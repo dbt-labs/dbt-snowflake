@@ -113,8 +113,8 @@ def _pytest_get_test_root():
         head, tail = os.path.split(head)
         path_parts.append(tail)
     path_parts.reverse()
-    # tests are all of the form 'plugins/snowflake/tests/integration/suite_name'
-    target = os.path.join(*path_parts[:5])  # TODO: try to not hard code this
+    # dbt tests are all of the form 'tests/integration/suite_name'
+    target = os.path.join(*path_parts[:3])  # TODO: try to not hard code this
     return os.path.join(relative_to, target)
 
 

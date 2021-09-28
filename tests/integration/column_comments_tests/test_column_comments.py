@@ -1,6 +1,6 @@
 import json
 
-from test.integration.base import DBTIntegrationTest, use_profile
+from tests.integration.base import DBTIntegrationTest, use_profile
 
 
 class TestColumnComment(DBTIntegrationTest):

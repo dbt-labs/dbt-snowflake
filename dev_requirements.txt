@@ -1,0 +1,16 @@
+bumpversion
+flake8
+flaky
+freezegun==0.3.12
+ipdb
+mypy==0.782
+pip-tools
+pytest
+pytest-dotenv
+pytest-logbook
+pytest-csv
+pytest-xdist
+pytz
+tox>=3.13
+twine
+wheel

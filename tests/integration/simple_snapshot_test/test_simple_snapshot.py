@@ -1,4 +1,4 @@
-from test.integration.base import DBTIntegrationTest, use_profile
+from tests.integration.base import DBTIntegrationTest, use_profile
 from datetime import datetime
 import pytz
 import dbt.exceptions

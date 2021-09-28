@@ -2,7 +2,7 @@ import json
 import os
 from pytest import mark
 
-from test.integration.base import DBTIntegrationTest, use_profile
+from tests.integration.base import DBTIntegrationTest, use_profile
 
 
 class BaseTestSimpleCopy(DBTIntegrationTest):

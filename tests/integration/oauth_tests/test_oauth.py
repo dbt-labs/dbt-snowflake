@@ -32,7 +32,7 @@ integration the same, just the refresh token changed)
 """
 import os
 import pytest
-from test.integration.base import DBTIntegrationTest, use_profile
+from tests.integration.base import DBTIntegrationTest, use_profile
 
 
 def env_set_truthy(key):

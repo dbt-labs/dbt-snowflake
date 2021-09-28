@@ -1,4 +1,4 @@
-from test.integration.base import DBTIntegrationTest, FakeArgs, use_profile
+from tests.integration.base import DBTIntegrationTest, FakeArgs, use_profile
 
 from dbt.task.test import TestTask
 import os

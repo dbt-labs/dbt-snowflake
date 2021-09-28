@@ -2,7 +2,7 @@ import os
 
 from dbt.exceptions import CompilationException
 
-from test.integration.base import DBTIntegrationTest, use_profile
+from tests.integration.base import DBTIntegrationTest, use_profile
 
 
 class TestSimpleReference(DBTIntegrationTest):

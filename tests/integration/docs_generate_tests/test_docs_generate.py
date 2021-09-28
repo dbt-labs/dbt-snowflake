@@ -5,7 +5,7 @@ from datetime import datetime
 from unittest.mock import ANY, patch
 
 from pytest import mark
-from test.integration.base import DBTIntegrationTest, use_profile, AnyFloat, \
+from tests.integration.base import DBTIntegrationTest, use_profile, AnyFloat, \
     AnyString, AnyStringWith, normalize, Normalized
 
 import dbt.tracking
