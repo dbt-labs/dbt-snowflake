@@ -82,7 +82,7 @@ class TestArgs:
 
 
 def _profile_from_test_name(test_name):
-    adapter_names = ('snowflake')
+    adapter_names = ('snowflake',)
     adapters_in_name = sum(x in test_name for x in adapter_names)
     if adapters_in_name != 1:
         raise ValueError(
@@ -113,8 +113,8 @@ def _pytest_get_test_root():
         head, tail = os.path.split(head)
         path_parts.append(tail)
     path_parts.reverse()
-    # dbt tests are all of the form 'test/integration/XXX_suite_name'
-    target = os.path.join(*path_parts[:3])
+    # tests are all of the form 'plugins/snowflake/tests/integration/suite_name'
+    target = os.path.join(*path_parts[:5])  # TODO: try to not hard code this
     return os.path.join(relative_to, target)
 
 
@@ -227,7 +227,9 @@ class DBTIntegrationTest(unittest.TestCase):
         return _profile_from_test_name(test_name)
 
     def _symlink_test_folders(self):
+        print(self.test_original_source_path)
         for entry in os.listdir(self.test_original_source_path):
+            print(entry)
             src = os.path.join(self.test_original_source_path, entry)
             tst = os.path.join(self.test_root_dir, entry)
             if os.path.isdir(src) or src.endswith('.sql'):
