@@ -1,3 +1,7 @@
+# install latest changes in dbt-core
+# TODO: how to automate switching from develop to version branches?
+git+https://github.com/dbt-labs/dbt.git@develop#egg=dbt-core&subdirectory=core
+
 bumpversion
 flake8
 flaky

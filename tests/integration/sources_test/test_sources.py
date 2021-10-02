@@ -10,15 +10,44 @@ from tests.integration.base import DBTIntegrationTest, use_profile, AnyFloat, \
     AnyStringWith
 
 
-class TestSourceFreshness(DBTIntegrationTest):
+class BaseSourcesTest(DBTIntegrationTest):
     @property
     def schema(self):
-        return "sources"
+        return "sources_042"
 
     @property
     def models(self):
         return "models"
 
+    @property
+    def project_config(self):
+        return {
+            'config-version': 2,
+            'data-paths': ['data'],
+            'quoting': {'database': True, 'schema': True, 'identifier': True},
+            'seeds': {
+                'quote_columns': True,
+            },
+        }
+
+    def setUp(self):
+        super().setUp()
+        os.environ['DBT_TEST_SCHEMA_NAME_VARIABLE'] = 'test_run_schema'
+
+    def tearDown(self):
+        del os.environ['DBT_TEST_SCHEMA_NAME_VARIABLE']
+        super().tearDown()
+
+    def run_dbt_with_vars(self, cmd, *args, **kwargs):
+        vars_dict = {
+            'test_run_schema': self.unique_schema(),
+            'test_loaded_at': self.adapter.quote('updated_at'),
+        }
+        cmd.extend(['--vars', yaml.safe_dump(vars_dict)])
+        return self.run_dbt(cmd, *args, **kwargs)
+
+
+class SuccessfulSourcesTest(BaseSourcesTest):
     def setUp(self):
         super().setUp()
         self.run_dbt_with_vars(['seed'])
@@ -26,19 +55,10 @@ class TestSourceFreshness(DBTIntegrationTest):
         self._id = 101
         # this is the db initial value
         self.last_inserted_time = "2016-09-19T14:45:51+00:00"
-        os.environ['DBT_TEST_SCHEMA_NAME_VARIABLE'] = 'test_run_schema'
         os.environ['DBT_ENV_CUSTOM_ENV_key'] = 'value'
-        self.run_sql(
-            'create table {}.dummy_table (id int)'.format(self.unique_schema())
-        )
-        self.run_sql(
-            'create view {}.external_view as (select * from {}.dummy_table)'
-            .format(self.alternative_schema(), self.unique_schema())
-        )
 
     def tearDown(self):
         super().tearDown()
-        del os.environ['DBT_TEST_SCHEMA_NAME_VARIABLE']
         del os.environ['DBT_ENV_CUSTOM_ENV_key']
 
     def _set_updated_at_to(self, delta):
@@ -53,7 +73,7 @@ class TestSourceFreshness(DBTIntegrationTest):
             'blue',{id},'Jake','abc@example.com','192.168.1.1','{time}'
         )"""
         quoted_columns = ','.join(
-            self.adapter.quote(c)
+            self.adapter.quote(c) if self.adapter_type != 'bigquery' else c
             for c in
             ('favorite_color', 'id', 'first_name',
              'email', 'ip_address', 'updated_at')
@@ -71,6 +91,8 @@ class TestSourceFreshness(DBTIntegrationTest):
         self.last_inserted_time = insert_time.strftime(
             "%Y-%m-%dT%H:%M:%S+00:00")
 
+
+class TestSources(SuccessfulSourcesTest):
     @property
     def project_config(self):
         cfg = super().project_config
@@ -87,6 +109,16 @@ class TestSourceFreshness(DBTIntegrationTest):
     def alternative_schema(self):
         return self.unique_schema() + '_other'
 
+    def setUp(self):
+        super().setUp()
+        self.run_sql(
+            'create table {}.dummy_table (id int)'.format(self.unique_schema())
+        )
+        self.run_sql(
+            'create view {}.external_view as (select * from {}.dummy_table)'
+            .format(self.alternative_schema(), self.unique_schema())
+        )
+
     def run_dbt_with_vars(self, cmd, *args, **kwargs):
         vars_dict = {
             'test_run_schema': self.unique_schema(),
@@ -95,6 +127,9 @@ class TestSourceFreshness(DBTIntegrationTest):
         }
         cmd.extend(['--vars', yaml.safe_dump(vars_dict)])
         return self.run_dbt(cmd, *args, **kwargs)
+
+
+class TestSourceFreshness(SuccessfulSourcesTest):
 
     def _assert_freshness_results(self, path, state):
         self.assertTrue(os.path.exists(path))
