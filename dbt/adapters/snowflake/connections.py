@@ -246,7 +246,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             except snowflake.connector.errors.Error as e:
                 error = e
                 logger.debug("Got an error when attempting to open a snowflake "
-                             "connection. This was attempt number: {attempt}. Retrying opening the connection. "
+                             "connection. This was attempt number: {attempt} of 3. "
                              "Error: '{error}'"
                              .format(attempt=attempt, error=e))
                 sleep(1)
