@@ -218,38 +218,48 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             logger.debug('Connection is already open, skipping open.')
             return connection
 
-        try:
-            creds = connection.credentials
+        error = None
+        for attempt in range(1, 4):  # retry opening the connection twice after encountering an error
+            try:
+                creds = connection.credentials
 
-            handle = snowflake.connector.connect(
-                account=creds.account,
-                user=creds.user,
-                database=creds.database,
-                schema=creds.schema,
-                warehouse=creds.warehouse,
-                role=creds.role,
-                autocommit=True,
-                client_session_keep_alive=creds.client_session_keep_alive,
-                application='dbt',
-                **creds.auth_args()
-            )
+                handle = snowflake.connector.connect(
+                    account=creds.account,
+                    user=creds.user,
+                    database=creds.database,
+                    schema=creds.schema,
+                    warehouse=creds.warehouse,
+                    role=creds.role,
+                    autocommit=True,
+                    client_session_keep_alive=creds.client_session_keep_alive,
+                    application='dbt',
+                    **creds.auth_args()
+                )
 
-            if creds.query_tag:
-                handle.cursor().execute(
-                    ("alter session set query_tag = '{}'")
-                    .format(creds.query_tag))
+                if creds.query_tag:
+                    handle.cursor().execute(
+                        ("alter session set query_tag = '{}'")
+                            .format(creds.query_tag))
 
-            connection.handle = handle
-            connection.state = 'open'
-        except snowflake.connector.errors.Error as e:
+                connection.handle = handle
+                connection.state = 'open'
+            except snowflake.connector.errors.Error as e:
+                error = e
+                logger.debug("Got an error when attempting to open a snowflake "
+                             "connection. This was attempt number: {attempt}. Retrying opening the connection. "
+                             "Error: '{error}'"
+                             .format(attempt=attempt, error=e))
+                sleep(1)
+            else:
+                break
+        else:
             logger.debug("Got an error when attempting to open a snowflake "
                          "connection: '{}'"
-                         .format(e))
+                         .format(error))
 
             connection.handle = None
             connection.state = 'fail'
-
-            raise FailedToConnectException(str(e))
+            raise FailedToConnectException(str(error))
 
     def cancel(self, connection):
         handle = connection.handle
