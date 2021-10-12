@@ -2,7 +2,7 @@ version: 2
 updates:
   # python dependencies
   - package-ecosystem: "pip"
-    directory: "/dbt"
+    directory: "/"
     schedule:
       interval: "daily"
     rebase-strategy: "disabled"
