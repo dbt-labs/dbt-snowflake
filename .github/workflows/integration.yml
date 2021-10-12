@@ -33,6 +33,9 @@ on:
   pull_request_target:
   # manual trigger
   workflow_dispatch:
+  # run this once per night to ensure no regressions from latest dbt-core changes
+  schedule:
+    - cron: '0 5 * * *' # 5 UTC
 
 # explicitly turn off permissions for `GITHUB_TOKEN`
 permissions: read-all
