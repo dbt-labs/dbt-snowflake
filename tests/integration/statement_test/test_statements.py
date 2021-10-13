@@ -26,7 +26,7 @@ class TestStatements(DBTIntegrationTest):
 
     @use_profile("snowflake")
     def test_snowflake_statements(self):
-        self.use_default_project({"data-paths": [self.dir("snowflake-seed")]})
+        self.use_default_project({"seed-paths": [self.dir("snowflake-seed")]})
 
         results = self.run_dbt(["seed"])
         self.assertEqual(len(results), 2)
