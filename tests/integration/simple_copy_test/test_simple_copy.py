@@ -39,12 +39,12 @@ class TestSimpleCopy(BaseTestSimpleCopy):
 
     @property
     def project_config(self):
-        return self.seed_quote_cfg_with({"data-paths": [self.dir("seed-initial")]})
+        return self.seed_quote_cfg_with({"seed-paths": [self.dir("seed-initial")]})
 
     @use_profile("snowflake")
     def test__snowflake__simple_copy(self):
         self.use_default_project({
-            "data-paths": [self.dir("seed-initial")],
+            "seed-paths": [self.dir("seed-initial")],
             "seeds": {
                 'quote_columns': False,
             }
@@ -56,7 +56,7 @@ class TestSimpleCopy(BaseTestSimpleCopy):
 
         self.assertManyTablesEqual(["SEED", "VIEW_MODEL", "INCREMENTAL", "MATERIALIZED", "GET_AND_REF"])
 
-        self.use_default_project({"data-paths": [self.dir("seed-update")]})
+        self.use_default_project({"seed-paths": [self.dir("seed-update")]})
         results = self.run_dbt(["seed"])
         self.assertEqual(len(results),  1)
         results = self.run_dbt()
@@ -66,7 +66,7 @@ class TestSimpleCopy(BaseTestSimpleCopy):
 
         self.use_default_project({
             "test-paths": [self.dir("tests")],
-            "data-paths": [self.dir("seed-update")],
+            "seed-paths": [self.dir("seed-update")],
         })
         self.run_dbt(['test'])
 
@@ -74,7 +74,7 @@ class TestSimpleCopy(BaseTestSimpleCopy):
     def test__snowflake__simple_copy__quoting_off(self):
         self.use_default_project({
             "quoting": {"identifier": False},
-            "data-paths": [self.dir("snowflake-seed-initial")],
+            "seed-paths": [self.dir("snowflake-seed-initial")],
         })
 
         results = self.run_dbt(["seed"])
@@ -85,7 +85,7 @@ class TestSimpleCopy(BaseTestSimpleCopy):
         self.assertManyTablesEqual(["SEED", "VIEW_MODEL", "INCREMENTAL", "MATERIALIZED", "GET_AND_REF"])
 
         self.use_default_project({
-            "data-paths": [self.dir("snowflake-seed-update")],
+            "seed-paths": [self.dir("snowflake-seed-update")],
             "quoting": {"identifier": False},
         })
         results = self.run_dbt(["seed"])
@@ -97,7 +97,7 @@ class TestSimpleCopy(BaseTestSimpleCopy):
 
         self.use_default_project({
             "test-paths": [self.dir("tests")],
-            "data-paths": [self.dir("snowflake-seed-update")],
+            "seed-paths": [self.dir("snowflake-seed-update")],
             "quoting": {"identifier": False},
         })
         self.run_dbt(['test'])
@@ -106,21 +106,21 @@ class TestSimpleCopy(BaseTestSimpleCopy):
     def test__snowflake__seed__quoting_switch(self):
         self.use_default_project({
             "quoting": {"identifier": False},
-            "data-paths": [self.dir("snowflake-seed-initial")],
+            "seed-paths": [self.dir("snowflake-seed-initial")],
         })
 
         results = self.run_dbt(["seed"])
         self.assertEqual(len(results),  1)
 
         self.use_default_project({
-            "data-paths": [self.dir("snowflake-seed-update")],
+            "seed-paths": [self.dir("snowflake-seed-update")],
             "quoting": {"identifier": True},
         })
         results = self.run_dbt(["seed"], expect_pass=False)
 
         self.use_default_project({
             "test-paths": [self.dir("tests")],
-            "data-paths": [self.dir("snowflake-seed-initial")],
+            "seed-paths": [self.dir("snowflake-seed-initial")],
         })
         self.run_dbt(['test'])
 
@@ -137,7 +137,7 @@ class TestSimpleCopyQuotingIdentifierOn(BaseTestSimpleCopy):
     @use_profile("snowflake")
     def test__snowflake__simple_copy__quoting_on(self):
         self.use_default_project({
-            "data-paths": [self.dir("snowflake-seed-initial")],
+            "seed-paths": [self.dir("snowflake-seed-initial")],
         })
 
         results = self.run_dbt(["seed"])
@@ -148,7 +148,7 @@ class TestSimpleCopyQuotingIdentifierOn(BaseTestSimpleCopy):
         self.assertManyTablesEqual(["seed", "view_model", "incremental", "materialized", "get_and_ref"])
 
         self.use_default_project({
-            "data-paths": [self.dir("snowflake-seed-update")],
+            "seed-paths": [self.dir("snowflake-seed-update")],
         })
         results = self.run_dbt(["seed"])
         self.assertEqual(len(results),  1)
@@ -169,7 +169,7 @@ class BaseLowercasedSchemaTest(BaseTestSimpleCopy):
 class TestSnowflakeSimpleLowercasedSchemaCopy(BaseLowercasedSchemaTest):
     @use_profile('snowflake')
     def test__snowflake__simple_copy(self):
-        self.use_default_project({"data-paths": [self.dir("snowflake-seed-initial")]})
+        self.use_default_project({"seed-paths": [self.dir("snowflake-seed-initial")]})
 
         results = self.run_dbt(["seed"])
         self.assertEqual(len(results),  1)
@@ -178,7 +178,7 @@ class TestSnowflakeSimpleLowercasedSchemaCopy(BaseLowercasedSchemaTest):
 
         self.assertManyTablesEqual(["SEED", "VIEW_MODEL", "INCREMENTAL", "MATERIALIZED", "GET_AND_REF"])
 
-        self.use_default_project({"data-paths": [self.dir("snowflake-seed-update")]})
+        self.use_default_project({"seed-paths": [self.dir("snowflake-seed-update")]})
 
         results = self.run_dbt(["seed"])
         self.assertEqual(len(results),  1)
@@ -189,7 +189,7 @@ class TestSnowflakeSimpleLowercasedSchemaCopy(BaseLowercasedSchemaTest):
 
         self.use_default_project({
             "test-paths": [self.dir("tests")],
-            "data-paths": [self.dir("snowflake-seed-update")],
+            "seed-paths": [self.dir("snowflake-seed-update")],
         })
         self.run_dbt(['test'])
 
@@ -204,7 +204,7 @@ class TestSnowflakeSimpleLowercasedSchemaQuoted(BaseLowercasedSchemaTest):
     @use_profile("snowflake")
     def test__snowflake__seed__quoting_switch_schema_lower(self):
         self.use_default_project({
-            "data-paths": [self.dir("snowflake-seed-initial")],
+            "seed-paths": [self.dir("snowflake-seed-initial")],
         })
 
         results = self.run_dbt(["seed"])
@@ -214,7 +214,7 @@ class TestSnowflakeSimpleLowercasedSchemaQuoted(BaseLowercasedSchemaTest):
         self.assertEqual(len(results),  1)
 
         self.use_default_project({
-            "data-paths": [self.dir("snowflake-seed-update")],
+            "seed-paths": [self.dir("snowflake-seed-update")],
             "quoting": {"identifier": False, "schema": False},
         })
         results = self.run_dbt(["seed"], expect_pass=False)
@@ -230,7 +230,7 @@ class TestSnowflakeSimpleUppercasedSchemaQuoted(BaseTestSimpleCopy):
     @use_profile("snowflake")
     def test__snowflake__seed__quoting_switch_schema_upper(self):
         self.use_default_project({
-            "data-paths": [self.dir("snowflake-seed-initial")],
+            "seed-paths": [self.dir("snowflake-seed-initial")],
         })
 
         results = self.run_dbt(["seed"])
@@ -240,7 +240,7 @@ class TestSnowflakeSimpleUppercasedSchemaQuoted(BaseTestSimpleCopy):
         self.assertEqual(len(results),  1)
 
         self.use_default_project({
-            "data-paths": [self.dir("snowflake-seed-update")],
+            "seed-paths": [self.dir("snowflake-seed-update")],
             "quoting": {"identifier": False, "schema": False},
         })
         results = self.run_dbt(["seed"])
@@ -254,7 +254,7 @@ class TestSnowflakeIncrementalOverwrite(BaseTestSimpleCopy):
     @use_profile("snowflake")
     def test__snowflake__incremental_overwrite(self):
         self.use_default_project({
-            "data-paths": [self.dir("snowflake-seed-initial")],
+            "seed-paths": [self.dir("snowflake-seed-initial")],
         })
         results = self.run_dbt(["run"])
         self.assertEqual(len(results),  1)
@@ -267,7 +267,7 @@ class TestSnowflakeIncrementalOverwrite(BaseTestSimpleCopy):
             "models": {
                 "incremental_strategy": "delete+insert"
             },
-            "data-paths": [self.dir("snowflake-seed-update")],
+            "seed-paths": [self.dir("snowflake-seed-update")],
         })
 
         results = self.run_dbt(["run"])
@@ -294,14 +294,14 @@ class TestIncrementalMergeColumns(BaseTestSimpleCopy):
     @use_profile("snowflake")
     def test__snowflake__incremental_merge_columns(self):
         self.use_default_project({
-            "data-paths": ["seeds-merge-cols-initial"],
+            "seed-paths": ["seeds-merge-cols-initial"],
             "seeds": {
                 "quote_columns": False
             }
         })
         self.seed_and_run()
         self.use_default_project({
-            "data-paths": ["seeds-merge-cols-update"],
+            "seed-paths": ["seeds-merge-cols-update"],
             "seeds": {
                 "quote_columns": False
             }
