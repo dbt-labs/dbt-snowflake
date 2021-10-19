@@ -78,6 +78,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check if relevant files changed
+        if: github.event_name == 'pull_request_target'
         # https://github.com/marketplace/actions/paths-changes-filter
         # For each filter, it sets output variable named by the filter to the text:
         #  'true' - if any of changed files matches any of filter rules
