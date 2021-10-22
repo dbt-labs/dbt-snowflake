@@ -14,6 +14,10 @@ _choose_authentication_type:
     private_key_passphrase:
       hint: 'passphrase for the private key, if key is encrypted'
       hide_input: true
+  sso:
+    authenticator:
+      hint: "'externalbrowser' or a valid Okta URL"
+      default: 'externalbrowser'
 role:
   hint: 'dev role'
 warehouse:
