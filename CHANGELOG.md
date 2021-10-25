@@ -7,6 +7,14 @@ N/A
 N/A
 
 ### Under the hood
+N/A
+
+### Contributors
+N/A
+
+## dbt-snowflake v1.0.0b2 (October 25, 2021)
+
+### Under the hood
 - Replace `sample_profiles.yml` with `profile_template.yml`, for use with new `dbt init` ([#32](https://github.com/dbt-labs/dbt-snowflake/pull/32))
 
 ### Contributors
