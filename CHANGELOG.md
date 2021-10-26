@@ -7,10 +7,10 @@ N/A
 N/A
 
 ### Under the hood
-N/A
+- Add optional profile parameters for atypical local connection setups ([#21](https://github.com/dbt-labs/dbt-snowflake/issues/21), [#36](https://github.com/dbt-labs/dbt-snowflake/pull/36))
 
 ### Contributors
-N/A
+- [@laxjesse](https://github.com/laxjesse) ([#36](https://github.com/dbt-labs/dbt-snowflake/pull/36))
 
 ## dbt-snowflake v1.0.0b2 (October 25, 2021)
 
