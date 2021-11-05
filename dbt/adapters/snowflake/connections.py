@@ -224,7 +224,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
         creds = connection.credentials
         error = None
-        for attempt in range(1, creds.connect_retries):  # retry opening the connection twice after encountering an error
+        for attempt in range(1, creds.connect_retries):
             try:
                 creds = connection.credentials
 
@@ -244,29 +244,40 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 if creds.query_tag:
                     handle.cursor().execute(
                         ("alter session set query_tag = '{}'")
-                            .format(creds.query_tag))
+                        .format(creds.query_tag))
 
                 connection.handle = handle
                 connection.state = 'open'
             except snowflake.connector.errors.DatabaseError as e:
-                if (creds.retry_on_database_errors or creds.retry_all) and creds.connect_retries > 0:
+                if (creds.retry_on_database_errors or creds.retry_all) \
+                        and creds.connect_retries > 0:
                     error = e
-                    logger.warning("Got an error when attempting to open a snowflake "
-                                 "connection. Retrying due to either retry configuration set to true."
-                                 "This was attempt number: {attempt} of {creds.connect_retries}. "
-                                 "Retrying in {creds.connect_timeout} seconds."
-                                 "Error: '{error}'"
-                                 .format(attempt=attempt, error=e))
+                    logger.warning("Got an error when attempting to open a "
+                                   "snowflake connection. Retrying due to "
+                                   "either retry configuration set to true."
+                                   "This was attempt number: {attempt} of "
+                                   "{retry_limit}. "
+                                   "Retrying in {timeout} "
+                                   "seconds. Error: '{error}'"
+                                   .format(attempt=attempt,
+                                           retry_limit=creds.connect_retries,
+                                           timeout=creds.connect_timeout,
+                                           error=e))
                     sleep(creds.connect_timeout)
             except snowflake.connector.errors.Error as e:
                 if creds.retry_all and creds.connect_retries > 0:
                     error = e
-                    logger.warning("Got an error when attempting to open a snowflake "
-                                   "connection. Retrying due to 'retry_all' configuration set to true."
-                                   "This was attempt number: {attempt} of {creds.connect_retries}. "
-                                   "Retrying in {creds.connect_timeout} seconds."
-                                   "Error: '{error}'"
-                                   .format(attempt=attempt, error=e))
+                    logger.warning("Got an error when attempting to open a "
+                                   "snowflake connection. Retrying due to "
+                                   "'retry_all' configuration set to true."
+                                   "This was attempt number: {attempt} of "
+                                   "{retry_limit}. "
+                                   "Retrying in {timeout} "
+                                   "seconds. Error: '{error}'"
+                                   .format(attempt=attempt,
+                                           retry_limit=creds.connect_retries,
+                                           timeout=creds.connect_timeout,
+                                           error=e))
                     sleep(creds.connect_timeout)
             else:
                 break
