@@ -21,9 +21,10 @@ from dbt.exceptions import (
 from dbt.adapters.base import Credentials
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLConnectionManager
-from dbt.logger import GLOBAL_LOGGER as logger
+from dbt.events import AdapterLogger
 
 
+logger = AdapterLogger("Snowflake")
 _TOKEN_REQUEST_URL = 'https://{}.snowflakecomputing.com/oauth/token-request'
 
 
