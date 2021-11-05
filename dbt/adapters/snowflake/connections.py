@@ -239,7 +239,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
         creds = connection.credentials
         error = None
-        for attempt in range(1, creds.connect_retries):
+        for attempt in range(1 + creds.connect_retries):
             try:
                 handle = snowflake.connector.connect(
                     account=creds.account,
