@@ -42,6 +42,11 @@ class SnowflakeCredentials(Credentials):
     oauth_client_secret: Optional[str] = None
     query_tag: Optional[str] = None
     client_session_keep_alive: bool = False
+    host: Optional[str] = None
+    port: Optional[int] = None
+    proxy_host: Optional[str] = None
+    proxy_port: Optional[int] = None
+    protocol: Optional[str] = None
     connect_retries: int = 0
     connect_timeout: int = 10
     retry_on_database_errors: bool = False
@@ -49,8 +54,8 @@ class SnowflakeCredentials(Credentials):
 
     def __post_init__(self):
         if (
-            self.authenticator != 'oauth' and
-            (self.oauth_client_secret or self.oauth_client_id or self.token)
+                self.authenticator != 'oauth' and
+                (self.oauth_client_secret or self.oauth_client_id or self.token)
         ):
             # the user probably forgot to set 'authenticator' like I keep doing
             warn_or_error(
@@ -78,6 +83,16 @@ class SnowflakeCredentials(Credentials):
         result = {}
         if self.password:
             result['password'] = self.password
+        if self.host:
+            result['host'] = self.host
+        if self.port:
+            result['port'] = self.port
+        if self.proxy_host:
+            result['proxy_host'] = self.proxy_host
+        if self.proxy_port:
+            result['proxy_port'] = self.proxy_port
+        if self.protocol:
+            result['protocol'] = self.protocol
         if self.authenticator:
             result['authenticator'] = self.authenticator
             if self.authenticator == 'oauth':
@@ -129,7 +144,7 @@ class SnowflakeCredentials(Credentials):
 
         auth = base64.b64encode(
             f'{self.oauth_client_id}:{self.oauth_client_secret}'
-            .encode('ascii')
+                .encode('ascii')
         ).decode('ascii')
         headers = {
             'Authorization': f'Basic {auth}',
@@ -199,7 +214,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                      'credentials are provided, or when your default role '
                      'does not have access to use the specified database. '
                      'Please double check your profile and try again.')
-                    .format(msg))
+                        .format(msg))
             else:
                 raise DatabaseException(msg)
         except Exception as e:
@@ -226,8 +241,6 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         error = None
         for attempt in range(1, creds.connect_retries):
             try:
-                creds = connection.credentials
-
                 handle = snowflake.connector.connect(
                     account=creds.account,
                     user=creds.user,
@@ -244,7 +257,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 if creds.query_tag:
                     handle.cursor().execute(
                         ("alter session set query_tag = '{}'")
-                        .format(creds.query_tag))
+                            .format(creds.query_tag))
 
                 connection.handle = handle
                 connection.state = 'open'
@@ -264,6 +277,8 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                                            timeout=creds.connect_timeout,
                                            error=e))
                     sleep(creds.connect_timeout)
+                else:
+                    break
             except snowflake.connector.errors.Error as e:
                 if creds.retry_all and creds.connect_retries > 0:
                     error = e
@@ -279,8 +294,8 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                                            timeout=creds.connect_timeout,
                                            error=e))
                     sleep(creds.connect_timeout)
-            else:
-                break
+                else:
+                    break
         else:
             logger.debug("Got an error when attempting to open a snowflake "
                          "connection: '{}'"
@@ -408,7 +423,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 "conditionally running\nsql, eg. in a model hook, make "
                 "sure your `else` clause contains valid sql!\n\n"
                 "Provided SQL:\n{}"
-                .format(conn_name, sql)
+                    .format(conn_name, sql)
             )
 
         return connection, cursor
