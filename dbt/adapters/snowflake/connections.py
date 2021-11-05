@@ -261,6 +261,8 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
                 connection.handle = handle
                 connection.state = 'open'
+                break
+
             except snowflake.connector.errors.DatabaseError as e:
                 if (creds.retry_on_database_errors or creds.retry_all) \
                         and creds.connect_retries > 0:
@@ -278,7 +280,16 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                                            error=e))
                     sleep(creds.connect_timeout)
                 else:
-                    break
+                    logger.debug("Got an error when attempting to open a "
+                                 "snowflake connection. No retries "
+                                 "attempted: '{}'"
+                                 .format(e))
+
+                    connection.handle = None
+                    connection.state = 'fail'
+
+                    raise FailedToConnectException(str(e))
+
             except snowflake.connector.errors.Error as e:
                 if creds.retry_all and creds.connect_retries > 0:
                     error = e
@@ -295,7 +306,16 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                                            error=e))
                     sleep(creds.connect_timeout)
                 else:
-                    break
+                    logger.debug("Got an error when attempting to open a "
+                                 "snowflake connection. No retries "
+                                 "attempted: '{}'"
+                                 .format(e))
+
+                    connection.handle = None
+                    connection.state = 'fail'
+
+                    raise FailedToConnectException(str(e))
+
         else:
             logger.debug("Got an error when attempting to open a snowflake "
                          "connection: '{}'"
