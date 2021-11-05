@@ -291,7 +291,7 @@ class DBTIntegrationTest(unittest.TestCase):
             'version': '1.0',
             'config-version': 2,
             'test-paths': [],
-            'source-paths': [self.models],
+            'model-paths': [self.models],
             'profile': 'test',
         }
 

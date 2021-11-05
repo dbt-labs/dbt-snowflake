@@ -42,6 +42,11 @@ class SnowflakeCredentials(Credentials):
     oauth_client_secret: Optional[str] = None
     query_tag: Optional[str] = None
     client_session_keep_alive: bool = False
+    host: Optional[str] = None
+    port: Optional[int] = None
+    proxy_host: Optional[str] = None
+    proxy_port: Optional[int] = None
+    protocol: Optional[str] = None
     connect_retries: int = 0
     connect_timeout: int = 10
     retry_on_database_errors: bool = False
@@ -78,6 +83,16 @@ class SnowflakeCredentials(Credentials):
         result = {}
         if self.password:
             result['password'] = self.password
+        if self.host:
+            result['host'] = self.host
+        if self.port:
+            result['port'] = self.port
+        if self.proxy_host:
+            result['proxy_host'] = self.proxy_host
+        if self.proxy_port:
+            result['proxy_port'] = self.proxy_port
+        if self.protocol:
+            result['protocol'] = self.protocol
         if self.authenticator:
             result['authenticator'] = self.authenticator
             if self.authenticator == 'oauth':
