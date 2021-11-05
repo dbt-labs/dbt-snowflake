@@ -54,8 +54,8 @@ class SnowflakeCredentials(Credentials):
 
     def __post_init__(self):
         if (
-                self.authenticator != 'oauth' and
-                (self.oauth_client_secret or self.oauth_client_id or self.token)
+            self.authenticator != 'oauth' and
+            (self.oauth_client_secret or self.oauth_client_id or self.token)
         ):
             # the user probably forgot to set 'authenticator' like I keep doing
             warn_or_error(
@@ -144,7 +144,7 @@ class SnowflakeCredentials(Credentials):
 
         auth = base64.b64encode(
             f'{self.oauth_client_id}:{self.oauth_client_secret}'
-                .encode('ascii')
+            .encode('ascii')
         ).decode('ascii')
         headers = {
             'Authorization': f'Basic {auth}',
@@ -214,7 +214,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                      'credentials are provided, or when your default role '
                      'does not have access to use the specified database. '
                      'Please double check your profile and try again.')
-                        .format(msg))
+                    .format(msg))
             else:
                 raise DatabaseException(msg)
         except Exception as e:
@@ -257,7 +257,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 if creds.query_tag:
                     handle.cursor().execute(
                         ("alter session set query_tag = '{}'")
-                            .format(creds.query_tag))
+                        .format(creds.query_tag))
 
                 connection.handle = handle
                 connection.state = 'open'
@@ -423,7 +423,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 "conditionally running\nsql, eg. in a model hook, make "
                 "sure your `else` clause contains valid sql!\n\n"
                 "Provided SQL:\n{}"
-                    .format(conn_name, sql)
+                .format(conn_name, sql)
             )
 
         return connection, cursor
