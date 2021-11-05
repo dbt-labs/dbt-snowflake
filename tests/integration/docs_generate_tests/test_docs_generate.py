@@ -102,7 +102,7 @@ class TestDocsGenerate(DBTIntegrationTest):
         if alternate_db is None:
             alternate_db = self.alternative_database
         project = {
-            "data-paths": [self.dir("seed")],
+            "seed-paths": [self.dir("seed")],
             'macro-paths': [self.dir('macros')],
             'snapshot-paths': [self.dir('snapshot')],
             'vars': {
@@ -967,7 +967,7 @@ class TestDocsGenerate(DBTIntegrationTest):
                     'database': self.default_database,
                     'description': 'My table',
                     'external': None,
-                    'freshness': {'error_after': None, 'warn_after': None, 'filter': None},
+                    'freshness': {'error_after': {'count': None, 'period': None}, 'warn_after': {'count': None, 'period': None}, 'filter': None},
                     'identifier': 'seed',
                     'loaded_at_field': None,
                     'loader': 'a_loader',

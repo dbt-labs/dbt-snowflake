@@ -15,7 +15,7 @@ class TestSimpleBigSeedBatched(DBTIntegrationTest):
     def project_config(self):
         return {
             'config-version': 2,
-            "data-paths": ['data-big'],
+            "seed-paths": ['data-big'],
             'seeds': {
                 'quote_columns': False,
             }

@@ -33,6 +33,9 @@ on:
   pull_request_target:
   # manual trigger
   workflow_dispatch:
+  # run this once per night to ensure no regressions from latest dbt-core changes
+  schedule:
+    - cron: '0 5 * * *' # 5 UTC
 
 # explicitly turn off permissions for `GITHUB_TOKEN`
 permissions: read-all
@@ -75,6 +78,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check if relevant files changed
+        if: github.event_name == 'pull_request_target'
         # https://github.com/marketplace/actions/paths-changes-filter
         # For each filter, it sets output variable named by the filter to the text:
         #  'true' - if any of changed files matches any of filter rules
@@ -149,7 +153,7 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          pip install --upgrade pip
+          pip install  --user --upgrade pip
           pip install tox
           pip --version
           tox --version
