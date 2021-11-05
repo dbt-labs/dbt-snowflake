@@ -42,6 +42,10 @@ class SnowflakeCredentials(Credentials):
     oauth_client_secret: Optional[str] = None
     query_tag: Optional[str] = None
     client_session_keep_alive: bool = False
+    connect_retries: int = 0
+    connect_timeout: int = 10
+    retry_on_database_errors: bool = False
+    retry_all: bool = False
 
     def __post_init__(self):
         if (
@@ -218,8 +222,9 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             logger.debug('Connection is already open, skipping open.')
             return connection
 
+        creds = connection.credentials
         error = None
-        for attempt in range(1, 4):  # retry opening the connection twice after encountering an error
+        for attempt in range(1, creds.connect_retries):  # retry opening the connection twice after encountering an error
             try:
                 creds = connection.credentials
 
@@ -243,13 +248,26 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
                 connection.handle = handle
                 connection.state = 'open'
+            except snowflake.connector.errors.DatabaseError as e:
+                if (creds.retry_on_database_errors or creds.retry_all) and creds.connect_retries > 0:
+                    error = e
+                    logger.warning("Got an error when attempting to open a snowflake "
+                                 "connection. Retrying due to either retry configuration set to true."
+                                 "This was attempt number: {attempt} of {creds.connect_retries}. "
+                                 "Retrying in {creds.connect_timeout} seconds."
+                                 "Error: '{error}'"
+                                 .format(attempt=attempt, error=e))
+                    sleep(creds.connect_timeout)
             except snowflake.connector.errors.Error as e:
-                error = e
-                logger.debug("Got an error when attempting to open a snowflake "
-                             "connection. This was attempt number: {attempt} of 3. "
-                             "Error: '{error}'"
-                             .format(attempt=attempt, error=e))
-                sleep(1)
+                if creds.retry_all and creds.connect_retries > 0:
+                    error = e
+                    logger.warning("Got an error when attempting to open a snowflake "
+                                   "connection. Retrying due to 'retry_all' configuration set to true."
+                                   "This was attempt number: {attempt} of {creds.connect_retries}. "
+                                   "Retrying in {creds.connect_timeout} seconds."
+                                   "Error: '{error}'"
+                                   .format(attempt=attempt, error=e))
+                    sleep(creds.connect_timeout)
             else:
                 break
         else:
