@@ -87,6 +87,21 @@ class TestSelectionExpansion(DBTIntegrationTest):
         self.list_tests_and_assert(select, exclude, expected)
         self.run_tests_and_assert(select, exclude, expected, compare_source, compare_target)
 
+    def run_incremental_append_new_columns_remove_one(self):
+        select = 'model_a incremental_append_new_columns_remove_one incremental_append_new_columns_remove_one_target'
+        compare_source = 'incremental_append_new_columns_remove_one'
+        compare_target = 'incremental_append_new_columns_remove_one_target'
+        exclude = None
+        expected = [
+            'select_from_a',
+            'select_from_incremental_append_new_columns_remove_one',
+            'select_from_incremental_append_new_columns_remove_one_target',
+            'unique_model_a_id',
+            'unique_incremental_append_new_columns_remove_one_id',
+            'unique_incremental_append_new_columns_remove_one_target_id'
+        ]
+        self.run_tests_and_assert(select, exclude, expected, compare_source, compare_target)
+
     def run_incremental_sync_all_columns(self):
         select = 'model_a incremental_sync_all_columns incremental_sync_all_columns_target'
         compare_source = 'incremental_sync_all_columns'
@@ -116,6 +131,7 @@ class TestSelectionExpansion(DBTIntegrationTest):
     @use_profile('snowflake')
     def test__snowflake__run_incremental_append_new_columns(self):
         self.run_incremental_append_new_columns()
+        self.run_incremental_append_new_columns_remove_one()
 
     @use_profile('snowflake')
     def test__snowflake__run_incremental_sync_all_columns(self):
