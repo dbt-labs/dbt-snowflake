@@ -137,6 +137,10 @@ jobs:
           pip install --upgrade setuptools wheel twine check-wheel-contents
           pip --version
 
+      - name: Install dbt-core latest
+        run: |
+          pip install "git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core"
+
       - name: Build distributions
         run: ./scripts/build-dist.sh
 
