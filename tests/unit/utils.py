@@ -1,5 +1,4 @@
 """Unit test utility functions.
-
 Note that all imports should be inside the functions to avoid import/mocking
 issues.
 """
@@ -11,11 +10,11 @@ from unittest import TestCase
 import agate
 import pytest
 from dbt.dataclass_schema import ValidationError
+from dbt.config.project import PartialProject
 
 
 def normalize(path):
     """On windows, neither is enough on its own:
-
     >>> normcase('C:\\documents/ALL CAPS/subdir\\..')
     'c:\\documents\\all caps\\subdir\\..'
     >>> normpath('C:\\documents/ALL CAPS/subdir\\..')
@@ -46,7 +45,7 @@ def profile_from_dict(profile, profile_name, cli_vars='{}'):
     if not isinstance(cli_vars, dict):
         cli_vars = parse_cli_vars(cli_vars)
 
-    renderer = ProfileRenderer(generate_base_context(cli_vars))
+    renderer = ProfileRenderer(cli_vars)
     return Profile.from_raw_profile_info(
         profile,
         profile_name,
@@ -62,13 +61,18 @@ def project_from_dict(project, profile, packages=None, selectors=None, cli_vars=
     if not isinstance(cli_vars, dict):
         cli_vars = parse_cli_vars(cli_vars)
 
-    renderer = DbtProjectYamlRenderer(generate_target_context(profile, cli_vars))
+    renderer = DbtProjectYamlRenderer(profile, cli_vars)
 
     project_root = project.pop('project-root', os.getcwd())
 
-    return Project.render_from_dict(
-            project_root, project, packages, selectors, renderer
-        )
+    partial = PartialProject.from_dicts(
+        project_root=project_root,
+        project_dict=project,
+        packages_dict=packages,
+        selectors_dict=selectors,
+    )
+    return partial.render(renderer)
+
 
 
 def config_from_parts_or_dicts(project, profile, packages=None, selectors=None, cli_vars='{}'):
@@ -368,4 +372,3 @@ def replace_config(n, **kwargs):
         config=n.config.replace(**kwargs),
         unrendered_config=dict_replace(n.unrendered_config, **kwargs),
     )
-

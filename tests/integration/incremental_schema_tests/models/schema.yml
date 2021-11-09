@@ -35,6 +35,20 @@ models:
         tags: [column_level_tag]
         tests:
           - unique
+
+  - name: incremental_append_new_columns_remove_one
+    columns:
+      - name: id
+        tags: [column_level_tag]
+        tests:
+          - unique
+
+  - name: incremental_append_new_columns_remove_one_target
+    columns:
+      - name: id
+        tags: [column_level_tag]
+        tests:
+          - unique
  
   - name: incremental_sync_all_columns
     columns:
