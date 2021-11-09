@@ -429,8 +429,8 @@ class TestDocsGenerate(DBTIntegrationTest):
     def _verify_generic_macro_structure(self, manifest):
         # just test a known global macro to avoid having to update this every
         # time they change.
-        self.assertIn('macro.dbt.column_list', manifest['macros'])
-        macro = manifest['macros']['macro.dbt.column_list']
+        self.assertIn('macro.dbt.get_quoted_csv', manifest['macros'])
+        macro = manifest['macros']['macro.dbt.get_quoted_csv']
         self.assertEqual(
             set(macro),
             {
@@ -447,7 +447,7 @@ class TestDocsGenerate(DBTIntegrationTest):
             if k not in {'macro_sql'}
         }
         # Windows means we can't hard-code these.
-        helpers_path = Normalized('macros/materializations/helpers.sql')
+        helpers_path = Normalized('macros/materializations/models/incremental/column_helpers.sql')
         root_path = Normalized(os.path.join(
             self.dbt_core_install_root, 'include', 'global_project'
         ))
@@ -457,8 +457,8 @@ class TestDocsGenerate(DBTIntegrationTest):
                 'original_file_path': helpers_path,
                 'package_name': 'dbt',
                 'root_path': root_path,
-                'name': 'column_list',
-                'unique_id': 'macro.dbt.column_list',
+                'name': 'get_quoted_csv',
+                'unique_id': 'macro.dbt.get_quoted_csv',
                 'created_at': ANY,
                 'tags': [],
                 'resource_type': 'macro',
@@ -772,6 +772,7 @@ class TestDocsGenerate(DBTIntegrationTest):
                     },
                     'deferred': False,
                     'description': '',
+                    'file_key_name': 'models.model',
                     'fqn': ['test', 'not_null_model_id'],
                     'name': 'not_null_model_id',
                     'original_file_path': model_schema_yml_path,
@@ -863,6 +864,7 @@ class TestDocsGenerate(DBTIntegrationTest):
                     },
                     'deferred': False,
                     'description': '',
+                    'file_key_name': 'models.model',
                     'fqn': ['test', 'test_nothing_model_'],
                     'name': 'test_nothing_model_',
                     'original_file_path': model_schema_yml_path,
@@ -909,6 +911,7 @@ class TestDocsGenerate(DBTIntegrationTest):
                     },
                     'deferred': False,
                     'description': '',
+                    'file_key_name': 'models.model',
                     'fqn': ['test', 'unique_model_id'],
                     'name': 'unique_model_id',
                     'original_file_path': model_schema_yml_path,
@@ -1051,6 +1054,7 @@ class TestDocsGenerate(DBTIntegrationTest):
                     'tags': []
                 }
             },
+            'metrics': {},
             'selectors': {},
             'parent_map': {
                 'model.test.model': ['seed.test.seed'],
@@ -1149,6 +1153,7 @@ class TestDocsGenerate(DBTIntegrationTest):
         manifest_keys = frozenset({
             'nodes', 'sources', 'macros', 'parent_map', 'child_map',
             'docs', 'metadata', 'docs', 'disabled', 'exposures', 'selectors',
+            'metrics',
         })
 
         self.assertEqual(frozenset(manifest), manifest_keys)
