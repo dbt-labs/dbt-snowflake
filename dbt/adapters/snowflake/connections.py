@@ -48,6 +48,10 @@ class SnowflakeCredentials(Credentials):
     proxy_host: Optional[str] = None
     proxy_port: Optional[int] = None
     protocol: Optional[str] = None
+    connect_retries: int = 0
+    connect_timeout: int = 10
+    retry_on_database_errors: bool = False
+    retry_all: bool = False
 
     def __post_init__(self):
         if (
@@ -234,38 +238,93 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             logger.debug('Connection is already open, skipping open.')
             return connection
 
-        try:
-            creds = connection.credentials
+        creds = connection.credentials
+        error = None
+        for attempt in range(1 + creds.connect_retries):
+            try:
+                handle = snowflake.connector.connect(
+                    account=creds.account,
+                    user=creds.user,
+                    database=creds.database,
+                    schema=creds.schema,
+                    warehouse=creds.warehouse,
+                    role=creds.role,
+                    autocommit=True,
+                    client_session_keep_alive=creds.client_session_keep_alive,
+                    application='dbt',
+                    **creds.auth_args()
+                )
 
-            handle = snowflake.connector.connect(
-                account=creds.account,
-                user=creds.user,
-                database=creds.database,
-                schema=creds.schema,
-                warehouse=creds.warehouse,
-                role=creds.role,
-                autocommit=True,
-                client_session_keep_alive=creds.client_session_keep_alive,
-                application='dbt',
-                **creds.auth_args()
-            )
+                if creds.query_tag:
+                    handle.cursor().execute(
+                        ("alter session set query_tag = '{}'")
+                        .format(creds.query_tag))
 
-            if creds.query_tag:
-                handle.cursor().execute(
-                    ("alter session set query_tag = '{}'")
-                    .format(creds.query_tag))
+                connection.handle = handle
+                connection.state = 'open'
+                break
 
-            connection.handle = handle
-            connection.state = 'open'
-        except snowflake.connector.errors.Error as e:
+            except snowflake.connector.errors.DatabaseError as e:
+                if (creds.retry_on_database_errors or creds.retry_all) \
+                        and creds.connect_retries > 0:
+                    error = e
+                    logger.warning("Got an error when attempting to open a "
+                                   "snowflake connection. Retrying due to "
+                                   "either retry configuration set to true."
+                                   "This was attempt number: {attempt} of "
+                                   "{retry_limit}. "
+                                   "Retrying in {timeout} "
+                                   "seconds. Error: '{error}'"
+                                   .format(attempt=attempt,
+                                           retry_limit=creds.connect_retries,
+                                           timeout=creds.connect_timeout,
+                                           error=e))
+                    sleep(creds.connect_timeout)
+                else:
+                    logger.debug("Got an error when attempting to open a "
+                                 "snowflake connection. No retries "
+                                 "attempted: '{}'"
+                                 .format(e))
+
+                    connection.handle = None
+                    connection.state = 'fail'
+
+                    raise FailedToConnectException(str(e))
+
+            except snowflake.connector.errors.Error as e:
+                if creds.retry_all and creds.connect_retries > 0:
+                    error = e
+                    logger.warning("Got an error when attempting to open a "
+                                   "snowflake connection. Retrying due to "
+                                   "'retry_all' configuration set to true."
+                                   "This was attempt number: {attempt} of "
+                                   "{retry_limit}. "
+                                   "Retrying in {timeout} "
+                                   "seconds. Error: '{error}'"
+                                   .format(attempt=attempt,
+                                           retry_limit=creds.connect_retries,
+                                           timeout=creds.connect_timeout,
+                                           error=e))
+                    sleep(creds.connect_timeout)
+                else:
+                    logger.debug("Got an error when attempting to open a "
+                                 "snowflake connection. No retries "
+                                 "attempted: '{}'"
+                                 .format(e))
+
+                    connection.handle = None
+                    connection.state = 'fail'
+
+                    raise FailedToConnectException(str(e))
+
+        else:
             logger.debug("Got an error when attempting to open a snowflake "
                          "connection: '{}'"
-                         .format(e))
+                         .format(error))
 
             connection.handle = None
             connection.state = 'fail'
-
-            raise FailedToConnectException(str(e))
+            raise FailedToConnectException(str(error))
 
     def cancel(self, connection):
         handle = connection.handle
