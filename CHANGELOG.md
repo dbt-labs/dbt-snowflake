@@ -1,5 +1,7 @@
 ## dbt-snowflake 1.0.0 (Release TBD)
 
+## dbt-snowflake 1.0.0rc1 (November 10, 2021)
+
 ### Features
 - Adds option to enable retries on errors encountered by the Snowflake connector ([#14](https://github.com/dbt-labs/dbt-snowflake/issues/14))
 
