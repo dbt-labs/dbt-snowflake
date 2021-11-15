@@ -47,6 +47,7 @@ class SnowflakeCredentials(Credentials):
     proxy_host: Optional[str] = None
     proxy_port: Optional[int] = None
     protocol: Optional[str] = None
+    insecure_mode: Optional[bool] = False
 
     def __post_init__(self):
         if (
@@ -245,6 +246,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 role=creds.role,
                 autocommit=True,
                 client_session_keep_alive=creds.client_session_keep_alive,
+                insecure_mode=creds.insecure_mode,
                 application='dbt',
                 **creds.auth_args()
             )
