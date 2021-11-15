@@ -52,6 +52,7 @@ class SnowflakeCredentials(Credentials):
     connect_timeout: int = 10
     retry_on_database_errors: bool = False
     retry_all: bool = False
+    insecure_mode: Optional[bool] = False
 
     def __post_init__(self):
         if (
@@ -252,6 +253,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                     autocommit=True,
                     client_session_keep_alive=creds.client_session_keep_alive,
                     application='dbt',
+                    insecure_mode=creds.insecure_mode,
                     **creds.auth_args()
                 )
 
