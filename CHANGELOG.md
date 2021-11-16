@@ -1,4 +1,4 @@
-## dbt-snowflake 1.0.0 (Release TBD)
+## dbt-snowflake 1.0.0 (Release TBD) test change
 
 ## dbt-snowflake 1.0.0rc1 (November 10, 2021)
 
