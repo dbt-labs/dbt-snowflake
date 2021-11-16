@@ -42,11 +42,25 @@
   {%- set secure = config.get('secure', default=false) -%}
   {%- set copy_grants = config.get('copy_grants', default=false) -%}
   {%- set sql_header = config.get('sql_header', none) -%}
-
+  {% set existing_columns = adapter.get_columns_in_relation(relation) | map(attribute="name") | list %}
+  {% set model_columns = model.columns %}
+  {% set query_columns = get_columns_in_query(sql ~ ' limit 0') %}
   {{ sql_header if sql_header is not none }}
   create or replace {% if secure -%}
     secure
-  {%- endif %} view {{ relation }} {% if copy_grants -%} copy grants {%- endif %} as (
+  {%- endif %} view {{ relation }} 
+  {% if config.persist_column_docs() -%}
+    (
+      {% for column_name in query_columns %}
+        {% if (column_name|upper in model_columns) or (column_name in model_columns) %}
+          {{column_name}} COMMENT '{{ model_columns[column_name]['description']}}'
+        {% else %}
+          {{column_name}}
+        {% endif %}
+      {% endfor %}
+    )
+  {%- endif %}
+  {% if copy_grants -%} copy grants {%- endif %} as (
     {{ sql }}
   );
 {% endmacro %}
