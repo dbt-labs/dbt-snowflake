@@ -6,4 +6,6 @@ models:
       - name: 2id
         description: "XXX My description"
         quote: true
-
+      - name: 3iD
+        description: "XXX Testing for non-lowercase column name"
+        quote: true

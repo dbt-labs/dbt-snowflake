@@ -1,5 +1,11 @@
 ## dbt-snowflake 1.0.0 (Release TBD)
 
+### Features
+- Adds column-level comments to Snowflake views ([#17](https://github.com/dbt-labs/dbt-snowflake/issues/17))
+
+### Contributors
+- [@spencer-taylor-workrise](https://github.com/spencer-taylor-workrise) ([#17](https://github.com/dbt-labs/dbt-snowflake/issues/17))
+
 ## dbt-snowflake 1.0.0rc1 (November 10, 2021)
 
 ### Features
