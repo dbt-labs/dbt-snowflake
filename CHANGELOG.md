@@ -23,6 +23,7 @@ Resolves an issue caused when the Snowflake OCSP server is not accessible. This 
 ### Contributors
 - [@laxjesse](https://github.com/laxjesse) ([#36](https://github.com/dbt-labs/dbt-snowflake/pull/36))
 - [@mhmcdonald](https://github.com/mhmcdonald) ([#6](https://github.com/dbt-labs/dbt-snowflake/pull/6))
+- [@JoshuaHuntley](https://github.com/JoshuaHuntley) ([#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
 
 ## dbt-snowflake v1.0.0b2 (October 25, 2021)
 
