@@ -1,5 +1,9 @@
-## dbt-snowflake next
-Resolves an issue caused when the Snowflake OCSP server is not accessible. This change only exposes the insecure_mode boolean avalable in the Snowflake python connector to dbt. This allows dbt to pass insecure_mode=true to the connector.
+## dbt-snowflake 1.0.0 (Release TBD)
+
+### Under the hood
+Resolves an issue caused when the Snowflake OCSP server is not accessible. This change only exposes the `insecure_mode` boolean avalable in the Snowflake python connector to dbt. This allows dbt to pass `insecure_mode=true` to the connector. ([#31](https://github.com/dbt-labs/dbt-snowflake/issues/31), [#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
+
+### Contributros
 
 ## dbt-snowflake 1.0.0rc1 (November 10, 2021)
 
