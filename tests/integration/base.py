@@ -26,11 +26,14 @@ from dbt.logger import log_manager
 from dbt.events.functions import (
     capture_stdout_logs, fire_event, setup_event_logger, stop_capture_stdout_logs
 )
-from dbt.events import AdapterLogger
+from dbt.events.test_types import (
+    IntegrationTestInfo,
+    IntegrationTestDebug,
+    IntegrationTestException
+)
 from dbt.contracts.graph.manifest import Manifest
 
 
-logger = AdapterLogger("Snowflake")
 INITIAL_ROOT = os.getcwd()
 
 
@@ -272,7 +275,7 @@ class DBTIntegrationTest(unittest.TestCase):
                 'test_original_source_path={0.test_original_source_path}',
                 'test_root_dir={0.test_root_dir}'
             )).format(self)
-            logger.exception(msg)
+            fire_event(IntegrationTestException(msg=msg))
 
             # if logging isn't set up, I still really want this message.
             print(msg)
@@ -382,8 +385,8 @@ class DBTIntegrationTest(unittest.TestCase):
         try:
             shutil.rmtree(self.test_root_dir)
         except EnvironmentError:
-            logger.exception('Could not clean up after test - {} not removable'
-                             .format(self.test_root_dir))
+            msg = f"Could not clean up after test - {self.test_root_dir} not removable"
+            fire_event(IntegrationTestException(msg=msg))
 
     def _get_schema_fqn(self, database, schema):
         schema_fqn = self.quote_as_configured(schema, 'schema')
@@ -479,7 +482,8 @@ class DBTIntegrationTest(unittest.TestCase):
             final_args.extend(['--profiles-dir', self.test_root_dir])
         final_args.append('--log-cache-events')
 
-        logger.info("Invoking dbt with {}".format(final_args))
+        msg = f"Invoking dbt with {final_args}"
+        fire_event(IntegrationTestInfo(msg=msg))
         return dbt.handle_and_check(final_args)
 
     def run_sql_file(self, path, kwargs=None):
@@ -537,7 +541,8 @@ class DBTIntegrationTest(unittest.TestCase):
         sql = self.transform_sql(query, kwargs=kwargs)
 
         with self.get_connection(connection_name) as conn:
-            logger.debug('test connection "{}" executing: {}'.format(conn.name, sql))
+            msg = f'test connection "{conn.name}" executing: {sql}'
+            fire_event(IntegrationTestDebug(msg=msg))
             return self.run_sql_common(sql, fetch, conn)
 
     def _ilike(self, target, value):
