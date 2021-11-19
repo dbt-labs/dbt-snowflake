@@ -38,29 +38,37 @@
     {%- endif -%}
 {% endmacro %}
 
+{% macro get_column_comment_sql(column_name, column_dict) %}
+  {{ adapter.quote(column_name) if column_dict[column_name]['quote'] else column_name }} COMMENT $${{ column_dict[column_name]['description'] | replace('$', '[$]') }}$$
+{% endmacro %}
+
+{% macro get_persist_docs_column_list(model_columns, query_columns) %}
+(
+  {% for column_name in query_columns %}
+    {% if (column_name|upper in model_columns) or (column_name in model_columns) %}
+      {{ get_column_comment_sql(column_name, model_columns) }}
+    {% else %}
+      {{column_name}}
+    {% endif %}
+    {{ ", " if not loop.last else "" }}
+  {% endfor %}
+)
+{% endmacro %}
+
 {% macro snowflake__create_view_as(relation, sql) -%}
   {%- set secure = config.get('secure', default=false) -%}
   {%- set copy_grants = config.get('copy_grants', default=false) -%}
   {%- set sql_header = config.get('sql_header', none) -%}
-  {% set existing_columns = adapter.get_columns_in_relation(relation) | map(attribute="name") | list %}
-  {% set model_columns = model.columns %}
 
-  {% set query_columns = get_columns_in_query(sql + ' limit 0') %}
   {{ sql_header if sql_header is not none }}
   create or replace {% if secure -%}
     secure
   {%- endif %} view {{ relation }} 
   {% if config.persist_column_docs() -%}
-    (
-      {% for column_name in query_columns %}
-        {% if (column_name|upper in model_columns) or (column_name in model_columns) %}
-          {{ adapter.quote(column_name) if model_columns[column_name]['quote'] else column_name }} COMMENT '{{ model_columns[column_name]['description']}}'
-        {% else %}
-          {{column_name}}
-        {% endif %}
-        {{ ", " if not loop.last else "" }}
-      {% endfor %}
-    )
+    {% set model_columns = model.columns %}
+    {% set query_columns = get_columns_in_query(sql) %}
+    {{ get_persist_docs_column_list(model_columns, query_columns) }}
+    
   {%- endif %}
   {% if copy_grants -%} copy grants {%- endif %} as (
     {{ sql }}
@@ -174,7 +182,7 @@
     {% set existing_columns = adapter.get_columns_in_relation(relation) | map(attribute="name") | list %}
     alter {{ relation.type }} {{ relation }} alter
     {% for column_name in column_dict if (column_name in existing_columns) or (column_name|upper in existing_columns) %}
-        {{ adapter.quote(column_name) if column_dict[column_name]['quote'] else column_name }} COMMENT $${{ column_dict[column_name]['description'] | replace('$', '[$]') }}$$ {{ ',' if not loop.last else ';' }}
+        {{ get_column_comment_sql(column_name, column_dict) }} {{ ',' if not loop.last else ';' }}
     {% endfor %}
 {% endmacro %}
 
