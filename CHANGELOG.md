@@ -1,9 +1,14 @@
 ## dbt-snowflake 1.0.0 (Release TBD)
 
-### Under the hood
-Resolves an issue caused when the Snowflake OCSP server is not accessible. This change only exposes the `insecure_mode` boolean avalable in the Snowflake python connector to dbt. This allows dbt to pass `insecure_mode=true` to the connector. ([#31](https://github.com/dbt-labs/dbt-snowflake/issues/31), [#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
+### Fixes
+- Apply query tags for Seed and Snapshot materialisations ([#20](https://github.com/dbt-labs/dbt-snowflake/issues/20), [#48](https://github.com/dbt-labs/dbt-snowflake/issues/48))
 
-### Contributros
+### Under the hood
+- Resolves an issue caused when the Snowflake OCSP server is not accessible, by exposing the `insecure_mode` boolean avalable in the Snowflake python connector ([#31](https://github.com/dbt-labs/dbt-snowflake/issues/31), [#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
+
+### Contributors
+- [@anthu](https://github.com/anthu) ([#48](https://github.com/dbt-labs/dbt-snowflake/pull/48))
+- [@JoshuaHuntley](https://github.com/JoshuaHuntley) ([#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
 
 ## dbt-snowflake 1.0.0rc1 (November 10, 2021)
 
@@ -23,7 +28,6 @@ Resolves an issue caused when the Snowflake OCSP server is not accessible. This 
 ### Contributors
 - [@laxjesse](https://github.com/laxjesse) ([#36](https://github.com/dbt-labs/dbt-snowflake/pull/36))
 - [@mhmcdonald](https://github.com/mhmcdonald) ([#6](https://github.com/dbt-labs/dbt-snowflake/pull/6))
-- [@JoshuaHuntley](https://github.com/JoshuaHuntley) ([#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
 
 ## dbt-snowflake v1.0.0b2 (October 25, 2021)
 
