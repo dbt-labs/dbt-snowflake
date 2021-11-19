@@ -1,5 +1,10 @@
 ## dbt-snowflake 1.0.0 (Release TBD)
 
+## dbt-snowflake 1.0.0rc2 (TBD)
+
+### Fixes
+- Apply query tags for Seed and Snapshot materialisations ([#48](https://github.com/dbt-labs/dbt-snowflake/issues/48))
+
 ## dbt-snowflake 1.0.0rc1 (November 10, 2021)
 
 ### Features
