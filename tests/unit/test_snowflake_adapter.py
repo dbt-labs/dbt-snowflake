@@ -352,7 +352,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 client_session_keep_alive=False, database='test_database',
                 role=None, schema='public', user='test_user',
                 warehouse='test_warehouse', authenticator='oauth', token='my-oauth-token',
-                private_key=None, application='dbt', client_store_temporary_credential=True, insecure_mode=False
+                private_key=None, application='dbt', client_store_temporary_credential=True, insecure_mode=False)
         ])
 
     @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')
