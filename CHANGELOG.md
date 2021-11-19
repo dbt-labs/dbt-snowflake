@@ -1,9 +1,14 @@
 ## dbt-snowflake 1.0.0 (Release TBD)
 
-## dbt-snowflake 1.0.0rc2 (TBD)
-
 ### Fixes
-- Apply query tags for Seed and Snapshot materialisations ([#48](https://github.com/dbt-labs/dbt-snowflake/issues/48))
+- Apply query tags for Seed and Snapshot materialisations ([#20](https://github.com/dbt-labs/dbt-snowflake/issues/20), [#48](https://github.com/dbt-labs/dbt-snowflake/issues/48))
+
+### Under the hood
+- Resolves an issue caused when the Snowflake OCSP server is not accessible, by exposing the `insecure_mode` boolean avalable in the Snowflake python connector ([#31](https://github.com/dbt-labs/dbt-snowflake/issues/31), [#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
+
+### Contributors
+- [@anthu](https://github.com/anthu) ([#48](https://github.com/dbt-labs/dbt-snowflake/pull/48))
+- [@JoshuaHuntley](https://github.com/JoshuaHuntley) ([#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
 
 ## dbt-snowflake 1.0.0rc1 (November 10, 2021)
 
