@@ -12,7 +12,7 @@
     store_failures = true
 ) }}
 
-select query_tag, array_agg(query_type)
+select query_tag, array_agg(query_type) as query_types
 from table(information_schema.query_history_by_user())
 where query_tag in (
   '{{ var("query_tag") }}_view',
