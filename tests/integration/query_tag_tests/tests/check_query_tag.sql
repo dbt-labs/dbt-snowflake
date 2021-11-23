@@ -11,7 +11,7 @@
     warn_if = "< 5"
 ) }}
 
-select distinct query_tag
+select query_tag, array_agg(query_type)
 from table(information_schema.query_history_by_user())
 where query_tag in (
   '{{ var("query_tag") }}_view',
@@ -20,3 +20,4 @@ where query_tag in (
   '{{ var("query_tag") }}_seed',
   '{{ var("query_tag") }}_snapshot'
 )
+group by 1

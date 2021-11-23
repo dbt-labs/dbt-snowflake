@@ -31,7 +31,7 @@ class TestSeedWithQueryTag(DBTIntegrationTest):
         }
         
     def build_all_with_query_tags(self):
-        self.run_dbt(['build', '--vars', '{{"query_tag": {}}}'.format(self.prefix)])
+        self.run_dbt(['build', '--vars', '{{"query_tag": "{}"}}'.format(self.prefix)])
 
     @use_profile('snowflake')
     def test__snowflake__build_tagged_twice(self):
