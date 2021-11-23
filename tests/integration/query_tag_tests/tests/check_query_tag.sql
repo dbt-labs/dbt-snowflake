@@ -8,7 +8,8 @@
 
 {{ config(
     error_if = "< 5",
-    warn_if = "< 5"
+    warn_if = "< 5",
+    store_failures = true
 ) }}
 
 select query_tag, array_agg(query_type)
