@@ -1,6 +1,3 @@
-{{ config(
-    materialized = 'view',
-    query_tag = var("query_tag") + '_view'
-) }}
+{{ config(materialized = 'view') }}
 
 select 1 as id

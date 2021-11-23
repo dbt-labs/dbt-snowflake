@@ -15,17 +15,22 @@ class TestSeedWithQueryTag(DBTIntegrationTest):
     def project_config(self):
         return {
             'config-version': 2,
-            'seed-paths': ['seeds'],
-            'snapshot-paths': ['snapshots'],
-            'test-paths': ['tests'],
+            'models': {
+                'test': {
+                    'query_tag': self.prefix,
+                    'post-hook': '{{ check_query_tag() }}'
+                },
+            },
             'seeds': {
                 'test': {
-                    'query_tag': self.prefix + '_seed',
+                    'query_tag': self.prefix,
+                    'post-hook': '{{ check_query_tag() }}'
                 },
             },
             'snapshots': {
                 'test': {
-                    'query_tag': self.prefix + '_snapshot',
+                    'query_tag': self.prefix,
+                    'post-hook': '{{ check_query_tag() }}'
                 },
             },
         }
