@@ -6,8 +6,7 @@
             unique_key='id',
             strategy='check',
             check_cols=['color'],
-            query_tag=var('query_tag')
         )
     }}
-    select * from {{target.database}}.{{schema}}.seed
+    select 1 as id, 'blue' as color
 {% endsnapshot %}
