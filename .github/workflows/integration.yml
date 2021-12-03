@@ -218,3 +218,19 @@ jobs:
             "You do not have permissions to run integration tests, @dbt-labs/core "\
             "needs to label this PR with `ok to test` in order to run integration tests!"
           check_for_duplicate_msg: true
+
+  slack-results:
+    runs-on: ubuntu-latest
+    needs: test 
+    if: always()
+    
+    steps:
+      - name: Posting scheduled run failures
+        uses: ravsamhq/notify-slack-action@v1
+        if: ${{ github.event_name == 'schedule' }}
+        with:
+          notification_title: 'Snowflake nightly integration test failed'
+          status: ${{ job.status }}
+          notify_when: 'failure'
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_CORE_ALERTS }}
