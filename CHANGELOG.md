@@ -1,4 +1,4 @@
-## dbt-snowflake 1.0.0 (Release TBD)
+## dbt-snowflake 1.0.0 (December 3, 2021)
 
 ## dbt-snowflake 1.0.0rc2 (November 24, 2021)
 
