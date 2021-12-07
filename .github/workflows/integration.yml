@@ -219,10 +219,10 @@ jobs:
             "needs to label this PR with `ok to test` in order to run integration tests!"
           check_for_duplicate_msg: true
 
-  slack-results:
+  post-failure:
     runs-on: ubuntu-latest
     needs: test 
-    if: always()
+    if: ${{ failure() }}
     
     steps:
       - name: Posting scheduled run failures
@@ -231,6 +231,5 @@ jobs:
         with:
           notification_title: 'Snowflake nightly integration test failed'
           status: ${{ job.status }}
-          notify_when: 'failure'
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_CORE_ALERTS }}
