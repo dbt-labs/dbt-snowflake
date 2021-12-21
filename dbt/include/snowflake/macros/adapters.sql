@@ -45,7 +45,7 @@
 {% macro get_persist_docs_column_list(model_columns, query_columns) %}
 (
   {% for column_name in query_columns %}
-    {% if (column_name|upper in model_columns) or (column_name in model_columns) %}
+    {% if (column_name|upper in model_columns|upper) %}
       {{ get_column_comment_sql(column_name, model_columns) }}
     {% else %}
       {{column_name}}
@@ -181,7 +181,7 @@
 {% macro snowflake__alter_column_comment(relation, column_dict) -%}
     {% set existing_columns = adapter.get_columns_in_relation(relation) | map(attribute="name") | list %}
     alter {{ relation.type }} {{ relation }} alter
-    {% for column_name in column_dict if (column_name in existing_columns) or (column_name|upper in existing_columns) %}
+    {% for column_name in column_dict if (column_name|upper in existing_columns|upper) %}
         {{ get_column_comment_sql(column_name, column_dict) }} {{ ',' if not loop.last else ';' }}
     {% endfor %}
 {% endmacro %}
