@@ -354,6 +354,7 @@ class TestDocsGenerate(DBTIntegrationTest):
             'quote_columns': True,
             'full_refresh': None,
             'on_schema_change': 'ignore',
+            'incremental_predicates': None,
             'database': None,
             'schema': None,
             'alias': None,
