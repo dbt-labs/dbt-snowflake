@@ -416,7 +416,7 @@ class TestSnowflakeAdapterConversions(TestAdapterConversions):
             ['', '12.78', '-2'],
             ['', '79.41', '-3'],
         ]
-        agate_table = self._make_table_of(rows, agate_helper.Number)
+        agate_table = self._make_table_of(rows, agate.Number)
         expected = ['integer', 'float8', 'integer']
         for col_idx, expect in enumerate(expected):
             assert SnowflakeAdapter.convert_number_type(agate_table, col_idx) == expect
