@@ -3,10 +3,10 @@ import os
 import sys
 import re
 
-# require python 3.6 or newer
-if sys.version_info < (3, 6):
+# require python 3.7 or newer
+if sys.version_info < (3, 7):
     print('Error: dbt does not support this version of Python.')
-    print('Please upgrade to Python 3.6 or higher.')
+    print('Please upgrade to Python 3.7 or higher.')
     sys.exit(1)
 
 
@@ -43,11 +43,6 @@ def _get_plugin_version_dict():
         return match.groupdict()
 
 
-def _get_plugin_version():
-    parts = _get_plugin_version_dict()
-    return "{major}.{minor}.{patch}{prekind}{pre}".format(**parts)
-
-
 # require a compatible minor version (~=), prerelease if this is a prerelease
 def _get_dbt_core_version():
     parts = _get_plugin_version_dict()
@@ -57,7 +52,7 @@ def _get_dbt_core_version():
 
 
 package_name = "dbt-snowflake"
-package_version = _get_plugin_version()
+package_version = "1.0.0"
 dbt_core_version = _get_dbt_core_version()
 description = """The Snowflake adapter plugin for dbt"""
 
@@ -65,7 +60,7 @@ setup(
     name=package_name,
     version=package_version,
     description=description,
-    long_description=description,
+    long_description=long_description,
     long_description_content_type='text/markdown',
     author="dbt Labs",
     author_email="info@dbtlabs.com",
@@ -74,7 +69,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'dbt-core~={}'.format(dbt_core_version),
-        'snowflake-connector-python[secure-local-storage]>=2.4.1,<2.6.0',
+        'snowflake-connector-python[secure-local-storage]>=2.4.1,<2.8.0',
         'requests<3.0.0',
         'cryptography>=3.2,<4',
     ],
@@ -88,10 +83,9 @@ setup(
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX :: Linux',
 
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
     ],
-    python_requires=">=3.6.2",
+    python_requires=">=3.7",
 )

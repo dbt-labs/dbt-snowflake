@@ -21,9 +21,10 @@ from dbt.exceptions import (
 from dbt.adapters.base import Credentials
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLConnectionManager
-from dbt.logger import GLOBAL_LOGGER as logger
+from dbt.events import AdapterLogger
 
 
+logger = AdapterLogger("Snowflake")
 _TOKEN_REQUEST_URL = 'https://{}.snowflakecomputing.com/oauth/token-request'
 
 
@@ -46,6 +47,16 @@ class SnowflakeCredentials(Credentials):
     oauth_client_secret: Optional[str] = None
     query_tag: Optional[str] = None
     client_session_keep_alive: bool = False
+    host: Optional[str] = None
+    port: Optional[int] = None
+    proxy_host: Optional[str] = None
+    proxy_port: Optional[int] = None
+    protocol: Optional[str] = None
+    connect_retries: int = 0
+    connect_timeout: int = 10
+    retry_on_database_errors: bool = False
+    retry_all: bool = False
+    insecure_mode: Optional[bool] = False
 
     def __post_init__(self):
         if (
@@ -78,6 +89,16 @@ class SnowflakeCredentials(Credentials):
         result = {}
         if self.password:
             result['password'] = self.password
+        if self.host:
+            result['host'] = self.host
+        if self.port:
+            result['port'] = self.port
+        if self.proxy_host:
+            result['proxy_host'] = self.proxy_host
+        if self.proxy_port:
+            result['proxy_port'] = self.proxy_port
+        if self.protocol:
+            result['protocol'] = self.protocol
         if self.authenticator:
             result['authenticator'] = self.authenticator
             if self.authenticator == 'oauth':
@@ -222,38 +243,94 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             logger.debug('Connection is already open, skipping open.')
             return connection
 
-        try:
-            creds = connection.credentials
+        creds = connection.credentials
+        error = None
+        for attempt in range(1 + creds.connect_retries):
+            try:
+                handle = snowflake.connector.connect(
+                    account=creds.account,
+                    user=creds.user,
+                    database=creds.database,
+                    schema=creds.schema,
+                    warehouse=creds.warehouse,
+                    role=creds.role,
+                    autocommit=True,
+                    client_session_keep_alive=creds.client_session_keep_alive,
+                    application='dbt',
+                    insecure_mode=creds.insecure_mode,
+                    **creds.auth_args()
+                )
 
-            handle = snowflake.connector.connect(
-                account=creds.account,
-                user=creds.user,
-                database=creds.database,
-                schema=creds.schema,
-                warehouse=creds.warehouse,
-                role=creds.role,
-                autocommit=True,
-                client_session_keep_alive=creds.client_session_keep_alive,
-                application='dbt',
-                **creds.auth_args()
-            )
+                if creds.query_tag:
+                    handle.cursor().execute(
+                        ("alter session set query_tag = '{}'")
+                        .format(creds.query_tag))
 
-            if creds.query_tag:
-                handle.cursor().execute(
-                    ("alter session set query_tag = '{}'")
-                    .format(creds.query_tag))
+                connection.handle = handle
+                connection.state = 'open'
+                break
 
-            connection.handle = handle
-            connection.state = 'open'
-        except snowflake.connector.errors.Error as e:
+            except snowflake.connector.errors.DatabaseError as e:
+                if (creds.retry_on_database_errors or creds.retry_all) \
+                        and creds.connect_retries > 0:
+                    error = e
+                    logger.warning("Got an error when attempting to open a "
+                                   "snowflake connection. Retrying due to "
+                                   "either retry configuration set to true."
+                                   "This was attempt number: {attempt} of "
+                                   "{retry_limit}. "
+                                   "Retrying in {timeout} "
+                                   "seconds. Error: '{error}'"
+                                   .format(attempt=attempt,
+                                           retry_limit=creds.connect_retries,
+                                           timeout=creds.connect_timeout,
+                                           error=e))
+                    sleep(creds.connect_timeout)
+                else:
+                    logger.debug("Got an error when attempting to open a "
+                                 "snowflake connection. No retries "
+                                 "attempted: '{}'"
+                                 .format(e))
+
+                    connection.handle = None
+                    connection.state = 'fail'
+
+                    raise FailedToConnectException(str(e))
+
+            except snowflake.connector.errors.Error as e:
+                if creds.retry_all and creds.connect_retries > 0:
+                    error = e
+                    logger.warning("Got an error when attempting to open a "
+                                   "snowflake connection. Retrying due to "
+                                   "'retry_all' configuration set to true."
+                                   "This was attempt number: {attempt} of "
+                                   "{retry_limit}. "
+                                   "Retrying in {timeout} "
+                                   "seconds. Error: '{error}'"
+                                   .format(attempt=attempt,
+                                           retry_limit=creds.connect_retries,
+                                           timeout=creds.connect_timeout,
+                                           error=e))
+                    sleep(creds.connect_timeout)
+                else:
+                    logger.debug("Got an error when attempting to open a "
+                                 "snowflake connection. No retries "
+                                 "attempted: '{}'"
+                                 .format(e))
+
+                    connection.handle = None
+                    connection.state = 'fail'
+
+                    raise FailedToConnectException(str(e))
+
+        else:
             logger.debug("Got an error when attempting to open a snowflake "
                          "connection: '{}'"
-                         .format(e))
+                         .format(error))
 
             connection.handle = None
             connection.state = 'fail'
-
-            raise FailedToConnectException(str(e))
+            raise FailedToConnectException(str(error))
 
     def cancel(self, connection):
         handle = connection.handle
