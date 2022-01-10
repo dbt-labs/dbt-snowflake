@@ -20,5 +20,6 @@ class TestBaseCaching(DBTIntegrationTest):
     @use_profile('snowflake')
     def test_snowflake_adapter_methods(self):
         self.run_dbt(['compile'])  # trigger any compile-time issues
-        self.run_dbt()
+        results = self.run_dbt()
+        assert results[0].adapter_response['query_id'] is not None
         self.assertTablesEqual('MODEL', 'EXPECTED')
