@@ -25,7 +25,7 @@ from dbt.events import AdapterLogger
 
 
 logger = AdapterLogger("Snowflake")
-_TOKEN_REQUEST_URL = 'https://{}.snowflakecomputing.com/oauth/token-request'
+_TOKEN_REQUEST_URL = 'https://{}/oauth/token-request'
 
 
 @dataclass
