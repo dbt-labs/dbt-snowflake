@@ -40,7 +40,7 @@ If you are a member of the `dbt Labs` GitHub organization, you will have push ac
 
 ### Installation
 
-First make sure that you set up your `virtualenv` as described in [Setting up an environment](https://github.com/dbt-labs/dbt-core/blob/HEAD/CONTRIBUTING.md#setting-up-an-environment).  Ensure you have the latest version of pip installed with `pip install --upgrade pip`. Next, install `dbt-snowflake` latest dependencies:
+First make sure that you set up your `virtualenv` as described in [Setting up an environment](https://github.com/dbt-labs/dbt-core/blob/HEAD/CONTRIBUTING.md#setting-up-an-environment).  Ensure you have the latest version of `pip` installed with `pip install --upgrade pip`. Next, install `dbt-snowflake` latest dependencies:
 
 ```sh
 pip install -e . -r dev-requirements.txt
@@ -55,7 +55,9 @@ To confirm you have correct version of `dbt-core` installed please run `dbt --ve
 
 ### Initial Setup
 
-`dbt-snowflake` uses test credentials specified in a `test.env` file in the root of the repository. This `test.env` file is git-ignored, but please be _extra_ careful to never check in credentials or other sensitive information when developing. To create your `test.env` file, copy the provided example file, then supply your relevant credentials.
+`dbt-snowflake` contains [unit](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/unit) and [integration](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/integration) tests. Integration tests require tsting against an actual Snowflake warehouse. We have CI set up to test against a Snowflake warehouse. In order to run integration tests locally, you will need a `test.env` file in the root of the repository that contains credentials for Snowflake.
+
+Note: This `test.env` file is git-ignored, but please be _extra_ careful to never check in credentials or other sensitive information when developing. To create your `test.env` file, copy the provided example file, then supply your relevant credentials.
 
 ```
 cp test.env.example test.env
@@ -68,7 +70,7 @@ There are a few methods for running tests locally.
 #### `tox`
 `tox` takes care of managing Python virtualenvs and installing dependencies in order to run tests. You can also run tests in parallel, for example you can run unit tests for Python 3.7, Python 3.8, Python 3.9, and `flake8` checks in parallel with `tox -p`. Also, you can run unit tests for specific python versions with `tox -e py37`. The configuration of these tests are located in `tox.ini`.
 
-#### `pyteest`
+#### `pytest`
 Finally, you can also run a specific test or group of tests using `pytest` directly. With a Python virtualenv active and dev dependencies installed you can do things like:
 
 ```sh
@@ -81,7 +83,7 @@ python -m pytest tests/unit/test_snowflake_adapter.py::TestSnowflakeAdapter::tes
 ```
 ## Updating Docs
 
-Many changes will require and update to the `dbt-snowflake` docs here are some useful resources.
+Many changes will require an update to the `dbt-snowflake` docs here are some useful resources.
 
 - Docs are [here](https://docs.getdbt.com/).
 - The docs repo for making changes is located [here]( https://github.com/dbt-labs/docs.getdbt.com).
