@@ -8,9 +8,11 @@
 7. [Submitting a Pull Request](#submitting-a-pull-request)
 
 ## About this document
-This document is a guide intended for folks interested in contributing to `dbt-snowflake`. Below, we document the process by which members of the community should create issues and submit pull requests (PRs) in this repository. It is not intended as a guide for using `dbt-snowflake`, and it assumes a certain level of familiarity with Python concepts such as virtualenvs, `pip`, python modules, filesystems, and so on. This guide assumes you are using macOS or Linux and are comfortable with the command line.
+This document is a guide intended for folks interested in contributing to `dbt-snowflake`. Below, we document the process by which members of the community should create issues and submit pull requests (PRs) in this repository. 
 
-For those wishing to contribute we highly suggest reading the [dbt-core](https://github.com/dbt-labs/dbt-core/blob/main/CONTRIBUTING.md). if you haven't already. Almost all of the information there is applicable to contributing here, too!
+It is not intended as a guide for using `dbt-snowflake` but as a reference in our process and a source of resources such as  [Snowflake Profile](https://docs.getdbt.com/reference/warehouse-profiles/snowflake-profile), or [Snowflake Configs](https://docs.getdbt.com/reference/resource-configs/snowflake-configs), and it assumes a certain level of familiarity with Python concepts such as virtualenvs, `pip`, python modules, filesystems, and so on. This guide assumes you are using macOS or Linux and are comfortable with the command line.
+
+For those wishing to contribute we highly suggest reading the [dbt-core](https://github.com/dbt-labs/dbt-core/blob/main/CONTRIBUTING.md). Almost all of the information there is applicable to contributing here, too!
 
 ### Signing the CLA
 
@@ -55,7 +57,9 @@ To confirm you have correct version of `dbt-core` installed please run `dbt --ve
 
 ### Initial Setup
 
-`dbt-snowflake` contains [unit](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/unit) and [integration](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/integration) tests. Integration tests require tsting against an actual Snowflake warehouse. We have CI set up to test against a Snowflake warehouse. In order to run integration tests locally, you will need a `test.env` file in the root of the repository that contains credentials for Snowflake.
+`dbt-snowflake` contains [unit](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/unit) and [integration](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/integration) tests. Integration tests require testing against an actual Snowflake warehouse. We have CI set up to test against a Snowflake warehouse during PR checks. 
+
+In order to run integration tests locally, you will need a `test.env` file in the root of the repository that contains credentials for Snowflake.
 
 Note: This `test.env` file is git-ignored, but please be _extra_ careful to never check in credentials or other sensitive information when developing. To create your `test.env` file, copy the provided example file, then supply your relevant credentials.
 
@@ -96,6 +100,6 @@ Many changes will require an update to the `dbt-snowflake` docs here are some us
 
 dbt Labs provides a CI environment to test changes to the `dbt-snowflake` adapter, and periodic checks against the development version of `dbt-core` through Github Actions.  
 
-A `dbt-snowflake` maintainer will review your PR. They may suggest code revision for style or clarity, or request that you add unit or integration test(s). These are good things! We believe that, with a little bit of help, anyone can contribute high-quality code.
+A `dbt-snowflake` maintainer will review your PR and will decide if its approved testing in our CI. They may suggest code revision for style or clarity, or request that you add unit or integration test(s). These are good things! We believe that, with a little bit of help, anyone can contribute high-quality code.
 
 Once all tests are passing and your PR has been approved, a `dbt-snowflake` maintainer will merge your changes into the active development branch. And that's it! Happy developing :tada:
