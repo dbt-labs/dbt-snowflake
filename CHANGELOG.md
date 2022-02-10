@@ -5,6 +5,7 @@
 ### Fixes
 - Apply query tags for Seed and Snapshot materialisations ([#20](https://github.com/dbt-labs/dbt-snowflake/issues/20), [#48](https://github.com/dbt-labs/dbt-snowflake/issues/48))
 - Adds column-level comments to Snowflake views ([#17](https://github.com/dbt-labs/dbt-snowflake/issues/17))
+- Add unique\_id field to docs generation test catalogs; a follow-on PR to core PR ([#4168](https://github.com/dbt-labs/dbt-core/pull/4618))
 
 ### Under the hood
 - Resolves an issue caused when the Snowflake OCSP server is not accessible, by exposing the `insecure_mode` boolean avalable in the Snowflake python connector ([#31](https://github.com/dbt-labs/dbt-snowflake/issues/31), [#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
@@ -25,7 +26,7 @@
 
 ### Under the hood
 - Add optional profile parameters for atypical local connection setups ([#21](https://github.com/dbt-labs/dbt-snowflake/issues/21), [#36](https://github.com/dbt-labs/dbt-snowflake/pull/36))
-- Adds 4 optional profile parameters for configuring retries on Snowflake errors ([#14](https://github.com/dbt-labs/dbt-snowflake/issues/14), [#6](https://github.com/dbt-labs/dbt-snowflake/pull/6)) 
+- Adds 4 optional profile parameters for configuring retries on Snowflake errors ([#14](https://github.com/dbt-labs/dbt-snowflake/issues/14), [#6](https://github.com/dbt-labs/dbt-snowflake/pull/6))
 - Bump upper bound on `snowflake-connector-python` to `<2.8.0` ([#44](https://github.com/dbt-labs/dbt-snowflake/pull/44))
 - Remove official support for python 3.6, which is reaching end of life on December 23, 2021 ([dbt-core#4134](https://github.com/dbt-labs/dbt-core/issues/4134), [#38](https://github.com/dbt-labs/dbt-snowflake/pull/45))
 - Add support for structured logging [#42](https://github.com/dbt-labs/dbt-snowflake/pull/42)
