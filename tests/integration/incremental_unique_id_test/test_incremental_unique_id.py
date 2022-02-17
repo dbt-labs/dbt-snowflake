@@ -73,16 +73,11 @@ class TestIncrementalUniqueKey(DBTIntegrationTest):
     @use_profile('snowflake')
     def test__snowflake_no_unique_keys(self):
         '''with no unique keys, seed and model should match'''
-        incremental_model='no_unique_key'
-        seed='seed'
-
-        self.build_test_case(
-            seed=seed, incremental_model=incremental_model,
-            update_sql_file='add_new_rows', seed_expected_row_count=8
+        self.run_incremental_mirror_seed_test(
+            incremental_model='no_unique_key',
+            seed='seed',
+            seed_expected_row_count=8
         )
-        self.run_incremental_update(incremental_model=incremental_model)
-
-        self.assertTablesEqual(seed, incremental_model)
 
 
 class TestIncrementalStrUniqueKey(TestIncrementalUniqueKey):
@@ -94,16 +89,6 @@ class TestIncrementalStrUniqueKey(TestIncrementalUniqueKey):
             seed='seed',
             seed_expected_row_count=8
         )
-        incremental_model=''
-        seed='seed'
-
-        self.build_test_case(
-            seed=seed, incremental_model=incremental_model,
-            update_sql_file='add_new_rows', seed_expected_row_count=8
-        )
-        self.run_incremental_update(incremental_model=incremental_model)
-
-        self.assertTablesEqual(seed, incremental_model)
 
     @use_profile('snowflake')
     def test__snowflake_one_unique_key(self):
@@ -166,8 +151,8 @@ class TestIncrementalListUniqueKey(TestIncrementalUniqueKey):
     def test__snowflake_unique_key_list_no_update(self):
         '''with a fitting unique key, model will not overwrite existing row'''
         self.run_incremental_mirror_seed_test(
-            incremental_model='trinary_unique_key_list',
-            update_sql_file='add_new_rows',
+            incremental_model='nontyped_trinary_unique_key_list',
+            seed='seed',
             seed_expected_row_count=8
         )
 

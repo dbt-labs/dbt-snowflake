@@ -6,4 +6,4 @@ values ('WA','King','Seattle','2022-02-01');
 
 insert into {schema}.seed
     (state, county, city, last_visit_date)
-values ('CA','San Francisco','San Francisco','2022-02-01');
+values ('CA','Los Angeles','Los Angeles','2022-02-01');
