@@ -1,3 +1,6 @@
+-- Insert statement which when applied to seed.csv sees incremental model
+--   grow in size while not (necessarily) diverging from the seed itself.
+
 -- insert two new rows, both of which should be in incremental model
 --   with any unique columns
 insert into {schema}.seed

@@ -1,3 +1,5 @@
+-- a model with a unique key not found in the table itself will error out
+
 {{
     config(
         materialized='incremental',

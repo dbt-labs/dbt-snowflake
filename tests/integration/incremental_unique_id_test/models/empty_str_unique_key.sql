@@ -1,3 +1,5 @@
+-- ensure model with empty string unique key should build normally
+
 {{
     config(
         materialized='incremental',

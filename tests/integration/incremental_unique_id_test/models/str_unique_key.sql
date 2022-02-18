@@ -1,3 +1,7 @@
+-- a unique key with a string should trigger to overwrite behavior when
+--   the source has entries in conflict (i.e. more than one row per unique key
+--   combination)
+
 {{
     config(
         materialized='incremental',

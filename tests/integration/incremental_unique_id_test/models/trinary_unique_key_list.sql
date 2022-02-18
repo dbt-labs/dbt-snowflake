@@ -1,4 +1,5 @@
--- types needed to compare against expected model reliably
+-- a multi-argument unique key list should see overwriting on rows in the model
+--   where all unique key fields apply
 
 {{
     config(

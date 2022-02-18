@@ -1,3 +1,5 @@
+-- model with empty list unique key should build normally
+
 {{
     config(
         materialized='incremental',

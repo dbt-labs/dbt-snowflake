@@ -1,4 +1,6 @@
--- for comparing against auto-typed seeds
+-- a multi-argument unique key list should see overwriting on rows in the model
+--   where all unique key fields apply
+--   N.B. needed for direct comparison with seed
 
 {{
     config(

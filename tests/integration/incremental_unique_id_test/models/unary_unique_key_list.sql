@@ -1,3 +1,6 @@
+-- a one argument unique key list should result in overwritting semantics for
+--   that one matching field
+
 {{
     config(
         materialized='incremental',
