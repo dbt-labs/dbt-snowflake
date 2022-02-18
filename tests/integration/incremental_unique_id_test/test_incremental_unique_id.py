@@ -100,6 +100,7 @@ class TestIncrementalUniqueKey(DBTIntegrationTest):
             relation=relation
         )
 
+class TestIncrementalWithoutUniqueKey(TestIncrementalUniqueKey):
     @use_profile('snowflake')
     def test__snowflake_no_unique_keys(self):
         '''with no unique keys, seed and model should match'''
