@@ -1,11 +1,18 @@
-## dbt-snowflake 1.0.0 (Release TBD)
+## dbt-snowflake 1.1.0 (TBD)
+
+### Features
+- Adds tests for incremental model unique key parameter ([#91](https://github.com/dbt-labs/dbt-snowflake/issues/91))
+
+### Fixes
+- Add unique\_id field to docs generation test catalogs; a follow-on PR to core PR ([#4168](https://github.com/dbt-labs/dbt-core/pull/4618))
+
+## dbt-snowflake 1.0.0 (December 3rd, 2021)
 
 ## dbt-snowflake 1.0.0rc2 (November 24, 2021)
 
 ### Fixes
 - Apply query tags for Seed and Snapshot materialisations ([#20](https://github.com/dbt-labs/dbt-snowflake/issues/20), [#48](https://github.com/dbt-labs/dbt-snowflake/issues/48))
 - Adds column-level comments to Snowflake views ([#17](https://github.com/dbt-labs/dbt-snowflake/issues/17))
-- Add unique\_id field to docs generation test catalogs; a follow-on PR to core PR ([#4168](https://github.com/dbt-labs/dbt-core/pull/4618))
 
 ### Under the hood
 - Resolves an issue caused when the Snowflake OCSP server is not accessible, by exposing the `insecure_mode` boolean avalable in the Snowflake python connector ([#31](https://github.com/dbt-labs/dbt-snowflake/issues/31), [#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))

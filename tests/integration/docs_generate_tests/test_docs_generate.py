@@ -418,7 +418,7 @@ class TestDocsGenerate(DBTIntegrationTest):
             'database': None,
             'schema': 'dbt_test__audit',
             'alias': None,
-            'meta': {},
+            'meta': {}
         }
         result.update(updates)
         return result
