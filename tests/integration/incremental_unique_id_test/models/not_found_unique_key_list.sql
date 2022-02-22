@@ -3,7 +3,7 @@
 {{
     config(
         materialized='incremental',
-        unique_key=['state', 'asdf']
+        unique_key=['state', 'thisisnotacolumn']
     )
 }}
 

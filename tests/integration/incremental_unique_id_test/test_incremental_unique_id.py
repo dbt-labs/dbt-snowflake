@@ -1,4 +1,4 @@
-from dbt.exceptions import ParsingException
+from dbt.contracts.results import RunStatus
 from tests.integration.base import DBTIntegrationTest, use_profile
 from collections import namedtuple
 from pathlib import Path
@@ -11,7 +11,7 @@ TestResults = namedtuple(
 )
 
 
-class TestIncrementalUniqueKey(DBTIntegrationTest):
+class TestIncrementalUniqueKeyBase(DBTIntegrationTest):
     @property
     def schema(self):
         return 'incremental_unique_key'
@@ -20,46 +20,40 @@ class TestIncrementalUniqueKey(DBTIntegrationTest):
     def models(self):
         return 'models'
 
-    def count_test_relations(self, seed, incremental_model):
-        '''Idempotently create some number of seeds and incremental models'''
-        seed_result_set = self.run_dbt(
-            ['seed', '--select', seed, '--full-refresh']
-        )
-        model_result_set = self.run_dbt(
-            ['run', '--select', incremental_model, '--full-refresh']
-        )
-        return len(seed_result_set), len(model_result_set)
-
-    def get_seed_rows_after_update(self, seed, update_sql_file):
-        '''Upate seed and return new row count'''
-        row_count_query = 'select * from {}.{}'.format(
-            self.unique_schema(),
-            seed
-        )
-
-        self.run_sql_file(Path('seeds') / Path(update_sql_file + '.sql'))
-        return len(self.run_sql(row_count_query, fetch='all'))
-
     def update_incremental_model(self, incremental_model):
         '''update incremental model after the seed table has been updated'''
         model_result_set = self.run_dbt(['run', '--select', incremental_model])
         return len(model_result_set)
 
     def setup_test(self, seed, incremental_model, update_sql_file):
-        '''build a test case and return values for assertions'''
-        (seed_count, model_count) = self.count_test_relations(
-            seed=seed, incremental_model=incremental_model
+        '''build a test case and return values for assertions
+        [INFO] Models must be in place to test incremental model
+        construction and merge behavior. Database touches are side
+        effects to extract counts (which speak to health of unique keys).'''
+        #idempotently create some number of seeds and incremental models'''
+        seed_count = len(self.run_dbt(
+            ['seed', '--select', seed, '--full-refresh']
+        ))
+        model_count = len(self.run_dbt(
+            ['run', '--select', incremental_model, '--full-refresh']
+        ))
+
+        # update seed in anticipation of incremental model update
+        row_count_query = 'select * from {}.{}'.format(
+            self.unique_schema(),
+            seed
         )
-        seed_rows = self.get_seed_rows_after_update(
-            seed=seed, update_sql_file=update_sql_file
-        )
+        self.run_sql_file(Path('seeds') / Path(update_sql_file + '.sql'))
+        seed_rows = len(self.run_sql(row_count_query, fetch='all'))
+
+        # propagate seed state to incremental model according to unique keys
         inc_test_model_count = self.update_incremental_model(
             incremental_model=incremental_model
         )
 
         return (seed_count, model_count, seed_rows, inc_test_model_count)
 
-    def run_test(self, expected_fields, test_case_fields):
+    def test_scenario_correctness(self, expected_fields, test_case_fields):
         '''Invoke assertions to verify correct build functionality'''
         # 1. test seed(s) should build afresh
         self.assertEqual(
@@ -100,7 +94,27 @@ class TestIncrementalUniqueKey(DBTIntegrationTest):
             relation=relation
         )
 
-class TestIncrementalWithoutUniqueKey(TestIncrementalUniqueKey):
+    def fail_to_build_inc_missing_unique_key_column(self, incremental_model_name):
+        '''should pass back error state when trying build an incremental
+           model whose unique key or keylist includes a column missing
+           from the incremental model'''
+        seed_count = len(self.run_dbt(
+            ['seed', '--select', 'seed', '--full-refresh']
+        ))
+        # unique keys are not applied on first run, so two are needed
+        self.run_dbt(
+            ['run', '--select', incremental_model_name, '--full-refresh'],
+            expect_pass=True
+        )
+        run_result = self.run_dbt(
+            ['run', '--select', incremental_model_name],
+            expect_pass=False
+        ).results[0]
+
+        return run_result.status, run_result.message
+
+
+class TestIncrementalWithoutUniqueKey(TestIncrementalUniqueKeyBase):
     @use_profile('snowflake')
     def test__snowflake_no_unique_keys(self):
         '''with no unique keys, seed and model should match'''
@@ -117,9 +131,10 @@ class TestIncrementalWithoutUniqueKey(TestIncrementalUniqueKey):
             opt_model_count=None, relation=incremental_model
         )
 
-        self.run_test(expected_fields, test_case_fields)
+        self.test_scenario_correctness(expected_fields, test_case_fields)
 
-class TestIncrementalStrUniqueKey(TestIncrementalUniqueKey):
+
+class TestIncrementalStrUniqueKey(TestIncrementalUniqueKeyBase):
     @use_profile('snowflake')
     def test__snowflake_empty_str_unique_key(self):
         '''with empty string for unique key, seed and model should match'''
@@ -136,7 +151,7 @@ class TestIncrementalStrUniqueKey(TestIncrementalUniqueKey):
             opt_model_count=None, relation=incremental_model
         )
 
-        self.run_test(expected_fields, test_case_fields)
+        self.test_scenario_correctness(expected_fields, test_case_fields)
 
     @use_profile('snowflake')
     def test__snowflake_one_unique_key(self):
@@ -156,16 +171,23 @@ class TestIncrementalStrUniqueKey(TestIncrementalUniqueKey):
             relation=incremental_model
         )
 
-        self.run_test(expected_fields, test_case_fields)
+        self.test_scenario_correctness(expected_fields, test_case_fields)
 
     @use_profile('snowflake')
     def test__snowflake_bad_unique_key(self):
-        '''using a unique key not in seed or derived CTEs leads to an error'''
-        with self.assertRaises(AssertionError) as exc:
-            self.run_dbt(['run', '--select', 'not_found_unique_key'])
+        '''expect compilation error from unique key not being a column'''
+
+        err_msg = "invalid identifier 'DBT_INTERNAL_SOURCE.THISISNOTACOLUMN'"
+
+        (status, exc) = self.fail_to_build_inc_missing_unique_key_column(
+            incremental_model_name='not_found_unique_key'
+        )
+
+        self.assertEqual(status, RunStatus.Error)
+        self.assertTrue(err_msg in exc)
 
 
-class TestIncrementalListUniqueKey(TestIncrementalUniqueKey):
+class TestIncrementalListUniqueKey(TestIncrementalUniqueKeyBase):
     @use_profile('snowflake')
     def test__snowflake_empty_unique_key_list(self):
         '''with no unique keys, seed and model should match'''
@@ -182,7 +204,7 @@ class TestIncrementalListUniqueKey(TestIncrementalUniqueKey):
             opt_model_count=None, relation=incremental_model
         )
 
-        self.run_test(expected_fields, test_case_fields)
+        self.test_scenario_correctness(expected_fields, test_case_fields)
 
     @use_profile('snowflake')
     def test__snowflake_unary_unique_key_list(self):
@@ -202,7 +224,7 @@ class TestIncrementalListUniqueKey(TestIncrementalUniqueKey):
             relation=incremental_model
         )
 
-        self.run_test(expected_fields, test_case_fields)
+        self.test_scenario_correctness(expected_fields, test_case_fields)
 
     @use_profile('snowflake')
     def test__snowflake_duplicated_unary_unique_key_list(self):
@@ -222,7 +244,7 @@ class TestIncrementalListUniqueKey(TestIncrementalUniqueKey):
             relation=incremental_model
         )
 
-        self.run_test(expected_fields, test_case_fields)
+        self.test_scenario_correctness(expected_fields, test_case_fields)
 
     @use_profile('snowflake')
     def test__snowflake_trinary_unique_key_list(self):
@@ -242,7 +264,7 @@ class TestIncrementalListUniqueKey(TestIncrementalUniqueKey):
             relation=incremental_model
         )
 
-        self.run_test(expected_fields, test_case_fields)
+        self.test_scenario_correctness(expected_fields, test_case_fields)
 
     @use_profile('snowflake')
     def test__snowflake_trinary_unique_key_list_no_update(self):
@@ -261,10 +283,17 @@ class TestIncrementalListUniqueKey(TestIncrementalUniqueKey):
             opt_model_count=None, relation=incremental_model
         )
 
-        self.run_test(expected_fields, test_case_fields)
+        self.test_scenario_correctness(expected_fields, test_case_fields)
 
     @use_profile('snowflake')
     def test__snowflake_bad_unique_key_list(self):
-        '''using a unique key not in seed or derived CTEs leads to an error'''
-        with self.assertRaises(AssertionError) as exc:
-            self.run_dbt(['run', '--select', 'not_found_unique_key_list'])
+        '''expect compilation error from unique key not being a column'''
+
+        err_msg = "invalid identifier 'DBT_INTERNAL_SOURCE.THISISNOTACOLUMN'"
+
+        (status, exc) = self.fail_to_build_inc_missing_unique_key_column(
+            incremental_model_name='not_found_unique_key_list'
+        )
+
+        self.assertEqual(status, RunStatus.Error)
+        self.assertTrue(err_msg in exc)
