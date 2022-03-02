@@ -2,6 +2,7 @@
 # TODO: how to automate switching from develop to version branches?
 git+https://github.com/dbt-labs/dbt.git#egg=dbt-core&subdirectory=core
 
+black==21.12b0
 bumpversion
 flake8
 flaky
@@ -9,6 +10,7 @@ freezegun==0.3.12
 ipdb
 mypy==0.782
 pip-tools
+pre-commit
 pytest
 pytest-dotenv
 pytest-logbook
