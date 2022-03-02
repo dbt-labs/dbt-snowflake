@@ -26,7 +26,7 @@
 
     {%- endif -%}
     {%- endset -%}
-    
+
     {% do return(snowflake_dml_explicit_transaction(dml)) %}
 
 {% endmacro %}

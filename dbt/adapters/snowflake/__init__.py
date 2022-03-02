@@ -10,4 +10,5 @@ from dbt.include import snowflake
 Plugin = AdapterPlugin(
     adapter=SnowflakeAdapter,
     credentials=SnowflakeCredentials,
-    include_path=snowflake.PACKAGE_PATH)
+    include_path=snowflake.PACKAGE_PATH,
+)
