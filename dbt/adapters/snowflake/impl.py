@@ -82,6 +82,13 @@ class SnowflakeAdapter(SQLAdapter):
 
     def _use_warehouse(self, warehouse: str):
         """Use the given warehouse. Quotes are never applied."""
+        kwargs = {
+            'warehouse': warehouse
+        }
+        warehouse = self.execute_macro(
+            SNOWFLAKE_WAREHOUSE_MACRO_NAME,
+            kwargs=kwargs
+        )
         self.execute('use warehouse {}'.format(warehouse))
 
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:
