@@ -19,6 +19,9 @@ from dbt.exceptions import (
 from dbt.utils import filter_null_values
 
 
+SNOWFLAKE_WAREHOUSE_MACRO_NAME = 'snowflake_warehouse'
+
+
 @dataclass
 class SnowflakeConfig(AdapterConfig):
     transient: Optional[bool] = None
