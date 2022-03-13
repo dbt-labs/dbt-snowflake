@@ -4,7 +4,7 @@ from typing import Mapping, Any, Optional, List, Union
 import agate
 
 from dbt.adapters.base.impl import AdapterConfig
-from dbt.adapters.sql import SQLAdapter
+from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,

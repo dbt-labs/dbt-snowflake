@@ -18,10 +18,10 @@ from dbt.exceptions import (
     InternalException, RuntimeException, FailedToConnectException,
     DatabaseException, warn_or_error
 )
-from dbt.adapters.base import Credentials
+from dbt.adapters.base import Credentials  # type: ignore
 from dbt.contracts.connection import AdapterResponse
-from dbt.adapters.sql import SQLConnectionManager
-from dbt.events import AdapterLogger
+from dbt.adapters.sql import SQLConnectionManager  # type: ignore
+from dbt.events import AdapterLogger  # type: ignore
 
 
 logger = AdapterLogger("Snowflake")
