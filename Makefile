@@ -20,13 +20,16 @@ black: ## Runs black  against staged changes to enforce style guide.
 	@\
 	pre-commit run --hook-stage manual black-check -v | grep -v "INFO"
 
-
 .PHONY: lint
 lint: ## Runs flake8 and mypy code checks against staged changes.
 	@\
 	pre-commit run flake8-check --hook-stage manual | grep -v "INFO"; \
 	pre-commit run mypy-check --hook-stage manual | grep -v "INFO"
 
+.PHONY: linecheck
+linecheck: ## Checks for all Python lines 100 characters or more
+	@\
+	find dbt -type f -name "*.py" -exec grep -I -r -n '.\{100\}' {} \;
 
 .PHONY: unit
 unit: ## Runs unit tests with py38.
