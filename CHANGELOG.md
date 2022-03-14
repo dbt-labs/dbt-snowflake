@@ -6,6 +6,13 @@
 ### Fixes
 - Add unique\_id field to docs generation test catalogs; a follow-on PR to core PR ([#4168](https://github.com/dbt-labs/dbt-core/pull/4618))
 
+### Under the hood
+- Add `query_id` for a query to `run_result.json` ([#40](https://github.com/dbt-labs/dbt-snowflake/pull/40))
+
+### Contributors
+- [@joshuataylor](https://github.com/joshuataylor) ([#40](https://github.com/dbt-labs/dbt-snowflake/pull/40))
+- [@devoted](https://github.com/devoted) ([#40](https://github.com/dbt-labs/dbt-snowflake/pull/40))
+
 ## dbt-snowflake 1.0.0 (December 3rd, 2021)
 
 ## dbt-snowflake 1.0.0rc2 (November 24, 2021)

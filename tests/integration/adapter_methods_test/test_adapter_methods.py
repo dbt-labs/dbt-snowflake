@@ -19,6 +19,12 @@ class TestBaseCaching(DBTIntegrationTest):
 
     @use_profile('snowflake')
     def test_snowflake_adapter_methods(self):
-        self.run_dbt(['compile'])  # trigger any compile-time issues
+        self.run_dbt(['compile'])
         self.run_dbt()
         self.assertTablesEqual('MODEL', 'EXPECTED')
+
+    @use_profile('snowflake')
+    def test_snowflake_adapter_query_id(self):
+        results = self.run_dbt()
+        # strip to ensure nonempty string doesn't get passed
+        assert results[0].adapter_response['query_id'].strip() != ""
