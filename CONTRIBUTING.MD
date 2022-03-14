@@ -55,7 +55,7 @@ If you are a member of the `dbt Labs` GitHub organization, you will have push ac
 
 4. Install `dbt-snowflake` and development dependencies in the active `virtualenv`. Run `pip install -e . -r dev-requirements.txt`.
 
-When `dbt-snowflake` is installed this way, any changes you make to the `dbt-snowflake` source code will be reflected immediately (in your next local dbt invocation against a Snowflake target).
+When `dbt-snowflake` is installed this way, any changes you make to the `dbt-snowflake` source code will be reflected immediately (i.e. in your next local dbt invocation against a Snowflake target).
 
 ## Testing
 
@@ -79,7 +79,7 @@ WARNING: The parameters in your `test.env` file must link to a valid Snowflake a
 There are a few methods for running tests locally.
 
 #### `tox`
-`tox` automatically runs unit tests against several Python versions using its own virtualenvs. Run `tox -p` flag to run unit tests for Python 3.7, Python 3.8, Python 3.9, and `flake8` in parallel. Run `tox -e py37` to invoke tests on Python version 3.7, and run `tox -e py38` for testing against Python 3.8. All available tox recipes can be found in `tox.ini`.
+`tox` automatically runs unit tests against several Python versions using its own virtualenvs. Run `tox -p` to run unit tests for Python 3.7, Python 3.8, Python 3.9, and `flake8` in parallel. Run `tox -e py37` to invoke tests on Python version 3.7 only (use py37, py38, or py39). Tox recipes are found in `tox.ini`.
 
 #### `pytest`
 You may run a specific test or group of tests using `pytest` directly. Activate a Python virtualenv active with dev dependencies installed. Then, run tests like so:
