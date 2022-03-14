@@ -115,8 +115,10 @@ class SnowflakeCredentials(Credentials):
                     )
 
                 result['token'] = token
-            # enable the token cache
+            # enable id token cache for linux
             result['client_store_temporary_credential'] = True
+            # enable mfa token cache for linux
+            result['client_request_mfa_token'] = True
         result['private_key'] = self._get_private_key()
         return result
 
