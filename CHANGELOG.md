@@ -6,6 +6,9 @@
 ### Fixes
 - Add unique\_id field to docs generation test catalogs; a follow-on PR to core PR ([#4168](https://github.com/dbt-labs/dbt-core/pull/4618))
 
+### Under the hood
+- Use dbt.tests.adapter.basic in test suite (new test framework) ([#105](https://github.com/dbt-labs/dbt-snowflake/issues/105), [#106](https://github.com/dbt-labs/dbt-snowflake/pull/106))
+
 ## dbt-snowflake 1.0.0 (December 3rd, 2021)
 
 ## dbt-snowflake 1.0.0rc2 (November 24, 2021)
