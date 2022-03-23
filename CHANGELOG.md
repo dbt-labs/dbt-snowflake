@@ -1,13 +1,17 @@
-## dbt-snowflake 1.1.0 (TBD)
+## dbt-snowflake 1.1.0b1 (March 23, 2022)
 
 ### Features
 - Adds tests for incremental model unique key parameter ([#91](https://github.com/dbt-labs/dbt-snowflake/issues/91))
+- enables mfa token caching for linux when using the username_password_mfa authenticator ([#65](https://github.com/dbt-labs/dbt-snowflake/pull/65))
 
 ### Fixes
 - Add unique\_id field to docs generation test catalogs; a follow-on PR to core PR ([#4168](https://github.com/dbt-labs/dbt-core/pull/4618))
 
 ### Under the hood
 - Add `query_id` for a query to `run_result.json` ([#40](https://github.com/dbt-labs/dbt-snowflake/pull/40))
+- Change logic for Post-failure job run ([#67](https://github.com/dbt-labs/dbt-snowflake/pull/67))
+- Update to version bumping script ([#68](https://github.com/dbt-labs/dbt-snowflake/pull/68))
+- Add contributing.md file for snowflake adapter repo ([#79](https://github.com/dbt-labs/dbt-snowflake/pull/79))
 
 ### Contributors
 - [@joshuataylor](https://github.com/joshuataylor) ([#40](https://github.com/dbt-labs/dbt-snowflake/pull/40))
@@ -24,6 +28,8 @@
 ### Under the hood
 - Resolves an issue caused when the Snowflake OCSP server is not accessible, by exposing the `insecure_mode` boolean avalable in the Snowflake python connector ([#31](https://github.com/dbt-labs/dbt-snowflake/issues/31), [#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
 - Fix test related to preventing coercion of boolean values (True, False) to numeric values (0, 1) in query results ([#76](https://github.com/dbt-labs/dbt-snowflake/issues/76))
+- Add Stale messaging Github Action workflow ([#84](https://github.com/dbt-labs/dbt-snowflake/pull/84))
+
 
 ### Contributors
 - [@anthu](https://github.com/anthu) ([#48](https://github.com/dbt-labs/dbt-snowflake/pull/48))
