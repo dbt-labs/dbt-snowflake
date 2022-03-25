@@ -8,7 +8,7 @@ pytest_plugins = ["dbt.tests.fixtures.project"]
 
 # The profile dictionary, used to write out profiles.yml
 @pytest.fixture(scope="class")
-def dbt_profile_target(unique_schema):
+def dbt_profile_target():
     return {
         'type': 'snowflake',
         'threads': 4,
@@ -16,7 +16,6 @@ def dbt_profile_target(unique_schema):
         'user': os.getenv('SNOWFLAKE_TEST_USER'),
         'password': os.getenv('SNOWFLAKE_TEST_PASSWORD'),
         'database': os.getenv('SNOWFLAKE_TEST_DATABASE'),
-        'schema': unique_schema,
         'warehouse': os.getenv('SNOWFLAKE_TEST_WAREHOUSE'),
     }
 
