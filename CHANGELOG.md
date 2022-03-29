@@ -17,6 +17,7 @@
 - Change logic for Post-failure job run ([#67](https://github.com/dbt-labs/dbt-snowflake/pull/67))
 - Update to version bumping script ([#68](https://github.com/dbt-labs/dbt-snowflake/pull/68))
 - Add contributing.md file for snowflake adapter repo ([#79](https://github.com/dbt-labs/dbt-snowflake/pull/79))
+- Use dbt.tests.adapter.basic in test suite (new test framework) ([#105](https://github.com/dbt-labs/dbt-snowflake/issues/105), [#106](https://github.com/dbt-labs/dbt-snowflake/pull/106))
 
 ### Contributors
 - [@joshuataylor](https://github.com/joshuataylor) ([#40](https://github.com/dbt-labs/dbt-snowflake/pull/40))
