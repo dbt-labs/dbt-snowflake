@@ -3,6 +3,7 @@
 git+https://github.com/dbt-labs/dbt.git#egg=dbt-core&subdirectory=core
 
 black==21.12b0
+click~=8.0.4
 bumpversion
 flake8
 flaky
