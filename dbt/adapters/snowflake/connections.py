@@ -32,6 +32,11 @@ _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
 
 
 @dataclass
+class SnowflakeAdapterResponse(AdapterResponse):
+    query_id: str = ""
+
+
+@dataclass
 class SnowflakeCredentials(Credentials):
     account: str
     user: str
@@ -366,17 +371,18 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         logger.debug("Cancel query '{}': {}".format(connection_name, res))
 
     @classmethod
-    def get_response(cls, cursor) -> AdapterResponse:
+    def get_response(cls, cursor) -> SnowflakeAdapterResponse:
         code = cursor.sqlstate
 
         if code is None:
             code = "SUCCESS"
 
-        return AdapterResponse(
+        return SnowflakeAdapterResponse(
             _message="{} {}".format(code, cursor.rowcount),
             rows_affected=cursor.rowcount,
             code=code,
-        )
+            query_id=cursor.sfqid,
+        )  # type: ignore
 
     # disable transactional logic by default on Snowflake
     # except for DML statements where explicitly defined
