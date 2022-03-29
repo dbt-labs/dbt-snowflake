@@ -21,12 +21,14 @@ repos:
   rev: 21.12b0
   hooks:
   - id: black
+    additional_dependencies: ['click==8.0.4']
     args:
     - "--line-length=99"
     - "--target-version=py38"
   - id: black
     alias: black-check
     stages: [manual]
+    additional_dependencies: ['click==8.0.4']
     args:
     - "--line-length=99"
     - "--target-version=py38"
