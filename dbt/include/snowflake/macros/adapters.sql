@@ -63,12 +63,12 @@
   {{ sql_header if sql_header is not none }}
   create or replace {% if secure -%}
     secure
-  {%- endif %} view {{ relation }} 
+  {%- endif %} view {{ relation }}
   {% if config.persist_column_docs() -%}
     {% set model_columns = model.columns %}
     {% set query_columns = get_columns_in_query(sql) %}
     {{ get_persist_docs_column_list(model_columns, query_columns) }}
-    
+
   {%- endif %}
   {% if copy_grants -%} copy grants {%- endif %} as (
     {{ sql }}
@@ -214,13 +214,13 @@
       {% do run_query("alter session unset query_tag") %}
     {% endif %}
   {% endif %}
-{% endmacro %} 
+{% endmacro %}
 
 
 {% macro snowflake__alter_relation_add_remove_columns(relation, add_columns, remove_columns) %}
-  
+
   {% if add_columns %}
-    
+
     {% set sql -%}
        alter {{ relation.type }} {{ relation }} add column
           {% for column in add_columns %}
@@ -233,16 +233,16 @@
   {% endif %}
 
   {% if remove_columns %}
-  
+
     {% set sql -%}
         alter {{ relation.type }} {{ relation }} drop column
             {% for column in remove_columns %}
                 {{ column.name }}{{ ',' if not loop.last }}
             {% endfor %}
     {%- endset -%}
-    
+
     {% do run_query(sql) %}
-    
+
   {% endif %}
 
 {% endmacro %}
@@ -250,7 +250,7 @@
 
 {% macro snowflake_dml_explicit_transaction(dml) %}
   {#
-    Use this macro to wrap all INSERT, MERGE, UPDATE, DELETE, and TRUNCATE 
+    Use this macro to wrap all INSERT, MERGE, UPDATE, DELETE, and TRUNCATE
     statements before passing them into run_query(), or calling in the 'main' statement
     of a materialization
   #}
@@ -259,7 +259,7 @@
     {{ dml }};
     commit;
   {%- endset %}
-  
+
   {% do return(dml_transaction) %}
 
 {% endmacro %}
