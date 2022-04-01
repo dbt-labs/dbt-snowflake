@@ -2,6 +2,7 @@
 
 ### Under the hood
 - Add precommits for this repo ([#107](https://github.com/dbt-labs/dbt-snowflake/pull/107))
+- Convert unique id as a list tests to new pytest format ([#121](https://github.com/dbt-labs/dbt-snowflake/pull/121))
 
 ## dbt-snowflake 1.1.0b1 (March 23, 2022)
 
