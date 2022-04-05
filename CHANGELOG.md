@@ -1,3 +1,14 @@
+## dbt-snowflake 1.0.1rc1 (April 5, 2022)
+
+### Under the hood
+- Enable mfa token cache for linux ([#128](https://github.com/dbt-labs/dbt-snowflake/pull/65))
+- Fix test related to preventing coercion of boolean values (True, False) to numeric values (0, 1) in query results ([#76](https://github.com/dbt-labs/dbt-snowflake/pull/76))
+- Fixes CI to depend on the release branch for Core ([#128](https://github.com/dbt-labs/dbt-snowflake/pull/128))
+
+### Contributors
+- [@anthu](https://github.com/anthu) ([#76](https://github.com/dbt-labs/dbt-snowflake/pull/76))
+- [@tekumara](https://github.com/tekumara) ([#128](https://github.com/dbt-labs/dbt-snowflake/pull/65))
+
 ## dbt-snowflake 1.0.0 (December 3, 2021)
 
 ## dbt-snowflake 1.0.0rc2 (November 24, 2021)
@@ -8,7 +19,6 @@
 
 ### Under the hood
 - Resolves an issue caused when the Snowflake OCSP server is not accessible, by exposing the `insecure_mode` boolean avalable in the Snowflake python connector ([#31](https://github.com/dbt-labs/dbt-snowflake/issues/31), [#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
-- Fix test related to preventing coercion of boolean values (True, False) to numeric values (0, 1) in query results ([#76](https://github.com/dbt-labs/dbt-snowflake/issues/76))
 
 ### Contributors
 - [@anthu](https://github.com/anthu) ([#48](https://github.com/dbt-labs/dbt-snowflake/pull/48))
