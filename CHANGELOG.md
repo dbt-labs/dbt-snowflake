@@ -1,4 +1,4 @@
-## dbt-snowflake 1.0.1rc1 (April 5, 2022)
+## dbt-snowflake 1.0.1rc1 (April 6, 2022)
 
 ### Under the hood
 - Enable mfa token cache for linux ([#128](https://github.com/dbt-labs/dbt-snowflake/pull/65))
