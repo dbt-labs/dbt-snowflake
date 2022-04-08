@@ -1,7 +1,5 @@
-## dbt-snowflake next
-- Add set_query_tag and unset_query_tag to the dbt macro namespace ([#133](https://github.com/dbt-labs/dbt-snowflake/issues/133))
-
 ## dbt-snowflake 1.2.0 (tbd)
+- Add set_query_tag and unset_query_tag to the dbt macro namespace ([#133](https://github.com/dbt-labs/dbt-snowflake/issues/133))
 
 ### Under the hood
 - Add precommits for this repo ([#107](https://github.com/dbt-labs/dbt-snowflake/pull/107))
