@@ -114,7 +114,7 @@ jobs:
     name: build packages
 
     runs-on: ubuntu-latest
-    
+
     outputs:
       is_alpha: ${{ steps.check-is-alpha.outputs.is_alpha }}
 
@@ -148,7 +148,7 @@ jobs:
       - name: Check wheel contents
         run: |
           check-wheel-contents dist/*.whl --ignore W007,W008
-          
+
       - name: Check if this is an alpha version
         id: check-is-alpha
         run: |
