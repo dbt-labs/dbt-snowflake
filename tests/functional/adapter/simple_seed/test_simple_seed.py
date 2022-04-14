@@ -15,6 +15,7 @@ from dbt.tests.util import (
     read_file
 )
 from dbt.tests.adapter.seed.test_seed_type_override import SimpleSeedColumnOverride
+from fixtures_local import properties__schema_yml
 
 
 class TestBasicSeedTests(BasicSeedTests):
@@ -60,6 +61,12 @@ class TestSeedSpecificFormats(SeedSpecificFormats):
 
 
 class TestSimpleSeedColumnOverride(SimpleSeedColumnOverride):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "schema.yml": properties__schema_yml,
+        }
+
     def seed_enabled_types(self):
         return {
             "seed_id": "FLOAT",
