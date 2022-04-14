@@ -1,3 +1,8 @@
+#
+# Properties
+#
+
+properties__schema_yml = """
 version: 2
 seeds:
 - name: seed_enabled
@@ -6,18 +11,18 @@ seeds:
     tests:
     - column_type:
         type: character varying(16777216)
-  - name: id
+  - name: seed_id
     tests:
     - column_type:
         type: FLOAT
 
 - name: seed_tricky
   columns:
-  - name: id
+  - name: seed_id
     tests:
     - column_type:
         type: NUMBER(38,0)
-  - name: id_str
+  - name: seed_id_str
     tests:
     - column_type:
         type: character varying(16777216)
@@ -45,3 +50,5 @@ seeds:
     tests:
     - column_type:
         type: character varying(16777216)
+
+"""
