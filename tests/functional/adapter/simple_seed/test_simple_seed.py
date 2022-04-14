@@ -2,7 +2,6 @@ import pytest
 
 from dbt.tests.adapter.seed.test_seed import (
     BasicSeedTests,
-    SeedConfigFullRefreshOn,
     SeedConfigFullRefreshOff,
     SeedCustomSchema,
     SimpleSeedEnabledViaConfig,
