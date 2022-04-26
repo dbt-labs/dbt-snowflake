@@ -1,6 +1,6 @@
 module.exports = ({ context }) => {
   const defaultPythonVersion = "3.8";
-  const supportedPythonVersions = ["3.7", "3.8", "3.9"];
+  const supportedPythonVersions = ["3.7", "3.8", "3.9", "3.10"];
   const supportedAdapters = ["snowflake"];
 
   // if PR, generate matrix based on files changed and PR labels
