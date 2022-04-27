@@ -197,7 +197,7 @@
 {% endmacro %}
 
 
-{% macro default__set_query_tag() -%}
+{% macro snowflake__set_query_tag() -%}
   {% set new_query_tag = config.get('query_tag') %}
   {% if new_query_tag %}
     {% set original_query_tag = get_current_query_tag() %}
@@ -214,7 +214,7 @@
 {% endmacro %}
 
 
-{% macro default__unset_query_tag(original_query_tag) -%}
+{% macro snowflake__unset_query_tag(original_query_tag) -%}
   {% set new_query_tag = config.get('query_tag') %}
   {% if new_query_tag %}
     {% if original_query_tag %}
