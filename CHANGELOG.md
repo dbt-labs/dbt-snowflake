@@ -1,4 +1,4 @@
-## dbt-snowflake 1.2.0 (tbd)
+## dbt-snowflake 1.1.0 (April 28, 2022)
 
 ### Under the hood
 - Add precommits for this repo ([#107](https://github.com/dbt-labs/dbt-snowflake/pull/107))
