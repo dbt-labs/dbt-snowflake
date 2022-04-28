@@ -3,6 +3,7 @@
 
 ### Under the hood
 - Add precommits for this repo ([#107](https://github.com/dbt-labs/dbt-snowflake/pull/107))
+- Cleanup redundant precommit hook command ([#145](https://github.com/dbt-labs/dbt-snowflake/pull/145))
 
 ## dbt-snowflake 1.1.0b1 (March 23, 2022)
 
