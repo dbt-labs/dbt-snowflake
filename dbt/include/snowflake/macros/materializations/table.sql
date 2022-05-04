@@ -17,11 +17,37 @@
     {{ log("Dropping relation " ~ old_relation ~ " because it is of type " ~ old_relation.type) }}
     {{ drop_relation_if_exists(old_relation) }}
   {% endif %}
+  
+  {% if config.get('language', 'sql') == 'python' -%}}
+    {%- set proc_name = api.Relation.create(identifier=identifier ~ "__dbt_sp",
+                                                schema=schema,
+                                                database=database) -%}
+    {% set materialization_logic = py_materialize_as_table() %}
+    {% set setup_stored_proc = py_create_stored_procedure(proc_name, materialization_logic, model, sql) %}
 
-  --build model
-  {% call statement('main') -%}
-    {{ create_table_as(false, target_relation, sql) }}
-  {%- endcall %}
+    {% do log("Creating stored procedure: " ~ proc_name, info=true) %}
+    {% do run_query(setup_stored_proc) %}
+    {% do log("Finished creating stored procedure: " ~ proc_name, info=true) %}
+
+    --build model
+    {% call statement('main') -%}
+
+      {% do log("Calling stored procedure: " ~ proc_name, info=true) %}
+      CALL {{ proc_name }}('{{ target_relation }}');
+
+    {%- endcall %}
+
+    -- cleanup stuff
+    {% do log("Dropping stored procedure: " ~ proc_name, info=true) %}
+    {% do run_query("drop procedure if exists " ~ proc_name ~ "(string)") %}
+  
+  {%- else -%}
+    --build model
+    {% call statement('main') -%}
+      {{ create_table_as(false, target_relation, sql) }}
+    {%- endcall %}
+  
+  {%- endif %}
 
   {{ run_hooks(post_hooks) }}
 
@@ -32,3 +58,32 @@
   {{ return({'relations': [target_relation]}) }}
 
 {% endmaterialization %}
+
+
+
+{% macro py_create_stored_procedure(proc_name, materialization_logic, model, user_supplied_logic) %}
+
+{% set packages = ['snowflake-snowpark-python'] + config.get('packages', []) %}
+
+CREATE OR REPLACE PROCEDURE {{ proc_name }} (target_relation STRING)
+RETURNS STRING
+LANGUAGE PYTHON
+RUNTIME_VERSION = '3.8'
+PACKAGES = ('{{ packages | join("', '") }}')
+HANDLER = 'run'
+AS
+$$
+
+{#-- can we wrap in 'def model:' here? or will formatting screw us? --#}
+{{ user_supplied_logic }}
+
+{{ materialization_logic }}
+
+def run(session, target_relation):
+  df = model(session, dbt)
+  materialize(session, df, target_relation)  
+  return "OK"
+
+$$;
+
+{% endmacro %}
