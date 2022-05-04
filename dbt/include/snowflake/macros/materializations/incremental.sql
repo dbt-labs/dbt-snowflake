@@ -2,6 +2,7 @@
 {% macro dbt_snowflake_validate_get_incremental_strategy(config) %}
   {#-- Find and validate the incremental strategy #}
   {%- set strategy = config.get("incremental_strategy", default="merge") -%}
+  {%- set dml_query = False -%}
 
   {% set invalid_strategy_msg -%}
     Invalid incremental strategy provided: {{ strategy }}
@@ -54,6 +55,7 @@
     {% set build_sql = create_table_as(False, target_relation, sql) %}
 
   {% else %}
+    {%- set dml_query = True -%}
     {% do run_query(create_table_as(True, tmp_relation, sql)) %}
     {% do adapter.expand_target_column_types(
            from_relation=tmp_relation,
@@ -67,9 +69,22 @@
 
   {% endif %}
 
+  {% if dml_statement %}
+    {%- call statement() -%}
+      begin;
+    {%- endcall -%}
+  {% endif %}
+
+  {# The main query is separated to return the correct number of rows inserted instead of 1 #}
   {%- call statement('main') -%}
     {{ build_sql }}
   {%- endcall -%}
+
+  {% if dml_statement %}
+    {%- call statement() -%}
+      commit;
+    {%- endcall -%}
+  {% endif %}
 
   {{ run_hooks(post_hooks) }}
 
