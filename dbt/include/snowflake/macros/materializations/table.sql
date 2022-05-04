@@ -59,7 +59,12 @@
 
 {% endmaterialization %}
 
+{% macro py_materialize_as_table(config) %}
 
+def materialize(session, df, target_relation):
+    df.write.mode("overwrite").save_as_table(target_relation)
+
+{% endmacro %}
 
 {% macro py_create_stored_procedure(proc_name, materialization_logic, model, user_supplied_logic) %}
 
