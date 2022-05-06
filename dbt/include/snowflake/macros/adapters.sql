@@ -273,3 +273,7 @@
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
   {%- endcall %}
 {% endmacro %}
+
+{% macro load_df_def() %}
+  load_df_function = session.table
+{% endmacro %}
