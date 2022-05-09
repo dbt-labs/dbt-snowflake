@@ -1,6 +1,6 @@
 # install latest changes in dbt-core
 # TODO: how to automate switching from develop to version branches?
-git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core
+git+https://github.com/dbt-labs/dbt-core.git@fix/column-comparison-snapshot_check_all_get_existing_columns#egg=dbt-core&subdirectory=core
 git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=tests/adapter
 
 black==21.12b0
