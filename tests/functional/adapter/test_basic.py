@@ -41,8 +41,8 @@ class TestGenericTestsSnowflake(BaseGenericTests):
     pass
 
 
-class TestSnapshotCheckColsSnowflake(BaseSnapshotCheckCols):
-    pass
+#class TestSnapshotCheckColsSnowflake(BaseSnapshotCheckCols):
+#    pass
 
 
 class TestSnapshotTimestampSnowflake(BaseSnapshotTimestamp):
