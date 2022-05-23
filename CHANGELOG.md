@@ -4,6 +4,7 @@
 - Add precommits for this repo ([#107](https://github.com/dbt-labs/dbt-snowflake/pull/107))
 - Cleanup redundant precommit hook command ([#145](https://github.com/dbt-labs/dbt-snowflake/pull/145))
 - File rename to match reference to core ([#152](https://github.com/dbt-labs/dbt-snowflake/pull/152))
+- Improve colum comment handling when `persist_docs` is enabled ([#161](https://github.com/dbt-labs/dbt-snowflake/pull/161))
 
 ## dbt-snowflake 1.1.0b1 (March 23, 2022)
 
