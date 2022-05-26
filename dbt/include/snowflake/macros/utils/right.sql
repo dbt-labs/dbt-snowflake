@@ -1,8 +1,8 @@
 {% macro snowflake__right(string_text, length_expression) %}
 
-    case when {{ length_expression }} = 0 
+    case when {{ length_expression }} = 0
         then ''
-    else 
+    else
         right(
             {{ string_text }},
             {{ length_expression }}
