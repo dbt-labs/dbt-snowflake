@@ -273,3 +273,79 @@
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
   {%- endcall %}
 {% endmacro %}
+
+
+/* {#
+       Core materialization implementation. BigQuery and Snowflake are similar
+       because both can use `create or replace view` where the resulting view schema
+       is not necessarily the same as the existing view. On Redshift, this would
+       result in: ERROR:  cannot change number of columns in view
+
+       This implementation is superior to the create_temp, swap_with_existing, drop_old
+       paradigm because transactions don't run DDL queries atomically on Snowflake. By using
+       `create or replace view`, the materialization becomes atomic in nature.
+#} */
+
+{% macro create_or_replace_materializedview() %}
+  {%- set identifier = model['alias'] -%}
+
+  {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
+
+  {%- set exists_as_materializedview = (old_relation is not none and old_relation.is_materializedview) -%}
+
+  {%- set target_relation = api.Relation.create(
+      identifier=identifier, schema=schema, database=database,
+      type='materializedview') -%}
+
+  {{ run_hooks(pre_hooks) }}
+
+  -- If there's a table with the same name and we weren't told to full refresh,
+  -- that's an error. If we were told to full refresh, drop it. This behavior differs
+  -- for Snowflake and BigQuery, so multiple dispatch is used.
+  {%- if old_relation is not none and not old_relation.is_materializedview -%}
+    {{ handle_existing_relation(should_full_refresh(), old_relation) }}
+  {%- endif -%}
+
+  -- build model
+  {% call statement('main') -%}
+    {{ get_create_materializedview_as_sql(target_relation, sql) }}
+  {%- endcall %}
+
+  {{ run_hooks(post_hooks) }}
+
+  {{ return({'relations': [target_relation]}) }}
+
+{% endmacro %}
+
+
+{% macro get_create_materializedview_as_sql(relation, sql) -%}
+  {{ adapter.dispatch('get_create_materializedview_as_sql', 'dbt')(relation, sql) }}
+{%- endmacro %}
+
+{% macro default__get_create_materializedview_as_sql(relation, sql) -%}
+  {{ return(create_materializedview_as(relation, sql)) }}
+{% endmacro %}
+
+
+/* {# keep logic under old name for backwards compatibility #} */
+{% macro create_materializedview_as(relation, sql) -%}
+  {{ adapter.dispatch('create_materializedview_as', 'dbt')(relation, sql) }}
+{%- endmacro %}
+
+{% macro default__create_materializedview_as(relation, sql) -%}
+  {%- set sql_header = config.get('sql_header', none) -%}
+
+  {{ sql_header if sql_header is not none }}
+  create materialized view {{ relation }} as (
+    {{ sql }}
+  );
+{%- endmacro %}
+
+{% macro handle_existing_relation(full_refresh, old_relation) %}
+    {{ adapter.dispatch('handle_existing_relation', 'dbt')(full_refresh, old_relation) }}
+{% endmacro %}
+
+{% macro default__handle_existing_relation(full_refresh, old_relation) %}
+    {{ log("Dropping relation " ~ old_relation ~ " because it is of type " ~ old_relation.type) }}
+    {{ adapter.drop_relation(old_relation) }}
+{% endmacro %}
