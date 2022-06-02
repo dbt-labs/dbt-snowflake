@@ -12,6 +12,9 @@ from dbt.tests.adapter.basic.test_generic_tests import BaseGenericTests
 from dbt.tests.adapter.basic.test_snapshot_check_cols import BaseSnapshotCheckCols
 from dbt.tests.adapter.basic.test_snapshot_timestamp import BaseSnapshotTimestamp
 from dbt.tests.adapter.basic.test_adapter_methods import BaseAdapterMethod
+from dbt.tests.adapter.python_model.test_python_model import BasePythonModelTests
+
+
 
 class TestSimpleMaterializationsSnowflake(BaseSimpleMaterializations):
     pass
@@ -52,3 +55,7 @@ class TestBaseAdapterMethodSnowflake(BaseAdapterMethod):
     @pytest.fixture(scope="class")
     def equal_tables(self):
         return ["MODEL", "EXPECTED"]
+
+
+class TestBasePythonModelSnowflake(BasePythonModelTests):
+    pass

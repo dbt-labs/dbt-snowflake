@@ -31,14 +31,11 @@
 
     --build model
     {% call statement('main') -%}
-
-      {% do log("Calling stored procedure: " ~ proc_name, info=true) %}
       CALL {{ proc_name }}('{{ target_relation }}');
 
     {%- endcall %}
 
     -- cleanup stuff
-    {% do log("Dropping stored procedure: " ~ proc_name, info=true) %}
     {% do run_query("drop procedure if exists " ~ proc_name ~ "(string)") %}
 
   {%- else -%}
