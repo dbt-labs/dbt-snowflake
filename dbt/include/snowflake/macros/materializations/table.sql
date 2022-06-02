@@ -17,7 +17,7 @@
     {{ log("Dropping relation " ~ old_relation ~ " because it is of type " ~ old_relation.type) }}
     {{ drop_relation_if_exists(old_relation) }}
   {% endif %}
-  
+
   {% if config.get('language', 'sql') == 'python' -%}}
     {%- set proc_name = api.Relation.create(identifier=identifier ~ "__dbt_sp",
                                                 schema=schema,
@@ -40,13 +40,13 @@
     -- cleanup stuff
     {% do log("Dropping stored procedure: " ~ proc_name, info=true) %}
     {% do run_query("drop procedure if exists " ~ proc_name ~ "(string)") %}
-  
+
   {%- else -%}
     --build model
     {% call statement('main') -%}
       {{ create_table_as(false, target_relation, sql) }}
     {%- endcall %}
-  
+
   {%- endif %}
 
   {{ run_hooks(post_hooks) }}
