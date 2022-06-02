@@ -291,17 +291,19 @@
   -- If there's an object with the same name and we weren't told to full refresh,
   -- that's an error. If we were told to full refresh, drop it. This behavior differs
   -- for Snowflake and BigQuery, so multiple dispatch is used.
-  {%- if old_relation is not none and not old_relation.is_materializedview -%}
+  {%- if old_relation is not none and not exists_as_materialized_view -%}
     {{ handle_existing_relation(should_full_refresh(), old_relation) }}
   {%- endif -%}
 
+  {% if exists_as_materialized_view and not should_full_refresh() %}
+  {%- else %-}
   -- build model
   {% call statement('main') -%}
     {{ get_create_materializedview_as_sql(target_relation, sql) }}
   {%- endcall %}
 
   {{ run_hooks(post_hooks) }}
-
+  {%- endif -%}
   {{ return({'relations': [target_relation]}) }}
 
 {% endmacro %}
