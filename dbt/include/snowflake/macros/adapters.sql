@@ -275,17 +275,6 @@
 {% endmacro %}
 
 
-/* {#
-       Core materialization implementation. BigQuery and Snowflake are similar
-       because both can use `create or replace view` where the resulting view schema
-       is not necessarily the same as the existing view. On Redshift, this would
-       result in: ERROR:  cannot change number of columns in view
-
-       This implementation is superior to the create_temp, swap_with_existing, drop_old
-       paradigm because transactions don't run DDL queries atomically on Snowflake. By using
-       `create or replace view`, the materialization becomes atomic in nature.
-#} */
-
 {% macro create_or_replace_materializedview() %}
   {%- set identifier = model['alias'] -%}
 
@@ -299,7 +288,7 @@
 
   {{ run_hooks(pre_hooks) }}
 
-  -- If there's a table with the same name and we weren't told to full refresh,
+  -- If there's an object with the same name and we weren't told to full refresh,
   -- that's an error. If we were told to full refresh, drop it. This behavior differs
   -- for Snowflake and BigQuery, so multiple dispatch is used.
   {%- if old_relation is not none and not old_relation.is_materializedview -%}
