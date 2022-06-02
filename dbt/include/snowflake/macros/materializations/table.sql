@@ -79,14 +79,18 @@ HANDLER = 'run'
 AS
 $$
 
+snowpark_session = None
+
 {#-- can we wrap in 'def model:' here? or will formatting screw us? --#}
 {{ user_supplied_logic }}
 
 {{ materialization_logic }}
 
 def run(session, target_relation):
-  df = model(session, dbt)
-  materialize(session, df, target_relation)  
+  global snowpark_session
+  snowpark_session = session
+  df = model(dbt)
+  materialize(session, df, target_relation)
   return "OK"
 
 $$;

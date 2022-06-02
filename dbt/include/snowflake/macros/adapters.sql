@@ -275,5 +275,6 @@
 {% endmacro %}
 
 {% macro load_df_def() %}
-  load_df_function = session.table
+  global snowpark_session
+  load_df_function = snowpark_session.table
 {% endmacro %}
