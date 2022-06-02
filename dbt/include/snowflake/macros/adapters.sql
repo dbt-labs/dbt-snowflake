@@ -323,23 +323,13 @@
 {%- endmacro %}
 
 {% macro default__get_create_materializedview_as_sql(relation, sql) -%}
-  {{ return(create_materializedview_as(relation, sql)) }}
-{% endmacro %}
-
-
-/* {# keep logic under old name for backwards compatibility #} */
-{% macro create_materializedview_as(relation, sql) -%}
-  {{ adapter.dispatch('create_materializedview_as', 'dbt')(relation, sql) }}
-{%- endmacro %}
-
-{% macro default__create_materializedview_as(relation, sql) -%}
-  {%- set sql_header = config.get('sql_header', none) -%}
-
+    {%- set sql_header = config.get('sql_header', none) -%}
   {{ sql_header if sql_header is not none }}
   create materialized view {{ relation }} as (
     {{ sql }}
   );
-{%- endmacro %}
+{% endmacro %}
+
 
 {% macro handle_existing_relation(full_refresh, old_relation) %}
     {{ adapter.dispatch('handle_existing_relation', 'dbt')(full_refresh, old_relation) }}
