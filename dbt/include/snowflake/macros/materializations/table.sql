@@ -59,7 +59,16 @@
 {% macro py_materialize_as_table(config) %}
 
 def materialize(session, df, target_relation):
-    df.write.mode("overwrite").save_as_table(target_relation)
+    if isinstance(df, snowflake.snowpark.DataFrame):
+        df.write.mode("overwrite").save_as_table(target_relation)
+    elif pandas and isinstance(df, pandas.core.frame.DataFrame):
+        session.write_pandas(
+          df=df,
+          table_name=target_relation.identifier,
+          database=target_relation.database,
+          schema=target_relation.schema,
+          auto_create_table=True
+        )
 
 {% endmacro %}
 
@@ -67,27 +76,31 @@ def materialize(session, df, target_relation):
 
 {% set packages = ['snowflake-snowpark-python'] + config.get('packages', []) %}
 
-CREATE OR REPLACE PROCEDURE {{ proc_name }} (target_relation STRING)
+CREATE OR REPLACE PROCEDURE {{ proc_name }} ()
 RETURNS STRING
 LANGUAGE PYTHON
-RUNTIME_VERSION = '3.8'
+RUNTIME_VERSION = '3.8' -- TODO should this be configurable?
 PACKAGES = ('{{ packages | join("', '") }}')
-HANDLER = 'run'
+HANDLER = 'run' -- TODO should this be called 'main', to match Snowsight default?
 AS
 $$
 
 snowpark_session = None
 
-{#-- can we wrap in 'def model:' here? or will formatting screw us? --#}
 {{ user_supplied_logic }}
 
 {{ materialization_logic }}
 
-def run(session, target_relation):
+def run(session):
+  """
+  TODOs:
+    - how can we avoid the 'session' global?
+    - what should this return? can we make a real RunResult?
+  """
   global snowpark_session
   snowpark_session = session
   df = model(dbt)
-  materialize(session, df, target_relation)
+  materialize(session, df, dbt.this)
   return "OK"
 
 $$;
