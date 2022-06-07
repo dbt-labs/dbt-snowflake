@@ -38,10 +38,15 @@
   {{ adapter.dispatch('get_create_materializedview_as_sql', 'dbt')(relation, sql) }}
 {%- endmacro %}
 
-{% macro default__get_create_materializedview_as_sql(relation, sql) -%}
+{% macro snowflake__get_create_materializedview_as_sql(relation, sql) -%}
     {%- set sql_header = config.get('sql_header', none) -%}
+    {%- set cluster = config.get('cluster_by', none) -%}
   {{ sql_header if sql_header is not none }}
-  create materialized view {{ relation }} as (
+   create materialized view {{ relation }}  
+    {% if cluster is not none -%}
+     cluster by ({{ cluster|join(',') }})
+    {%- endif -%}
+     as (
     {{ sql }}
   );
 {% endmacro %}
@@ -51,7 +56,7 @@
     {{ adapter.dispatch('handle_existing_relation', 'dbt')(full_refresh, old_relation) }}
 {% endmacro %}
 
-{% macro default__handle_existing_relation(full_refresh, old_relation) %}
+{% macro snowflake__handle_existing_relation(full_refresh, old_relation) %}
     {{ log("Dropping relation " ~ old_relation ~ " because it is of type " ~ old_relation.type) }}
     {{ adapter.drop_relation(old_relation) }}
 {% endmacro %}
