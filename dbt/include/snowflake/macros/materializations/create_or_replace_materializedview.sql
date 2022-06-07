@@ -12,13 +12,14 @@
   {{ run_hooks(pre_hooks) }}
 
   -- If there's an object with the same name and we weren't told to full refresh,
-  -- that's an error. If we were told to full refresh, drop it. This behavior differs
-  -- for Snowflake and BigQuery, so multiple dispatch is used.
+  -- that's an error. If we were told to full refresh, drop it. 
   {%- if old_relation is not none and not exists_as_materialized_view -%}
     {{ handle_existing_relation(should_full_refresh(), old_relation) }}
   {%- endif -%}
 
   {% if exists_as_materialized_view and not should_full_refresh() %}
+  -- no action required
+  {{ log("No action required on " ~ old_relation ~ " because it is a materialized view and full refresh is off") }}
   {%- else -%}
   -- build model
   {% call statement('main') -%}
@@ -27,6 +28,7 @@
 
   {{ run_hooks(post_hooks) }}
   {%- endif -%}
+
   {{ return({'relations': [target_relation]}) }}
 
 {% endmacro %}
