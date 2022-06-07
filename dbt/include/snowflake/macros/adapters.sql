@@ -193,6 +193,11 @@
 
 
 {% macro set_query_tag() -%}
+    {{ return(adapter.dispatch('set_query_tag', 'dbt')()) }}
+{% endmacro %}
+
+
+{% macro snowflake__set_query_tag() -%}
   {% set new_query_tag = config.get('query_tag') %}
   {% if new_query_tag %}
     {% set original_query_tag = get_current_query_tag() %}
@@ -203,7 +208,13 @@
   {{ return(none)}}
 {% endmacro %}
 
+
 {% macro unset_query_tag(original_query_tag) -%}
+    {{ return(adapter.dispatch('unset_query_tag', 'dbt')(original_query_tag)) }}
+{% endmacro %}
+
+
+{% macro snowflake__unset_query_tag(original_query_tag) -%}
   {% set new_query_tag = config.get('query_tag') %}
   {% if new_query_tag %}
     {% if original_query_tag %}
