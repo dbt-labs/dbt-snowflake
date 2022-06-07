@@ -4,8 +4,6 @@ from dbt.tests.adapter.utils.test_any_value import BaseAnyValue
 from dbt.tests.adapter.utils.test_bool_or import BaseBoolOr
 from dbt.tests.adapter.utils.test_cast_bool_to_text import BaseCastBoolToText
 from dbt.tests.adapter.utils.test_concat import BaseConcat
-from dbt.tests.adapter.utils.test_current_timestamp_in_utc import BaseCurrentTimestampInUtc
-from dbt.tests.adapter.utils.test_current_timestamp import BaseCurrentTimestamp
 from dbt.tests.adapter.utils.test_dateadd import BaseDateAdd
 from dbt.tests.adapter.utils.test_datediff import BaseDateDiff
 from dbt.tests.adapter.utils.test_date_trunc import BaseDateTrunc
@@ -23,13 +21,6 @@ from dbt.tests.adapter.utils.test_right import BaseRight
 from dbt.tests.adapter.utils.test_safe_cast import BaseSafeCast
 from dbt.tests.adapter.utils.test_split_part import BaseSplitPart
 from dbt.tests.adapter.utils.test_string_literal import BaseStringLiteral
-from dbt.tests.adapter.utils.test_type_bigint import BaseTypeBigint
-from dbt.tests.adapter.utils.test_type_boolean import BaseTypeBoolean
-from dbt.tests.adapter.utils.test_type_float import BaseTypeFloat
-from dbt.tests.adapter.utils.test_type_int import BaseTypeInt
-from dbt.tests.adapter.utils.test_type_numeric import BaseTypeNumeric
-from dbt.tests.adapter.utils.test_type_string import BaseTypeString
-from dbt.tests.adapter.utils.test_type_timestamp import BaseTypeTimestamp
 
 
 class TestAnyValue(BaseAnyValue):
@@ -45,14 +36,6 @@ class TestCastBoolToText(BaseCastBoolToText):
 
 
 class TestConcat(BaseConcat):
-    pass
-
-
-class TestCurrentTimestampInUtc(BaseCurrentTimestampInUtc):
-    pass
-
-
-class TestCurrentTimestamp(BaseCurrentTimestamp):
     pass
 
 
@@ -117,39 +100,4 @@ class TestSplitPart(BaseSplitPart):
 
 
 class TestStringLiteral(BaseStringLiteral):
-    pass
-
-
-@pytest.mark.skip(reason="TODO - implement this test")
-class TestTypeBigint(BaseTypeBigint):
-    pass
-
-
-@pytest.mark.skip(reason="TODO - implement this test")
-class TestTypeBoolean(BaseTypeBoolean):
-    pass
-
-
-@pytest.mark.skip(reason="TODO - implement this test")
-class TestTypeFloat(BaseTypeFloat):
-    pass
-
-
-@pytest.mark.skip(reason="TODO - implement this test")
-class TestTypeInt(BaseTypeInt):
-    pass
-
-
-@pytest.mark.skip(reason="TODO - implement this test")
-class TestTypeNumeric(BaseTypeNumeric):
-    pass
-
-
-@pytest.mark.skip(reason="TODO - implement this test")
-class TestTypeString(BaseTypeString):
-    pass
-
-
-@pytest.mark.skip(reason="TODO - implement this test")
-class TestTypeTimestamp(BaseTypeTimestamp):
     pass
