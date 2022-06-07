@@ -7,7 +7,7 @@
 
   {%- set target_relation = api.Relation.create(
       identifier=identifier, schema=schema, database=database,
-      type='materializedview') -%}
+      type='materialized view') -%}
 
   {{ run_hooks(pre_hooks) }}
 
@@ -19,7 +19,7 @@
   {%- endif -%}
 
   {% if exists_as_materialized_view and not should_full_refresh() %}
-  {%- else %-}
+  {%- else -%}
   -- build model
   {% call statement('main') -%}
     {{ get_create_materializedview_as_sql(target_relation, sql) }}
