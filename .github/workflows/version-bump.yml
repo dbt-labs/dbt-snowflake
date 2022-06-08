@@ -57,7 +57,7 @@ jobs:
         run: |
           python3 -m venv env
           source env/bin/activate
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
 
       - name: Create PR branch
         if: ${{ steps.variables.outputs.IS_DRY_RUN  == 'true' }}
@@ -69,7 +69,7 @@ jobs:
       - name: Bumping version
         run: |
           source env/bin/activate
-          pip install -r dev_requirements.txt
+          python -m pip install -r dev_requirements.txt
           env/bin/bumpversion --allow-dirty --new-version ${{steps.variables.outputs.VERSION_NUMBER}} major
           git status
 
