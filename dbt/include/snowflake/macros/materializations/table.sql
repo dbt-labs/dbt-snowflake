@@ -31,7 +31,7 @@
 
     --build model
     {% call statement('main') -%}
-      CALL {{ proc_name }}('{{ target_relation }}');
+      CALL {{ proc_name }}();
 
     {%- endcall %}
 
@@ -57,11 +57,8 @@
 {% endmaterialization %}
 
 {% macro py_materialize_as_table(config) %}
-
 def materialize(session, df, target_relation):
-    if isinstance(df, snowflake.snowpark.DataFrame):
-        df.write.mode("overwrite").save_as_table(target_relation)
-    elif pandas and isinstance(df, pandas.core.frame.DataFrame):
+    if "pandas" in dir() and isinstance(df, pandas.core.frame.DataFrame):
         session.write_pandas(
           df=df,
           table_name=target_relation.identifier,
@@ -69,6 +66,9 @@ def materialize(session, df, target_relation):
           schema=target_relation.schema,
           auto_create_table=True
         )
+    else:
+        # we are assuming it is going to be snowflake DataFrame
+        df.write.mode("overwrite").save_as_table(target_relation)
 
 {% endmacro %}
 
@@ -85,23 +85,20 @@ HANDLER = 'run' -- TODO should this be called 'main', to match Snowsight default
 AS
 $$
 
-snowpark_session = None
 
 {{ user_supplied_logic }}
 
 {{ materialization_logic }}
 
 def run(session):
-  """
-  TODOs:
-    - how can we avoid the 'session' global?
-    - what should this return? can we make a real RunResult?
-  """
-  global snowpark_session
-  snowpark_session = session
-  df = model(dbt)
-  materialize(session, df, dbt.this)
-  return "OK"
+    """
+    TODOs:
+      - what should this return? can we make a real RunResult?
+    """
+    dbt = dbtObj(session.table)
+    df = model(dbt)
+    materialize(session, df, str(dbt.this))
+    return "OK"
 
 $$;
 
