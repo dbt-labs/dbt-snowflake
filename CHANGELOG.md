@@ -6,6 +6,7 @@
 - Cleanup redundant precommit hook command ([#145](https://github.com/dbt-labs/dbt-snowflake/pull/145))
 - File rename to match reference to core ([#152](https://github.com/dbt-labs/dbt-snowflake/pull/152))
 - Bump cryptography restraint upper bound to <37.0.0 ([#171](https://github.com/dbt-labs/dbt-snowflake/pull/171))
+- migrate oauth refresh script from core ([#175](https://github.com/dbt-labs/dbt-snowflake/pull/175))
 
 ### Contributors
 - [@hhobson](https://github.com/hhobson) ([#171](https://github.com/dbt-labs/dbt-snowflake/pull/171))
