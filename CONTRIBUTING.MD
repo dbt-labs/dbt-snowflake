@@ -79,7 +79,7 @@ WARNING: The parameters in your `test.env` file must link to a valid Snowflake a
 There are a few methods for running tests locally.
 
 #### `tox`
-`tox` automatically runs unit tests against several Python versions using its own virtualenvs. Run `tox -p` to run unit tests for Python 3.7, Python 3.8, Python 3.9, and `flake8` in parallel. Run `tox -e py37` to invoke tests on Python version 3.7 only (use py37, py38, or py39). Tox recipes are found in `tox.ini`.
+`tox` automatically runs unit tests against several Python versions using its own virtualenvs. Run `tox -p` to run unit tests for Python 3.7, Python 3.8, Python 3.9, Python 3.10, and `flake8` in parallel. Run `tox -e py37` to invoke tests on Python version 3.7 only (use py37, py38, py39, or py310). Tox recipes are found in `tox.ini`.
 
 #### `pytest`
 You may run a specific test or group of tests using `pytest` directly. Activate a Python virtualenv active with dev dependencies installed. Then, run tests like so:
