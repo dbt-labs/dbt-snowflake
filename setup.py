@@ -69,7 +69,7 @@ setup(
         "dbt-core~={}".format(dbt_core_version),
         "snowflake-connector-python[secure-local-storage]>=2.4.1,<2.8.0",
         "requests<3.0.0",
-        "cryptography>=3.2,<4",
+        "cryptography>=3.2,<37.0.0",
     ],
     zip_safe=False,
     classifiers=[
@@ -81,6 +81,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     python_requires=">=3.7",
 )
