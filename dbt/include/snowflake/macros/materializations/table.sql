@@ -58,18 +58,12 @@
 
 {% macro py_materialize_as_table(config) %}
 def materialize(session, df, target_relation):
-    if "pandas" in dir() and isinstance(df, pandas.core.frame.DataFrame):
-        session.write_pandas(
-          df=df,
-          table_name=target_relation.identifier,
-          database=target_relation.database,
-          schema=target_relation.schema,
-          auto_create_table=True
-        )
-    else:
-        # we are assuming it is going to be snowflake DataFrame
-        df.write.mode("overwrite").save_as_table(target_relation)
-
+    # we have to make sure pandas is imported
+    import pandas
+    if isinstance(df, pandas.core.frame.DataFrame):
+        # session.write_pandas does not have overwrite function
+        df = session.createDataFrame(df)
+    df.write.mode("overwrite").save_as_table(str(target_relation))
 {% endmacro %}
 
 {% macro py_create_stored_procedure(proc_name, materialization_logic, model, user_supplied_logic) %}
@@ -81,23 +75,22 @@ RETURNS STRING
 LANGUAGE PYTHON
 RUNTIME_VERSION = '3.8' -- TODO should this be configurable?
 PACKAGES = ('{{ packages | join("', '") }}')
-HANDLER = 'run' -- TODO should this be called 'main', to match Snowsight default?
+HANDLER = 'main'
 AS
 $$
-
 
 {{ user_supplied_logic }}
 
 {{ materialization_logic }}
 
-def run(session):
+def main(session):
     """
     TODOs:
       - what should this return? can we make a real RunResult?
     """
     dbt = dbtObj(session.table)
-    df = model(dbt)
-    materialize(session, df, str(dbt.this))
+    df = model(dbt, session)
+    materialize(session, df, dbt.this)
     return "OK"
 
 $$;
