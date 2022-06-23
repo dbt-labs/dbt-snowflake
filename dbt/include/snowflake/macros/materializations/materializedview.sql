@@ -1,4 +1,4 @@
-{% materialization mat, adapter='snowflake' %}
+{% materialization materialized view, adapter='snowflake' %}
 
     {% set original_query_tag = set_query_tag() %}
     {% set to_return = create_or_replace_materializedview() %}
