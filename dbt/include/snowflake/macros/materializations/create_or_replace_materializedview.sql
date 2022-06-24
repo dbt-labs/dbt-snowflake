@@ -7,14 +7,13 @@
 
   {%- set target_relation = api.Relation.create(
       identifier=identifier, schema=schema, database=database,
-      type='materializedview') -%}
+      type='materialized view') -%}
 
   {{ run_hooks(pre_hooks) }}
 
-  -- If there's an object with the same name and we weren't told to full refresh,
-  -- that's an error. If we were told to full refresh, drop it. 
+  -- If there's an object with the same name it's not an MV, drop it
   {%- if old_relation is not none and not exists_as_materialized_view -%}
-    {{ handle_existing_relation(should_full_refresh(), old_relation) }}
+    {{ handle_existing_table(should_full_refresh(), old_relation) }}
   {%- endif -%}
 
   {% if exists_as_materialized_view and not should_full_refresh() %}
@@ -49,14 +48,4 @@
      as (
     {{ sql }}
   );
-{% endmacro %}
-
-
-{% macro handle_existing_relation(full_refresh, old_relation) %}
-    {{ adapter.dispatch('handle_existing_relation', 'dbt')(full_refresh, old_relation) }}
-{% endmacro %}
-
-{% macro snowflake__handle_existing_relation(full_refresh, old_relation) %}
-    {{ log("Dropping relation " ~ old_relation ~ " because it is of type " ~ old_relation.type) }}
-    {{ adapter.drop_relation(old_relation) }}
 {% endmacro %}
