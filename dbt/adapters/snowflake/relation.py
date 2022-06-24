@@ -10,16 +10,8 @@ class SnowflakeQuotePolicy(Policy):
     database: bool = False
     schema: bool = False
     identifier: bool = False
-    
+
 
 @dataclass(frozen=True, eq=False, repr=False)
 class SnowflakeRelation(BaseRelation):
     quote_policy: SnowflakeQuotePolicy = SnowflakeQuotePolicy()
-
-    @property
-    def is_materializedview(self) -> bool:
-        return self.type == RelationType.MaterializedView
-
-    @classproperty
-    def MaterializedView(cls) -> str:
-        return str(RelationType.MaterializedView)
