@@ -7,7 +7,7 @@
 
   {%- set target_relation = api.Relation.create(
       identifier=identifier, schema=schema, database=database,
-      type='materialized view') -%}
+      type='materializedview') -%}
 
   {{ run_hooks(pre_hooks) }}
 
