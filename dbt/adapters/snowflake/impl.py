@@ -112,6 +112,10 @@ class SnowflakeAdapter(SQLAdapter):
         kwargs = {"schema_relation": schema_relation}
         try:
             tables_list = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
+            for t in tables_list:
+                print(len(t.rows))
+                if len(t.rows) == 0:
+                    tables_list.remove(t)
             results = agate.TableSet(tables_list, keys=range(len(tables_list))).merge().exclude(['group'])
                    
         except DatabaseException as exc:
