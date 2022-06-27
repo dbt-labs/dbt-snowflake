@@ -284,3 +284,4 @@
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
   {%- endcall %}
 {% endmacro %}
+

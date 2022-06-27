@@ -4,6 +4,8 @@
 
   {%- set identifier = model['alias'] -%}
 
+  {% set  grant_config = config.get('grants') %}
+
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
   {%- set target_relation = api.Relation.create(identifier=identifier,
                                                 schema=schema,
@@ -24,6 +26,8 @@
   {%- endcall %}
 
   {{ run_hooks(post_hooks) }}
+
+  {% do apply_grants(relation, grant_config, should_revoke=False) %}
 
   {% do persist_docs(target_relation, model) %}
 
