@@ -27,7 +27,7 @@
 
   {{ run_hooks(post_hooks) }}
 
-  {% do apply_grants(relation, grant_config, should_revoke=False) %}
+ {% do apply_grants(target_relation, grant_config, should_revoke=True) %}
 
   {% do persist_docs(target_relation, model) %}
 

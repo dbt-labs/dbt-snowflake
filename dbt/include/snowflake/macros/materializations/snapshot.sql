@@ -3,7 +3,7 @@
     {% set  grant_config = config.get('grants') %}
 
     {% set relations = materialization_snapshot_default() %}
-    {% do apply_grants(relation, grant_config, should_revoke=True) %}
+    {% do apply_grants(target_relation, grant_config, should_revoke=True) %}
     {% do unset_query_tag(original_query_tag) %}
 
     {{ return(relations) }}
