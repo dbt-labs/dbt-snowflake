@@ -35,6 +35,9 @@ _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
 class SnowflakeAdapterResponse(AdapterResponse):
     query_id: str = ""
 
+    def __str__(self):
+        return self._message + f"[{self.query_id}]"
+
 
 @dataclass
 class SnowflakeCredentials(Credentials):
@@ -434,6 +437,8 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
         connection = None
         cursor = None
+
+        logger.info(sql)
 
         if bindings:
             # The snowflake connector is more strict than, eg., psycopg2 -
