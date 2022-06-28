@@ -1,5 +1,6 @@
 import pytest
-from dbt.tests.util import run_dbt, check_relations_equal, relation_from_name
+
+from dbt.tests.util import run_dbt, run_sql_with_adapter, check_relations_equal, relation_from_name
 from dbt.tests.adapter.basic.files import (
     seeds_base_csv,
     seeds_added_csv,
@@ -7,7 +8,9 @@ from dbt.tests.adapter.basic.files import (
 )
 
 materializedview_sql = """
-{{ config(materialized="materializedview")}}
+{{ config(materialized="materializedview",
+  cluster_by=var('cluster', [])
+  )}}
 select * from {{ source('raw', 'seed') }}
 """.strip()
 
@@ -60,6 +63,37 @@ class BaseMaterializedView:
         assert len(catalog.nodes) == 3
         assert len(catalog.sources) == 1
 
+    def test_materializedview_cluster(self, project):
+        # seed command
+        results = run_dbt(["seed"])
+        assert len(results) == 2
+
+        cluster_combinations = {"['id']": 'LINEAR(id)', 
+                                "['id','name']": 'LINEAR(id,name)', 
+                                "[]": None, 
+                                None: None
+                                }
+        for cluster, expected_result in cluster_combinations.items():
+            # run command
+            if cluster is not None:
+                results = run_dbt(["run", "--vars", f"{{seed_name: base, cluster: {cluster} }}"])
+            else:
+                results = run_dbt(["run", "--vars", "{seed_name: base}"])
+            assert len(results) == 1
+    
+            clustering_key = run_sql_with_adapter(project.adapter, sql=f'''select clustering_key
+                                                                from {project.adapter.config.credentials.database}.information_schema.tables
+                                                                where table_schema = upper('{project.adapter.config.credentials.schema}')
+                                                                and table_name = 'MATERIALIZEDVIEW'
+                                                                ''', fetch='one')
+            assert clustering_key[0] == expected_result
+
+    def test_invalid_materializedview_cluster(self, project):
+         # seed command
+        run_dbt(["seed"])
+        # run command with invalid cluster key
+        output = run_dbt(["run", "--vars", "{seed_name: base, cluster: fake_column_name}"], expect_pass=False)
+        assert output.results[0].status == 'error'
 
 class TestMaterializedview(BaseMaterializedView):
     pass
