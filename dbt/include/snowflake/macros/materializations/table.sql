@@ -23,7 +23,7 @@
                                                 schema=schema,
                                                 database=database) -%}
     {% set materialization_logic = py_materialize_as_table() %}
-    {% set setup_stored_proc = py_create_stored_procedure(proc_name, materialization_logic, model, sql) %}
+    {% set setup_stored_proc = py_create_stored_procedure(proc_name, materialization_logic, model, compiled_code) %}
 
     {% do log("Creating stored procedure: " ~ proc_name, info=true) %}
     {% do run_query(setup_stored_proc) %}
@@ -41,7 +41,7 @@
   {%- else -%}
     --build model
     {% call statement('main') -%}
-      {{ create_table_as(false, target_relation, sql) }}
+      {{ create_table_as(false, target_relation, compiled_code) }}
     {%- endcall %}
 
   {%- endif %}
