@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Type
 
 from dataclasses import dataclass
 from dbt.adapters.base.relation import BaseRelation, Policy
@@ -32,3 +32,7 @@ class SnowflakeRelation(BaseRelation):
     @classproperty
     def MaterializedView(cls) -> str:
         return str(SnowflakeRelationType.MaterializedView)
+
+    @classproperty
+    def get_relation_type(cls) -> Type[SnowflakeRelationType]:
+        return SnowflakeRelationType
