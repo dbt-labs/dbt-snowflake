@@ -5,9 +5,6 @@
     {%- set identifier = model['alias'] -%}
     {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
 
-    {{ run_hooks(pre_hooks) }}
-
-    {% do persist_docs(target_relation, model, for_columns=false) %}
 
     -- if object exists already as MV, drop it before create_or_replace_view() macro
     {%- if old_relation is not none and old_relation.is_materializedview -%}
@@ -15,6 +12,10 @@
     {%- endif -%}
 
     {% set to_return = create_or_replace_view() %}
+
+    {{ run_hooks(pre_hooks) }}
+
+    {% do persist_docs(target_relation, model, for_columns=false) %}
 
     {% do return(to_return) %}
 
