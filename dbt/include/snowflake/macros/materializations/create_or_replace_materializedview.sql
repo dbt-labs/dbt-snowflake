@@ -11,7 +11,7 @@
 
   {{ run_hooks(pre_hooks) }}
 
-  -- If there's an object with the same name it's not an MV, drop it
+  -- If there's an object with the same name it's not an MV, drop
   {%- if old_relation is not none and not exists_as_materialized_view -%}
     {{ handle_existing_table(should_full_refresh(), old_relation) }}
   {%- endif -%}
@@ -41,7 +41,7 @@
     {%- set sql_header = config.get('sql_header', none) -%}
     {%- set cluster = config.get('cluster_by', none) -%}
   {{ sql_header if sql_header is not none }}
-   create materialized view {{ relation }}  
+   create materialized view {{ relation }}
     {% if cluster is not none -%}
      cluster by ({{ cluster|join(',') }})
     {%- endif -%}
