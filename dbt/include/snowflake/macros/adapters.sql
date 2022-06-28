@@ -273,3 +273,8 @@
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
   {%- endcall %}
 {% endmacro %}
+
+{% macro load_df_def() %}
+  global snowpark_session
+  load_df_function = snowpark_session.table
+{% endmacro %}
