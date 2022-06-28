@@ -42,7 +42,10 @@
     {%- set cluster = config.get('cluster_by', none) -%}
   {{ sql_header if sql_header is not none }}
    create materialized view {{ relation }}
-    {% if cluster is not none -%}
+    {% if cluster is not none and cluster|length > 0 -%}
+      {% if cluster is string %}
+        {% set cluster = list(cluster) %}
+       {% endif %}
      cluster by ({{ cluster|join(',') }})
     {%- endif -%}
      as (
