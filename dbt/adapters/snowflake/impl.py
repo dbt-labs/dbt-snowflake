@@ -9,6 +9,7 @@ from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
+from dbt.adapters.base.meta import available
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
@@ -86,6 +87,7 @@ class SnowflakeAdapter(SQLAdapter):
         if context is not None:
             self._use_warehouse(context)
 
+
     def list_schemas(self, database: str) -> List[str]:
         try:
             results = self.execute_macro(LIST_SCHEMAS_MACRO_NAME, kwargs={"database": database})
@@ -157,6 +159,18 @@ class SnowflakeAdapter(SQLAdapter):
             return self.quote(column)
         else:
             return column
+
+    @available
+    def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
+        grants_dict = {}
+        for row in grants_table:
+            grantee = row['grantee_name'].lower()
+            privilege = row['privilege'].lower()
+            if privilege in grants_dict.keys():
+                grants_dict[privilege].append(grantee)
+            else:
+                grants_dict.update({privilege: [grantee]})
+        return grants_dict
 
     def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
         return f"DATEADD({interval}, {number}, {add_to})"
