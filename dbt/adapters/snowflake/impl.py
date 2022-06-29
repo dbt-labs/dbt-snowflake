@@ -163,7 +163,7 @@ class SnowflakeAdapter(SQLAdapter):
         return f"DATEADD({interval}, {number}, {add_to})"
 
     @available.parse_none
-    def submit_python_job(self, parsed_model:dict, model_code: str):
+    def submit_python_job(self, parsed_model:dict, compiled_code: str):
         schema = getattr(parsed_model, "schema", self.config.credentials.schema)
         database = getattr(parsed_model, "database", self.config.credentials.database)
         identifier = parsed_model['alias']
@@ -179,7 +179,7 @@ PACKAGES = ('{packages}')
 HANDLER = 'main'
 AS
 $$
-{model_code}
+{compiled_code}
 
 $$;
         """
