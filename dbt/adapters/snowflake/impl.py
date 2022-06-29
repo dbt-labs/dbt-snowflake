@@ -4,6 +4,7 @@ from typing import Mapping, Any, Optional, List, Union
 import agate
 
 from dbt.adapters.base.impl import AdapterConfig
+from dbt.adapters.base.meta import available
 from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -160,3 +161,33 @@ class SnowflakeAdapter(SQLAdapter):
 
     def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
         return f"DATEADD({interval}, {number}, {add_to})"
+
+    @available.parse_none
+    def submit_python_job(self, parsed_model:dict, compiled_code: str):
+        schema = getattr(parsed_model, "schema", self.config.credentials.schema)
+        database = getattr(parsed_model, "database", self.config.credentials.database)
+        identifier = parsed_model['alias']
+        proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
+        packages = ['snowflake-snowpark-python'] + parsed_model['config'].get('packages', [])
+        packages = "', ".join(packages)
+        python_stored_procedure = f"""
+CREATE OR REPLACE PROCEDURE {proc_name} ()
+RETURNS STRING
+LANGUAGE PYTHON
+RUNTIME_VERSION = '3.8' -- TODO should this be configurable?
+PACKAGES = ('{packages}')
+HANDLER = 'main'
+AS
+$$
+{compiled_code}
+
+$$;
+        """
+        self.execute(python_stored_procedure, auto_begin=False, fetch=False)
+        self.execute(f"CALL {proc_name}()", auto_begin=False, fetch=False)
+        self.execute(f"drop procedure if exists {proc_name}(string)", auto_begin=False, fetch=False)
+        
+        # TODO add proper return
+        return "OK"
+        
+
