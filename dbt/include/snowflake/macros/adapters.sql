@@ -1,41 +1,49 @@
-{% macro snowflake__create_table_as(temporary, relation, sql) -%}
-  {%- set transient = config.get('transient', default=true) -%}
-  {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
-  {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
-  {%- set copy_grants = config.get('copy_grants', default=false) -%}
+{% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
+  {%- if language == 'sql' -%}
+    {%- set transient = config.get('transient', default=true) -%}
+    {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
+    {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
+    {%- set copy_grants = config.get('copy_grants', default=false) -%}
 
-  {%- if cluster_by_keys is not none and cluster_by_keys is string -%}
-    {%- set cluster_by_keys = [cluster_by_keys] -%}
-  {%- endif -%}
-  {%- if cluster_by_keys is not none -%}
-    {%- set cluster_by_string = cluster_by_keys|join(", ")-%}
-  {% else %}
-    {%- set cluster_by_string = none -%}
-  {%- endif -%}
-  {%- set sql_header = config.get('sql_header', none) -%}
-
-  {{ sql_header if sql_header is not none }}
-
-      create or replace {% if temporary -%}
-        temporary
-      {%- elif transient -%}
-        transient
-      {%- endif %} table {{ relation }} {% if copy_grants and not temporary -%} copy grants {%- endif %} as
-      (
-        {%- if cluster_by_string is not none -%}
-          select * from(
-            {{ sql }}
-            ) order by ({{ cluster_by_string }})
-        {%- else -%}
-          {{ sql }}
-        {%- endif %}
-      );
-    {% if cluster_by_string is not none and not temporary -%}
-      alter table {{relation}} cluster by ({{cluster_by_string}});
+    {%- if cluster_by_keys is not none and cluster_by_keys is string -%}
+      {%- set cluster_by_keys = [cluster_by_keys] -%}
     {%- endif -%}
-    {% if enable_automatic_clustering and cluster_by_string is not none and not temporary  -%}
-      alter table {{relation}} resume recluster;
+    {%- if cluster_by_keys is not none -%}
+      {%- set cluster_by_string = cluster_by_keys|join(", ")-%}
+    {% else %}
+      {%- set cluster_by_string = none -%}
     {%- endif -%}
+    {%- set sql_header = config.get('sql_header', none) -%}
+
+    {{ sql_header if sql_header is not none }}
+
+        create or replace {% if temporary -%}
+          temporary
+        {%- elif transient -%}
+          transient
+        {%- endif %} table {{ relation }} {% if copy_grants and not temporary -%} copy grants {%- endif %} as
+        (
+          {%- if cluster_by_string is not none -%}
+            select * from(
+              {{ compiled_code }}
+              ) order by ({{ cluster_by_string }})
+          {%- else -%}
+            {{ compiled_code }}
+          {%- endif %}
+        );
+      {% if cluster_by_string is not none and not temporary -%}
+        alter table {{relation}} cluster by ({{cluster_by_string}});
+      {%- endif -%}
+      {% if enable_automatic_clustering and cluster_by_string is not none and not temporary  -%}
+        alter table {{relation}} resume recluster;
+      {%- endif -%}
+
+  {%- elif language == 'python' -%}
+    {{ py_complete_script(compiled_code=compiled_code, target_relation=relation) }}
+  {%- else -%}
+      {% do exceptions.raise_compiler_error("snowflake__create_table_as macro didn't get supported language") %}
+  {%- endif -%}
+
 {% endmacro %}
 
 {% macro get_column_comment_sql(column_name, column_dict) %}
@@ -272,9 +280,4 @@
   {% call statement('truncate_relation') -%}
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
   {%- endcall %}
-{% endmacro %}
-
-{% macro load_df_def() %}
-global snowpark_session
-load_df_function = snowpark_session.table
 {% endmacro %}
