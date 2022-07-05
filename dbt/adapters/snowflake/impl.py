@@ -163,13 +163,15 @@ class SnowflakeAdapter(SQLAdapter):
     @available
     def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
         grants_dict = {}
+        
         for row in grants_table:
-            grantee = row['grantee_name'].lower()
-            privilege = row['privilege'].lower()
-            if privilege in grants_dict.keys():
-                grants_dict[privilege].append(grantee)
-            else:
-                grants_dict.update({privilege: [grantee]})
+            grantee = row['grantee_name']
+            privilege = row['privilege']
+            if privilege != 'OWNERSHIP':
+                if privilege in grants_dict.keys():
+                    grants_dict[privilege].append(grantee)
+                else:
+                    grants_dict.update({privilege: [grantee]})
         return grants_dict
 
     def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
