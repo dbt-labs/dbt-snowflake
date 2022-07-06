@@ -87,7 +87,6 @@ class SnowflakeAdapter(SQLAdapter):
         if context is not None:
             self._use_warehouse(context)
 
-
     def list_schemas(self, database: str) -> List[str]:
         try:
             results = self.execute_macro(LIST_SCHEMAS_MACRO_NAME, kwargs={"database": database})
@@ -163,11 +162,23 @@ class SnowflakeAdapter(SQLAdapter):
     @available
     def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
         grants_dict = {}
-        
+
         for row in grants_table:
             grantee = row['grantee_name']
             privilege = row['privilege']
-            if privilege != 'OWNERSHIP':
+            granted_by = row['granted_by']
+
+            # super gross, but it works
+            # (this is the value from profiles.yml)
+            current_role = self.connections.profile.credentials.role
+
+            if(
+                # granted BY the current role
+                granted_by.lower() == current_role.lower()
+                and
+                # NOT granted TO the current role
+                grantee.lower() != current_role.lower()
+            ):
                 if privilege in grants_dict.keys():
                     grants_dict[privilege].append(grantee)
                 else:

@@ -4,7 +4,7 @@
 
   {%- set identifier = model['alias'] -%}
 
-  {% set  grant_config = config.get('grants') %}
+  {% set grant_config = config.get('grants') %}
 
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
   {%- set target_relation = api.Relation.create(identifier=identifier,
@@ -27,7 +27,8 @@
 
   {{ run_hooks(post_hooks) }}
 
- {% do apply_grants(target_relation, grant_config, should_revoke=True) %}
+  {% set should_revoke = do_we_need_to_show_and_revoke_grants(old_relation, full_refresh_mode=True) %}
+  {% do apply_grants(target_relation, grant_config, should_revoke=should_revoke) %}
 
   {% do persist_docs(target_relation, model) %}
 
