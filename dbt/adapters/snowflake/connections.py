@@ -6,7 +6,10 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
 from time import sleep
-from typing import Optional
+from typing import Optional, Tuple
+
+import agate
+import dbt.clients.agate_helper
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -430,6 +433,19 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
         return super().process_results(column_names, fixed)
 
+    def execute(
+        self, sql: str, auto_begin: bool = False, fetch: bool = False
+    ) -> Tuple[AdapterResponse, agate.Table]:
+        # don't apply the query comment here
+        # it will be applied after ';' queries are split
+        _, cursor = self.add_query(sql, auto_begin)
+        response = self.get_response(cursor)
+        if fetch:
+            table = self.get_result_from_cursor(cursor)
+        else:
+            table = dbt.clients.agate_helper.empty_table()
+        return response, table
+
     def add_query(self, sql, auto_begin=True, bindings=None, abridge_sql_log=False):
 
         connection = None
@@ -454,6 +470,24 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
             if without_comments == "":
                 continue
+
+            # Even though we turn off transactions by default for Snowflake,
+            # the user/macro has passed them *explicitly*, probably to wrap a DML statement
+            # Let their wish be granted!
+            # This also has the effect of ignoring "commit" in the RunResult for this model
+            # https://github.com/dbt-labs/dbt-snowflake/issues/147
+            if individual_query.lower() == "begin;":
+                super().add_begin_query()
+                continue
+
+            elif individual_query.lower() == "commit;":
+                super().add_commit_query()
+                continue
+
+            # add a query comment to *every* statement
+            # needed for models with multi-step materializations
+            # https://github.com/dbt-labs/dbt-snowflake/issues/140
+            individual_query = self._add_query_comment(individual_query)
 
             connection, cursor = super().add_query(
                 individual_query, auto_begin, bindings=bindings, abridge_sql_log=abridge_sql_log

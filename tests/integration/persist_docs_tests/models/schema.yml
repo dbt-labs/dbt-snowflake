@@ -24,6 +24,15 @@ models:
         description: |
           Some stuff here and then a call to
           {{ doc('my_fun_doc')}}
+      - name: order
+        description: |
+          Order keyword lowercase column description
+      - name: ORDER
+        description: |
+          Order keyword uppercase column description
+      - name: OrDer
+        description: |
+          Order keyword mixed case column description
   - name: view_model
     description: |
       View model description "with double quotes"
@@ -43,6 +52,15 @@ models:
           --
           /* comment */
           Some $lbl$ labeled $lbl$ and $$ unlabeled $$ dollar-quoting
+      - name: order
+        description: |
+          Order keyword lowercase column description
+      - name: ORDER
+        description: |
+          Order keyword uppercase column description
+      - name: OrDer
+        description: |
+          Order keyword mixed case column description
 
 seeds:
   - name: seed
