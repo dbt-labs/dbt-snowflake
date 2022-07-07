@@ -294,7 +294,7 @@
   {%- endcall %}
 {% endmacro %}
 
-{% macro snowflake__are_grants_copied_over_when_replaced() %}
+{% macro snowflake__copy_grants() %}
     {% set copy_grants = config.get('copy_grants', False) %}
     {{ return(copy_grants) }}
 {% endmacro %}

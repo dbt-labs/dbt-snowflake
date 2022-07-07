@@ -74,6 +74,16 @@ class SnowflakeAdapter(SQLAdapter):
         """Use the given warehouse. Quotes are never applied."""
         self.execute("use warehouse {}".format(warehouse))
 
+    def _get_role(self) -> str:
+        configured_role = self.connections.profile.credentials.role
+        if configured_role:
+            return configured_role
+        else:
+            _, table = self.execute("select current_role() as warehouse", fetch=True)
+            if len(table) == 0 or len(table[0]) == 0:
+                raise RuntimeException("Could not get current role: no results")
+            return str(table[0][0])
+
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:
         default_warehouse = self.config.credentials.warehouse
         warehouse = config.get("snowflake_warehouse", default_warehouse)
@@ -168,9 +178,8 @@ class SnowflakeAdapter(SQLAdapter):
             privilege = row['privilege']
             granted_by = row['granted_by']
 
-            # super gross, but it works
-            # (this is the value from profiles.yml)
-            current_role = self.connections.profile.credentials.role
+            current_role = self._get_role()
+            breakpoint()
 
             if(
                 # granted BY the current role
