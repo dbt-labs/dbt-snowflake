@@ -164,9 +164,9 @@ class SnowflakeAdapter(SQLAdapter):
         grants_dict = {}
 
         for row in grants_table:
-            grantee = row['grantee_name']
-            privilege = row['privilege']
-            if privilege != 'OWNERSHIP':
+            grantee = row["grantee_name"]
+            privilege = row["privilege"]
+            if privilege != "OWNERSHIP":
                 if privilege in grants_dict.keys():
                     grants_dict[privilege].append(grantee)
                 else:
