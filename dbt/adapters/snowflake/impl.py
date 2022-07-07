@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Mapping, Any, Optional, List, Union
+from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
@@ -161,7 +161,7 @@ class SnowflakeAdapter(SQLAdapter):
 
     @available
     def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
-        grants_dict = {}
+        grants_dict: Dict[str, Any] = {}
 
         for row in grants_table:
             grantee = row["grantee_name"]
