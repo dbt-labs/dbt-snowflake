@@ -1,9 +1,29 @@
-## dbt-snowflake 1.2.0 (tbd)
+## dbt-snowflake 1.2.0rc1 (Release TBD)
+
+### Fixes
+- In multi-query statements, prepend all queries with query comments. Use the last non-`COMMIT` query to store metadata about the model result. **Note:** this restores previous (pre-v0.21) behavior for incremental models and snapshots, which will again correctly reflect the number of rows modified in `adapter_response.rows_affected` ([#140](https://github.com/dbt-labs/dbt-snowflake/issues/140), [#147](https://github.com/dbt-labs/dbt-snowflake/issues147140), [#153](https://github.com/dbt-labs/dbt-snowflake/pull/153))
+- Improve column comment handling when `persist_docs` is enabled ([#161](https://github.com/dbt-labs/dbt-snowflake/pull/161))
+
+### Contributors
+- [@LewisDavies](https://github.com/LewisDavies) ([#161](https://github.com/dbt-labs/dbt-snowflake/pull/161))
+
+## dbt-snowflake 1.2.0b1 (June 24, 2022)
+
+### Features
+- Add set_query_tag and unset_query_tag to the dbt macro namespace ([#133](https://github.com/dbt-labs/dbt-snowflake/issues/133), [#132](https://github.com/dbt-labs/dbt-snowflake/pull/132))
 
 ### Under the hood
 - Add precommits for this repo ([#107](https://github.com/dbt-labs/dbt-snowflake/pull/107))
 - Cleanup redundant precommit hook command ([#145](https://github.com/dbt-labs/dbt-snowflake/pull/145))
 - File rename to match reference to core ([#152](https://github.com/dbt-labs/dbt-snowflake/pull/152))
+- Bump cryptography restraint upper bound to <37.0.0 ([#171](https://github.com/dbt-labs/dbt-snowflake/pull/171))
+- Migrate oauth refresh script from core ([#175](https://github.com/dbt-labs/dbt-snowflake/pull/175))
+- Lift and shift cross-database macros from dbt-utils ([#162](https://github.com/dbt-labs/dbt-snowflake/pull/162)
+
+### Contributors
+- [@hhobson](https://github.com/hhobson) ([#171](https://github.com/dbt-labs/dbt-snowflake/pull/171))
+- [@robscriva](https://github.com/robscriva) ([#132](https://github.com/dbt-labs/dbt-snowflake/pull/132))
+- [@dbeatty10](https://github.com/dbeatty10) ([#162](https://github.com/dbt-labs/dbt-snowflake/pull/162)
 
 ## dbt-snowflake 1.1.0b1 (March 23, 2022)
 
