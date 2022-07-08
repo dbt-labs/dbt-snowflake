@@ -33,7 +33,7 @@
 
 {% endmaterialization %}
 
-{% macro py_complete_script(compiled_code, target_relation) %}
+{% macro py_complete_script(compiled_code, target_relation, temporary=False) %}
 {{ compiled_code }}
 def materialize(session, df, target_relation):
     # we have to make sure pandas is imported
@@ -41,7 +41,7 @@ def materialize(session, df, target_relation):
     if isinstance(df, pandas.core.frame.DataFrame):
         # session.write_pandas does not have overwrite function
         df = session.createDataFrame(df)
-    df.write.mode("overwrite").save_as_table("{{ target_relation }}")
+    df.write.mode("overwrite").save_as_table("{{ target_relation }}", create_temp_table={{temporary}})
 
 def main(session):
     """

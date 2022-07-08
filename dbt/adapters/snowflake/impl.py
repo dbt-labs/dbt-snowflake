@@ -177,6 +177,7 @@ LANGUAGE PYTHON
 RUNTIME_VERSION = '3.8' -- TODO should this be configurable?
 PACKAGES = ('{packages}')
 HANDLER = 'main'
+EXECUTE AS CALLER
 AS
 $$
 {compiled_code}

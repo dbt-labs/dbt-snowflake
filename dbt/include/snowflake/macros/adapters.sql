@@ -39,7 +39,7 @@
       {%- endif -%}
 
   {%- elif language == 'python' -%}
-    {{ py_complete_script(compiled_code=compiled_code, target_relation=relation) }}
+    {{ py_complete_script(compiled_code=compiled_code, target_relation=relation, temporary=temporary) }}
   {%- else -%}
       {% do exceptions.raise_compiler_error("snowflake__create_table_as macro didn't get supported language") %}
   {%- endif -%}
