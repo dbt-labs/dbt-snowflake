@@ -16,7 +16,11 @@ class TestIncrementalGrantsSnowflake(BaseIncrementalGrants):
 
 
 class TestInvalidGrantsSnowflake(BaseInvalidGrants):
-    pass
+    def grantee_does_not_exist_error(self):
+        return "does not exist or not authorized"
+
+    def privilege_does_not_exist_error(self):
+        return "unexpected"
 
 
 class TestModelGrantsSnowflake(BaseModelGrants):
