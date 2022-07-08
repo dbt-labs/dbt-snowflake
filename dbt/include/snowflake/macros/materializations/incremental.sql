@@ -72,15 +72,12 @@
     {% if not dest_columns %}
       {% set dest_columns = adapter.get_columns_in_relation(existing_relation) %}
     {% endif %}
-     {%- call statement('main') -%}
+
+    {%- call statement('main') -%}
       {{ dbt_snowflake_get_incremental_sql(strategy, tmp_relation, target_relation, unique_key, dest_columns) }}
     {%- endcall -%}
 
   {% endif %}
-
-  {%- call statement('main') -%}
-    {{ build_sql }}
-  {%- endcall -%}
 
   {{ run_hooks(post_hooks) }}
 
