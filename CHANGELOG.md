@@ -4,6 +4,9 @@
 - In multi-query statements, prepend all queries with query comments. Use the last non-`COMMIT` query to store metadata about the model result. **Note:** this restores previous (pre-v0.21) behavior for incremental models and snapshots, which will again correctly reflect the number of rows modified in `adapter_response.rows_affected` ([#140](https://github.com/dbt-labs/dbt-snowflake/issues/140), [#147](https://github.com/dbt-labs/dbt-snowflake/issues147140), [#153](https://github.com/dbt-labs/dbt-snowflake/pull/153))
 - Improve column comment handling when `persist_docs` is enabled ([#161](https://github.com/dbt-labs/dbt-snowflake/pull/161))
 
+### Features
+- Add grants to materializations ([#168](https://github.com/dbt-labs/dbt-snowflake/issues/168), [#178](https://github.com/dbt-labs/dbt-snowflake/pull/178))
+
 ### Contributors
 - [@LewisDavies](https://github.com/LewisDavies) ([#161](https://github.com/dbt-labs/dbt-snowflake/pull/161))
 
