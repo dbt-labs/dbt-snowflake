@@ -1,18 +1,27 @@
-from dbt.tests.adapter.grants.base_grants import BaseGrants
+import pytest
 from dbt.tests.adapter.grants.test_incremental_grants import BaseIncrementalGrants
 from dbt.tests.adapter.grants.test_invalid_grants import BaseInvalidGrants
 from dbt.tests.adapter.grants.test_model_grants import BaseModelGrants
-# to do: from dbt.tests.adapter.grants.test_revoke_all import
 from dbt.tests.adapter.grants.test_seed_grants import BaseSeedGrants
 from dbt.tests.adapter.grants.test_snapshot_grants import BaseSnapshotGrants
 
 
-class TestGrantsSnowflake(BaseGrants):
-    pass
-
-
-class TestIncrementalGrantsSnowflake(BaseIncrementalGrants):
-    pass
+class BaseCopyGrantsSnowflake:
+    # Try every test case without copy_grants enabled (default),
+    # and with copy_grants enabled (this base class)
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "models": {
+                "+copy_grants": True,
+            },
+            "seeds": {
+                "+copy_grants": True,
+            },
+            "snapshots": {
+                "+copy_grants": True,
+            }
+        }
 
 
 class TestInvalidGrantsSnowflake(BaseInvalidGrants):
@@ -26,10 +35,23 @@ class TestInvalidGrantsSnowflake(BaseInvalidGrants):
 class TestModelGrantsSnowflake(BaseModelGrants):
     pass
 
+class TestModelGrantsCopyGrantsSnowflake(BaseCopyGrantsSnowflake, BaseModelGrants):
+    pass
+
+class TestIncrementalGrantsSnowflake(BaseIncrementalGrants):
+    pass
+
+class TestIncrementalCopyGrantsSnowflake(BaseCopyGrantsSnowflake, BaseIncrementalGrants):
+    pass
 
 class TestSeedGrantsSnowflake(BaseSeedGrants):
     pass
 
+class TestSeedCopyGrantsSnowflake(BaseCopyGrantsSnowflake, BaseSeedGrants):
+    pass
 
 class TestSnapshotGrants(BaseSnapshotGrants):
+    pass
+
+class TestSnapshotCopyGrantsSnowflake(BaseCopyGrantsSnowflake, BaseSnapshotGrants):
     pass
