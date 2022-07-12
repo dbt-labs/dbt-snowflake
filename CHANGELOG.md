@@ -7,6 +7,9 @@
 ### Features
 - Add grants to materializations ([#168](https://github.com/dbt-labs/dbt-snowflake/issues/168), [#178](https://github.com/dbt-labs/dbt-snowflake/pull/178))
 
+### Under the Hood
+- Reformat overridden macro location of grants work to a apply_grants.sql file in snowflake ([#193](https://github.com/dbt-labs/dbt-snowflake/issues/193), [#192](https://github.com/dbt-labs/dbt-snowflake/pull/192))
+
 ### Contributors
 - [@LewisDavies](https://github.com/LewisDavies) ([#161](https://github.com/dbt-labs/dbt-snowflake/pull/161))
 
