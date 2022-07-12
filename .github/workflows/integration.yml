@@ -170,6 +170,9 @@ jobs:
           SNOWFLAKE_TEST_DATABASE: ${{ secrets.SNOWFLAKE_TEST_DATABASE }}
           SNOWFLAKE_TEST_QUOTED_DATABASE: ${{ secrets.SNOWFLAKE_TEST_QUOTED_DATABASE }}
           SNOWFLAKE_TEST_ROLE: ${{ secrets.SNOWFLAKE_TEST_ROLE }}
+          DBT_TEST_USER_1: dbt_test_role_1
+          DBT_TEST_USER_2: dbt_test_role_2
+          DBT_TEST_USER_3: dbt_test_role_3
         run: tox
 
       - uses: actions/upload-artifact@v2
