@@ -1,5 +1,7 @@
 ## dbt-snowflake 1.3.0b1 (Release TBD)
 
+### Under the Hood
+- Reformat overridden macro location of grants work to a apply_grants.sql file in snowflake ([#193](https://github.com/dbt-labs/dbt-snowflake/issues/193), [#192](https://github.com/dbt-labs/dbt-snowflake/pull/192))
 
 ## dbt-snowflake 1.2.0rc1 (July 12, 2022)
 
