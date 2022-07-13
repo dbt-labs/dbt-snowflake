@@ -175,3 +175,6 @@ class SnowflakeAdapter(SQLAdapter):
 
     def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
         return f"DATEADD({interval}, {number}, {add_to})"
+
+    def valid_incremental_strategies(self):
+        return ["merge", "delete+insert"]
