@@ -263,6 +263,11 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         error = None
         for attempt in range(1 + creds.connect_retries):
             try:
+                session_parameters = {}
+
+                if creds.query_tag:
+                    session_parameters.update({"QUERY_TAG": creds.query_tag})
+
                 handle = snowflake.connector.connect(
                     account=creds.account,
                     user=creds.user,
@@ -273,14 +278,10 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                     autocommit=True,
                     client_session_keep_alive=creds.client_session_keep_alive,
                     application="dbt",
+                    session_parameters=session_parameters,
                     insecure_mode=creds.insecure_mode,
                     **creds.auth_args(),
                 )
-
-                if creds.query_tag:
-                    handle.cursor().execute(
-                        ("alter session set query_tag = '{}'").format(creds.query_tag)
-                    )
 
                 connection.handle = handle
                 connection.state = "open"
