@@ -169,7 +169,7 @@ class SnowflakeAdapter(SQLAdapter):
         identifier = parsed_model['alias']
         proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
         packages = ['snowflake-snowpark-python'] + parsed_model['config'].get('packages', [])
-        packages = "', ".join(packages)
+        packages = "', '".join(packages)
         python_stored_procedure = f"""
 CREATE OR REPLACE PROCEDURE {proc_name} ()
 RETURNS STRING
