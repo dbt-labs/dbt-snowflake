@@ -44,10 +44,7 @@ def materialize(session, df, target_relation):
     df.write.mode("overwrite").save_as_table("{{ target_relation }}", create_temp_table={{temporary}})
 
 def main(session):
-    """
-    TODOs:
-      - what should this return? can we make a real RunResult?
-    """
+
     dbt = dbtObj(session.table)
     df = model(dbt, session)
     materialize(session, df, dbt.this)

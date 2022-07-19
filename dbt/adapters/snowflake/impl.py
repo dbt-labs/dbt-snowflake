@@ -185,10 +185,8 @@ $$
 $$;
         """
         self.execute(python_stored_procedure, auto_begin=False, fetch=False)
-        self.execute(f"CALL {proc_name}()", auto_begin=False, fetch=False)
+        response, _ = self.execute(f"CALL {proc_name}()", auto_begin=False, fetch=False)
         self.execute(f"drop procedure if exists {proc_name}(string)", auto_begin=False, fetch=False)
-        
-        # TODO add proper return
-        return "OK"
+        return response
         
 
