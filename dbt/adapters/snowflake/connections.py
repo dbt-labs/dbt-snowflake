@@ -64,6 +64,7 @@ class SnowflakeCredentials(Credentials):
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
+    release_connection: Optional[bool] = True
 
     def __post_init__(self):
         if self.authenticator != "oauth" and (
@@ -216,6 +217,11 @@ class SnowflakeCredentials(Credentials):
 class SnowflakeConnectionManager(SQLConnectionManager):
     TYPE = "snowflake"
 
+    # Used for determining if the connection should be released.
+    # As this feature is new, we don't want to break existing integrations, instead make it opt-in for users to test.
+    # Reusing connections can see a big performance improvement, as you don't need to reauthenticate.
+    __release_connection: Optional[bool] = True
+
     @contextmanager
     def exception_handler(self, sql):
         try:
@@ -260,6 +266,10 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             return connection
 
         creds = connection.credentials
+
+        if not creds.release_connection:
+            cls.__release_connection = False
+
         error = None
         for attempt in range(1 + creds.connect_retries):
             try:
@@ -508,3 +518,21 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             )
 
         return connection, cursor
+
+    def release(self) -> None:
+        if not self.__release_connection:
+            return
+
+        with self.lock:
+            conn = self.get_if_exists()
+            if conn is None:
+                return
+
+        try:
+            # always close the connection. close() calls _rollback() if there
+            # is an open transaction
+            self.close(conn)
+        except Exception:
+            # if rollback or close failed, remove our busted connection
+            self.clear_thread_connection()
+            raise
