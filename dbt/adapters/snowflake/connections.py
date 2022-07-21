@@ -16,6 +16,18 @@ from cryptography.hazmat.primitives import serialization
 import requests
 import snowflake.connector
 import snowflake.connector.errors
+from snowflake.connector.errors import (
+    Error,
+    DatabaseError,
+    InternalError,
+    InternalServerError,
+    ServiceUnavailableError,
+    GatewayTimeoutError,
+    RequestTimeoutError,
+    BadGatewayError,
+    OtherHTTPRetryableError,
+    BindUploadError,
+)
 
 from dbt.exceptions import (
     InternalException,
@@ -60,7 +72,7 @@ class SnowflakeCredentials(Credentials):
     proxy_port: Optional[int] = None
     protocol: Optional[str] = None
     connect_retries: int = 1
-    connect_timeout: Optional[int] = 10
+    connect_timeout: Optional[int] = None
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
@@ -287,11 +299,21 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         def exponential_backoff(attempt: int):
             return attempt * attempt
 
-        retryable_exceptions = []
+        retryable_exceptions = [
+            InternalError,
+            InternalServerError,
+            ServiceUnavailableError,
+            GatewayTimeoutError,
+            RequestTimeoutError,
+            BadGatewayError,
+            OtherHTTPRetryableError,
+            BindUploadError,
+        ]
+        # these two options are for backwards compatibility
         if creds.retry_all:
-            retryable_exceptions = [snowflake.connector.errors.Error]
+            retryable_exceptions = [Error]
         elif creds.retry_on_database_errors:
-            retryable_exceptions = [snowflake.connector.errors.DatabaseError]
+            retryable_exceptions.insert(0, DatabaseError)
 
         return cls.retry_connection(
             connection,
