@@ -107,9 +107,7 @@ class SnowflakeAdapter(SQLAdapter):
             else:
                 raise
 
-    def list_relations_without_caching(
-        self, schema_relation: SnowflakeRelation
-    ) -> List[SnowflakeRelation]:
+    def list_relations_without_caching(self, schema_relation: SnowflakeRelation) -> List[SnowflakeRelation]:  # type: ignore
         kwargs = {"schema_relation": schema_relation}
         try:
             results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
@@ -163,12 +161,12 @@ class SnowflakeAdapter(SQLAdapter):
         return f"DATEADD({interval}, {number}, {add_to})"
 
     @available.parse_none
-    def submit_python_job(self, parsed_model:dict, compiled_code: str):
+    def submit_python_job(self, parsed_model: dict, compiled_code: str):
         schema = getattr(parsed_model, "schema", self.config.credentials.schema)
         database = getattr(parsed_model, "database", self.config.credentials.database)
-        identifier = parsed_model['alias']
+        identifier = parsed_model["alias"]
         proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
-        packages = ['snowflake-snowpark-python'] + parsed_model['config'].get('packages', [])
+        packages = ["snowflake-snowpark-python"] + parsed_model["config"].get("packages", [])
         packages = "', '".join(packages)
         python_stored_procedure = f"""
 CREATE OR REPLACE PROCEDURE {proc_name} ()
@@ -186,7 +184,9 @@ $$;
         """
         self.execute(python_stored_procedure, auto_begin=False, fetch=False)
         response, _ = self.execute(f"CALL {proc_name}()", auto_begin=False, fetch=False)
-        self.execute(f"drop procedure if exists {proc_name}(string)", auto_begin=False, fetch=False)
+        self.execute(
+            f"drop procedure if exists {proc_name}(string)",
+            auto_begin=False,
+            fetch=False,
+        )
         return response
-        
-
