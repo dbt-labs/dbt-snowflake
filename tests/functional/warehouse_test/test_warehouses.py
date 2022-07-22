@@ -3,11 +3,7 @@ from dbt.tests.util import (
     run_dbt,
     check_relations_equal
 )
-# from tests.functional.warehouse_test.fixtures import (
-#     models,
-#     project_config_models,
-#     project_files
-#     ) # noqa: F401
+
 import os
 
 
@@ -51,7 +47,7 @@ def models():
     }
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def project_config_models():
     return {
         "override_warehouse.sql": project_config_models__override_warehouse_sql,
@@ -72,11 +68,12 @@ class TestModelWarehouse():
 
 
 class TestConfigWarehouse():
+
+
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {
             'config-version': 2,
-            'model-paths': ['project_config_models'],
             'models': {
                 'test': {
                     'snowflake_warehouse': os.getenv('SNOWFLAKE_TEST_ALT_WAREHOUSE', 'DBT_TEST_ALT'),
