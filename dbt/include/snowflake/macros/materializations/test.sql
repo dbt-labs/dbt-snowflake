@@ -1,5 +1,5 @@
 {%- materialization test, adapter='snowflake' -%}
-
+  {% set original_query_tag = set_query_tag() %}
   {% set relations = [] %}
 
   {% if should_store_failures() %}
@@ -42,7 +42,8 @@
     {{ get_test_sql(main_sql, fail_calc, warn_if, error_if, limit)}}
 
   {%- endcall %}
-
+  
+  {% do unset_query_tag(original_query_tag) %}
   {{ return({'relations': relations}) }}
 
 {%- endmaterialization -%}
