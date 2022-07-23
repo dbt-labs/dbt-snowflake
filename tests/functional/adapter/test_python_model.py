@@ -2,36 +2,8 @@ import pytest
 from dbt.tests.util import run_dbt, write_file
 from dbt.tests.adapter.python_model.test_python_model import BasePythonModelTests
 
-basic_sql = """
-select 1 as id union all
-select 1 as id union all
-select 1 as id union all
-select 1 as id union all
-select 1 as id
-"""
-basic_python = """
-def model(dbt, session):
-    dbt.config(
-        materialized='table',
-    )
-    df =  dbt.ref("my_sql_model")
-    df = df.limit(2)
-    return df
-"""
-
-class TestBasePythonModelSnowflake:
-    @pytest.fixture(scope="class")
-    def models(self):
-        return {
-            "my_sql_model.sql": basic_sql,
-            "my_python_model.py": basic_python,
-        }
-
-    def test_singular_tests(self, project):
-        # test command
-        results = run_dbt(["run"])
-        assert len(results) == 2
-
+class TestPythonModelSpark(BasePythonModelTests):
+    pass
 
 models__simple_python_model = """
 import pandas
