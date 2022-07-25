@@ -1,31 +1,5 @@
-
-{% macro dbt_snowflake_validate_get_incremental_strategy(config) %}
-  {#-- Find and validate the incremental strategy #}
-  {%- set strategy = config.get("incremental_strategy", default="merge") -%}
-
-  {% set invalid_strategy_msg -%}
-    Invalid incremental strategy provided: {{ strategy }}
-    Expected one of: 'merge', 'delete+insert'
-  {%- endset %}
-  {% if strategy not in ['merge', 'delete+insert'] %}
-    {% do exceptions.raise_compiler_error(invalid_strategy_msg) %}
-  {% endif %}
-
-  {% do return(strategy) %}
-{% endmacro %}
-
-{% macro dbt_snowflake_get_incremental_sql(strategy, tmp_relation, target_relation, unique_key, dest_columns) %}
-  {% if strategy == 'merge' %}
-    {% do return(get_merge_sql(target_relation, tmp_relation, unique_key, dest_columns)) %}
-  {% elif strategy == 'delete+insert' %}
-    {% do return(get_delete_insert_merge_sql(target_relation, tmp_relation, unique_key, dest_columns)) %}
-  {% else %}
-    {% do exceptions.raise_compiler_error('invalid strategy: ' ~ strategy) %}
-  {% endif %}
-{% endmacro %}
-
 {% materialization incremental, adapter='snowflake' -%}
-   
+
   {% set original_query_tag = set_query_tag() %}
 
   {%- set unique_key = config.get('unique_key') -%}
@@ -35,24 +9,24 @@
   {% set existing_relation = load_relation(this) %}
   {% set tmp_relation = make_temp_relation(this) %}
 
-  {#-- Validate early so we don't run SQL if the strategy is invalid --#}
-  {% set strategy = dbt_snowflake_validate_get_incremental_strategy(config) -%}
+  {% set  grant_config = config.get('grants') %}
+
   {% set on_schema_change = incremental_validate_on_schema_change(config.get('on_schema_change'), default='ignore') %}
 
   {{ run_hooks(pre_hooks) }}
 
   {% if existing_relation is none %}
     {% set build_sql = create_table_as(False, target_relation, sql) %}
-  
+
   {% elif existing_relation.is_view %}
     {#-- Can't overwrite a view with a table - we must drop --#}
     {{ log("Dropping relation " ~ target_relation ~ " because it is a view and this model is a table.") }}
     {% do adapter.drop_relation(existing_relation) %}
     {% set build_sql = create_table_as(False, target_relation, sql) %}
-  
+
   {% elif full_refresh_mode %}
     {% set build_sql = create_table_as(False, target_relation, sql) %}
-  
+
   {% else %}
     {% do run_query(create_table_as(True, tmp_relation, sql)) %}
     {% do adapter.expand_target_column_types(
@@ -63,8 +37,14 @@
     {% if not dest_columns %}
       {% set dest_columns = adapter.get_columns_in_relation(existing_relation) %}
     {% endif %}
-    {% set build_sql = dbt_snowflake_get_incremental_sql(strategy, tmp_relation, target_relation, unique_key, dest_columns) %}
-  
+
+    {#-- Get the incremental_strategy, the macro to use for the strategy, and build the sql --#}
+    {% set incremental_strategy = config.get('incremental_strategy') or 'default' %}
+    {% set incremental_predicates = config.get('incremental_predicates', none) %}
+    {% set strategy_sql_macro_func = adapter.get_incremental_strategy_macro(context, incremental_strategy) %}
+    {% set strategy_arg_dict = ({'target_relation': target_relation, 'temp_relation': tmp_relation, 'unique_key': unique_key, 'dest_columns': dest_columns, 'predicates': incremental_predicates }) %}
+    {% set build_sql = strategy_sql_macro_func(strategy_arg_dict) %}
+
   {% endif %}
 
   {%- call statement('main') -%}
@@ -74,6 +54,11 @@
   {{ run_hooks(post_hooks) }}
 
   {% set target_relation = target_relation.incorporate(type='table') %}
+
+  {% set should_revoke =
+   should_revoke(existing_relation.is_table, full_refresh_mode) %}
+  {% do apply_grants(target_relation, grant_config, should_revoke=should_revoke) %}
+
   {% do persist_docs(target_relation, model) %}
 
   {% do unset_query_tag(original_query_tag) %}
@@ -81,3 +66,7 @@
   {{ return({'relations': [target_relation]}) }}
 
 {%- endmaterialization %}
+
+{% macro snowflake__get_incremental_default_sql(arg_dict) %}
+  {{ return(get_incremental_merge_sql(arg_dict)) }}
+{% endmacro %}

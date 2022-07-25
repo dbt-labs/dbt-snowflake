@@ -1,21 +1,20 @@
 from dataclasses import dataclass
-from typing import Mapping, Any, Optional, List, Union
+from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
 from dbt.adapters.base.impl import AdapterConfig
-from dbt.adapters.sql import SQLAdapter
+from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
+from dbt.adapters.base.meta import available
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.contracts.graph.manifest import Manifest
-from dbt.exceptions import (
-    raise_compiler_error, RuntimeException, DatabaseException
-)
+from dbt.exceptions import raise_compiler_error, RuntimeException, DatabaseException
 from dbt.utils import filter_null_values
 
 
@@ -46,14 +45,10 @@ class SnowflakeAdapter(SQLAdapter):
         return "CURRENT_TIMESTAMP()"
 
     @classmethod
-    def _catalog_filter_table(
-        cls, table: agate.Table, manifest: Manifest
-    ) -> agate.Table:
+    def _catalog_filter_table(cls, table: agate.Table, manifest: Manifest) -> agate.Table:
         # On snowflake, users can set QUOTED_IDENTIFIERS_IGNORE_CASE, so force
         # the column names to their lowercased forms.
-        lowered = table.rename(
-            column_names=[c.lower() for c in table.column_names]
-        )
+        lowered = table.rename(column_names=[c.lower() for c in table.column_names])
         return super()._catalog_filter_table(lowered, manifest)
 
     def _make_match_kwargs(self, database, schema, identifier):
@@ -72,15 +67,10 @@ class SnowflakeAdapter(SQLAdapter):
         )
 
     def _get_warehouse(self) -> str:
-        _, table = self.execute(
-            'select current_warehouse() as warehouse',
-            fetch=True
-        )
+        _, table = self.execute("select current_warehouse() as warehouse", fetch=True)
         if len(table) == 0 or len(table[0]) == 0:
             # can this happen?
-            raise RuntimeException(
-                'Could not get current warehouse: no results'
-            )
+            raise RuntimeException("Could not get current warehouse: no results")
         return str(table[0][0])
 
     def _use_warehouse(self, warehouse: str):
@@ -94,90 +84,76 @@ class SnowflakeAdapter(SQLAdapter):
         )
         self.execute('use warehouse {}'.format(warehouse))
 
+
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:
         default_warehouse = self.config.credentials.warehouse
-        warehouse = config.get('snowflake_warehouse', default_warehouse)
+        warehouse = config.get("snowflake_warehouse", default_warehouse)
         if warehouse == default_warehouse or warehouse is None:
             return None
         previous = self._get_warehouse()
         self._use_warehouse(warehouse)
         return previous
 
-    def post_model_hook(
-        self, config: Mapping[str, Any], context: Optional[str]
-    ) -> None:
+    def post_model_hook(self, config: Mapping[str, Any], context: Optional[str]) -> None:
         if context is not None:
             self._use_warehouse(context)
 
     def list_schemas(self, database: str) -> List[str]:
         try:
-            results = self.execute_macro(
-                LIST_SCHEMAS_MACRO_NAME,
-                kwargs={'database': database}
-            )
+            results = self.execute_macro(LIST_SCHEMAS_MACRO_NAME, kwargs={"database": database})
         except DatabaseException as exc:
-            msg = (
-                f'Database error while listing schemas in database '
-                f'"{database}"\n{exc}'
-            )
+            msg = f"Database error while listing schemas in database " f'"{database}"\n{exc}'
             raise RuntimeException(msg)
         # this uses 'show terse schemas in database', and the column name we
         # want is 'name'
 
-        return [row['name'] for row in results]
+        return [row["name"] for row in results]
 
     def get_columns_in_relation(self, relation):
         try:
             return super().get_columns_in_relation(relation)
         except DatabaseException as exc:
-            if 'does not exist or not authorized' in str(exc):
+            if "does not exist or not authorized" in str(exc):
                 return []
             else:
                 raise
 
     def list_relations_without_caching(
-            self, schema_relation: SnowflakeRelation
+        self, schema_relation: SnowflakeRelation
     ) -> List[SnowflakeRelation]:
-        kwargs = {'schema_relation': schema_relation}
+        kwargs = {"schema_relation": schema_relation}
         try:
-            results = self.execute_macro(
-                LIST_RELATIONS_MACRO_NAME,
-                kwargs=kwargs
-            )
+            results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
         except DatabaseException as exc:
             # if the schema doesn't exist, we just want to return.
             # Alternatively, we could query the list of schemas before we start
             # and skip listing the missing ones, which sounds expensive.
-            if 'Object does not exist' in str(exc):
+            if "Object does not exist" in str(exc):
                 return []
             raise
 
         relations = []
-        quote_policy = {
-            'database': True,
-            'schema': True,
-            'identifier': True
-        }
+        quote_policy = {"database": True, "schema": True, "identifier": True}
 
-        columns = ['database_name', 'schema_name', 'name', 'kind']
+        columns = ["database_name", "schema_name", "name", "kind"]
         for _database, _schema, _identifier, _type in results.select(columns):
             try:
                 _type = self.Relation.get_relation_type(_type.lower())
             except ValueError:
                 _type = self.Relation.External
-            relations.append(self.Relation.create(
-                database=_database,
-                schema=_schema,
-                identifier=_identifier,
-                quote_policy=quote_policy,
-                type=_type
-            ))
+            relations.append(
+                self.Relation.create(
+                    database=_database,
+                    schema=_schema,
+                    identifier=_identifier,
+                    quote_policy=quote_policy,
+                    type=_type,
+                )
+            )
 
         return relations
 
-    def quote_seed_column(
-        self, column: str, quote_config: Optional[bool]
-    ) -> str:
+    def quote_seed_column(self, column: str, quote_config: Optional[bool]) -> str:
         quote_columns: bool = False
         if isinstance(quote_config, bool):
             quote_columns = quote_config
@@ -186,7 +162,7 @@ class SnowflakeAdapter(SQLAdapter):
         else:
             raise_compiler_error(
                 f'The seed configuration value of "quote_columns" has an '
-                f'invalid type {type(quote_config)}'
+                f"invalid type {type(quote_config)}"
             )
 
         if quote_columns:
@@ -194,7 +170,22 @@ class SnowflakeAdapter(SQLAdapter):
         else:
             return column
 
-    def timestamp_add_sql(
-        self, add_to: str, number: int = 1, interval: str = 'hour'
-    ) -> str:
-        return f'DATEADD({interval}, {number}, {add_to})'
+    @available
+    def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
+        grants_dict: Dict[str, Any] = {}
+
+        for row in grants_table:
+            grantee = row["grantee_name"]
+            privilege = row["privilege"]
+            if privilege != "OWNERSHIP":
+                if privilege in grants_dict.keys():
+                    grants_dict[privilege].append(grantee)
+                else:
+                    grants_dict.update({privilege: [grantee]})
+        return grants_dict
+
+    def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
+        return f"DATEADD({interval}, {number}, {add_to})"
+
+    def valid_incremental_strategies(self):
+        return ["append", "merge", "delete+insert"]

@@ -38,19 +38,28 @@
     {%- endif -%}
 {% endmacro %}
 
-{% macro get_column_comment_sql(column_name, column_dict) %}
-  {{ adapter.quote(column_name) if column_dict[column_name]['quote'] else column_name }} COMMENT $${{ column_dict[column_name]['description'] | replace('$', '[$]') }}$$
+{% macro get_column_comment_sql(column_name, column_dict) -%}
+  {% if (column_name|upper in column_dict) -%}
+    {% set matched_column = column_name|upper -%}
+  {% elif (column_name|lower in column_dict) -%}
+    {% set matched_column = column_name|lower -%}
+  {% elif (column_name in column_dict) -%}
+    {% set matched_column = column_name -%}
+  {% else -%}
+    {% set matched_column = None -%}
+  {% endif -%}
+  {% if matched_column -%}
+    {{ adapter.quote(column_name) }} COMMENT $${{ column_dict[matched_column]['description'] | replace('$', '[$]') }}$$
+  {%- else -%}
+    {{ adapter.quote(column_name) }} COMMENT $$$$
+  {%- endif -%}
 {% endmacro %}
 
 {% macro get_persist_docs_column_list(model_columns, query_columns) %}
 (
   {% for column_name in query_columns %}
-    {% if (column_name|upper in model_columns) or (column_name in model_columns) %}
-      {{ get_column_comment_sql(column_name, model_columns) }}
-    {% else %}
-      {{column_name}}
-    {% endif %}
-    {{ ", " if not loop.last else "" }}
+    {{ get_column_comment_sql(column_name, model_columns) }}
+    {{- ", " if not loop.last else "" }}
   {% endfor %}
 )
 {% endmacro %}
@@ -63,12 +72,12 @@
   {{ sql_header if sql_header is not none }}
   create or replace {% if secure -%}
     secure
-  {%- endif %} view {{ relation }} 
+  {%- endif %} view {{ relation }}
   {% if config.persist_column_docs() -%}
     {% set model_columns = model.columns %}
     {% set query_columns = get_columns_in_query(sql) %}
     {{ get_persist_docs_column_list(model_columns, query_columns) }}
-    
+
   {%- endif %}
   {% if copy_grants -%} copy grants {%- endif %} as (
     {{ sql }}
@@ -181,8 +190,8 @@
 {% macro snowflake__alter_column_comment(relation, column_dict) -%}
     {% set existing_columns = adapter.get_columns_in_relation(relation) | map(attribute="name") | list %}
     alter {{ relation.type }} {{ relation }} alter
-    {% for column_name in column_dict if (column_name in existing_columns) or (column_name|upper in existing_columns) %}
-        {{ get_column_comment_sql(column_name, column_dict) }} {{ ',' if not loop.last else ';' }}
+    {% for column_name in existing_columns if (column_name in existing_columns) or (column_name|lower in existing_columns) %}
+        {{ get_column_comment_sql(column_name, column_dict) }} {{- ',' if not loop.last else ';' }}
     {% endfor %}
 {% endmacro %}
 
@@ -193,6 +202,11 @@
 
 
 {% macro set_query_tag() -%}
+    {{ return(adapter.dispatch('set_query_tag', 'dbt')()) }}
+{% endmacro %}
+
+
+{% macro snowflake__set_query_tag() -%}
   {% set new_query_tag = config.get('query_tag') %}
   {% if new_query_tag %}
     {% set original_query_tag = get_current_query_tag() %}
@@ -203,7 +217,13 @@
   {{ return(none)}}
 {% endmacro %}
 
+
 {% macro unset_query_tag(original_query_tag) -%}
+    {{ return(adapter.dispatch('unset_query_tag', 'dbt')(original_query_tag)) }}
+{% endmacro %}
+
+
+{% macro snowflake__unset_query_tag(original_query_tag) -%}
   {% set new_query_tag = config.get('query_tag') %}
   {% if new_query_tag %}
     {% if original_query_tag %}
@@ -214,13 +234,13 @@
       {% do run_query("alter session unset query_tag") %}
     {% endif %}
   {% endif %}
-{% endmacro %} 
+{% endmacro %}
 
 
 {% macro snowflake__alter_relation_add_remove_columns(relation, add_columns, remove_columns) %}
-  
+
   {% if add_columns %}
-    
+
     {% set sql -%}
        alter {{ relation.type }} {{ relation }} add column
           {% for column in add_columns %}
@@ -233,16 +253,16 @@
   {% endif %}
 
   {% if remove_columns %}
-  
+
     {% set sql -%}
         alter {{ relation.type }} {{ relation }} drop column
             {% for column in remove_columns %}
                 {{ column.name }}{{ ',' if not loop.last }}
             {% endfor %}
     {%- endset -%}
-    
+
     {% do run_query(sql) %}
-    
+
   {% endif %}
 
 {% endmacro %}
@@ -250,7 +270,7 @@
 
 {% macro snowflake_dml_explicit_transaction(dml) %}
   {#
-    Use this macro to wrap all INSERT, MERGE, UPDATE, DELETE, and TRUNCATE 
+    Use this macro to wrap all INSERT, MERGE, UPDATE, DELETE, and TRUNCATE
     statements before passing them into run_query(), or calling in the 'main' statement
     of a materialization
   #}
@@ -259,7 +279,7 @@
     {{ dml }};
     commit;
   {%- endset %}
-  
+
   {% do return(dml_transaction) %}
 
 {% endmacro %}

@@ -1,13 +1,54 @@
-## dbt-snowflake 1.1.0 (TBD)
+## dbt-snowflake 1.3.0b1 (Release TBD)
+
+### Under the Hood
+- Reformat overridden macro location of grants work to a apply_grants.sql file in snowflake ([#193](https://github.com/dbt-labs/dbt-snowflake/issues/193), [#192](https://github.com/dbt-labs/dbt-snowflake/pull/192))
+- Support dbt Core incremental materialization refactor ([#195](https://github.com/dbt-labs/dbt-snowflake/issues/195), [#196](https://github.com/dbt-labs/dbt-snowflake/pull/196))
+
+## dbt-snowflake 1.2.0rc1 (July 12, 2022)
+
+### Fixes
+- In multi-query statements, prepend all queries with query comments. Use the last non-`COMMIT` query to store metadata about the model result. **Note:** this restores previous (pre-v0.21) behavior for incremental models and snapshots, which will again correctly reflect the number of rows modified in `adapter_response.rows_affected` ([#140](https://github.com/dbt-labs/dbt-snowflake/issues/140), [#147](https://github.com/dbt-labs/dbt-snowflake/issues147140), [#153](https://github.com/dbt-labs/dbt-snowflake/pull/153))
+- Improve column comment handling when `persist_docs` is enabled ([#161](https://github.com/dbt-labs/dbt-snowflake/pull/161))
+
+### Features
+- Add grants to materializations ([#168](https://github.com/dbt-labs/dbt-snowflake/issues/168), [#178](https://github.com/dbt-labs/dbt-snowflake/pull/178))
+
+### Contributors
+- [@LewisDavies](https://github.com/LewisDavies) ([#161](https://github.com/dbt-labs/dbt-snowflake/pull/161))
+
+## dbt-snowflake 1.2.0b1 (June 24, 2022)
+
+### Features
+- Add set_query_tag and unset_query_tag to the dbt macro namespace ([#133](https://github.com/dbt-labs/dbt-snowflake/issues/133), [#132](https://github.com/dbt-labs/dbt-snowflake/pull/132))
+
+### Under the hood
+- Add precommits for this repo ([#107](https://github.com/dbt-labs/dbt-snowflake/pull/107))
+- Cleanup redundant precommit hook command ([#145](https://github.com/dbt-labs/dbt-snowflake/pull/145))
+- File rename to match reference to core ([#152](https://github.com/dbt-labs/dbt-snowflake/pull/152))
+- Bump cryptography restraint upper bound to <37.0.0 ([#171](https://github.com/dbt-labs/dbt-snowflake/pull/171))
+- Migrate oauth refresh script from core ([#175](https://github.com/dbt-labs/dbt-snowflake/pull/175))
+- Lift and shift cross-database macros from dbt-utils ([#162](https://github.com/dbt-labs/dbt-snowflake/pull/162)
+
+### Contributors
+- [@hhobson](https://github.com/hhobson) ([#171](https://github.com/dbt-labs/dbt-snowflake/pull/171))
+- [@robscriva](https://github.com/robscriva) ([#132](https://github.com/dbt-labs/dbt-snowflake/pull/132))
+- [@dbeatty10](https://github.com/dbeatty10) ([#162](https://github.com/dbt-labs/dbt-snowflake/pull/162)
+
+## dbt-snowflake 1.1.0b1 (March 23, 2022)
 
 ### Features
 - Adds tests for incremental model unique key parameter ([#91](https://github.com/dbt-labs/dbt-snowflake/issues/91))
+- enables mfa token caching for linux when using the username_password_mfa authenticator ([#65](https://github.com/dbt-labs/dbt-snowflake/pull/65))
 
 ### Fixes
 - Add unique\_id field to docs generation test catalogs; a follow-on PR to core PR ([#4168](https://github.com/dbt-labs/dbt-core/pull/4618))
 
 ### Under the hood
 - Add `query_id` for a query to `run_result.json` ([#40](https://github.com/dbt-labs/dbt-snowflake/pull/40))
+- Change logic for Post-failure job run ([#67](https://github.com/dbt-labs/dbt-snowflake/pull/67))
+- Update to version bumping script ([#68](https://github.com/dbt-labs/dbt-snowflake/pull/68))
+- Add contributing.md file for snowflake adapter repo ([#79](https://github.com/dbt-labs/dbt-snowflake/pull/79))
+- Use dbt.tests.adapter.basic in test suite (new test framework) ([#105](https://github.com/dbt-labs/dbt-snowflake/issues/105), [#106](https://github.com/dbt-labs/dbt-snowflake/pull/106))
 
 ### Contributors
 - [@joshuataylor](https://github.com/joshuataylor) ([#40](https://github.com/dbt-labs/dbt-snowflake/pull/40))
@@ -24,6 +65,8 @@
 ### Under the hood
 - Resolves an issue caused when the Snowflake OCSP server is not accessible, by exposing the `insecure_mode` boolean avalable in the Snowflake python connector ([#31](https://github.com/dbt-labs/dbt-snowflake/issues/31), [#49](https://github.com/dbt-labs/dbt-snowflake/pull/49))
 - Fix test related to preventing coercion of boolean values (True, False) to numeric values (0, 1) in query results ([#76](https://github.com/dbt-labs/dbt-snowflake/issues/76))
+- Add Stale messaging Github Action workflow ([#84](https://github.com/dbt-labs/dbt-snowflake/pull/84))
+
 
 ### Contributors
 - [@anthu](https://github.com/anthu) ([#48](https://github.com/dbt-labs/dbt-snowflake/pull/48))
