@@ -177,4 +177,4 @@ class SnowflakeAdapter(SQLAdapter):
         return f"DATEADD({interval}, {number}, {add_to})"
 
     def valid_incremental_strategies(self):
-        return ["merge", "delete+insert"]
+        return ["append", "merge", "delete+insert"]
