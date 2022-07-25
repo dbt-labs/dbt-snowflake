@@ -2,6 +2,7 @@
 
 ### Under the Hood
 - Reformat overridden macro location of grants work to a apply_grants.sql file in snowflake ([#193](https://github.com/dbt-labs/dbt-snowflake/issues/193), [#192](https://github.com/dbt-labs/dbt-snowflake/pull/192))
+- Support dbt Core incremental materialization refactor ([#195](https://github.com/dbt-labs/dbt-snowflake/issues/195), [#196](https://github.com/dbt-labs/dbt-snowflake/pull/196))
 
 ## dbt-snowflake 1.2.0rc1 (July 12, 2022)
 
