@@ -308,3 +308,21 @@ class TestIncrementalMergeColumns(BaseTestSimpleCopy):
         })
         self.seed_and_run()
         self.assertTablesEqual("incremental_update_cols", "expected_result")
+    
+    @use_profile("snowflake")
+    def test__snowflake__incremental_merge_exclude_columns(self):
+        self.use_default_project({
+            "seed-paths": ["seeds-merge-exclude-cols-initial"],
+            "seeds": {
+                "quote_columns": False
+            }
+        })
+        self.seed_and_run()
+        self.use_default_project({
+            "seed-paths": ["seeds-merge-exclude-cols-update"],
+            "seeds": {
+                "quote_columns": False
+            }
+        })
+        self.seed_and_run()
+        self.assertTablesEqual("incremental_exclude_cols", "expected_result")
