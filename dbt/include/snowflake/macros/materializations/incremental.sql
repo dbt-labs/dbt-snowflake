@@ -1,29 +1,3 @@
-
-{% macro dbt_snowflake_validate_get_incremental_strategy(config) %}
-  {#-- Find and validate the incremental strategy #}
-  {%- set strategy = config.get("incremental_strategy", default="merge") -%}
-
-  {% set invalid_strategy_msg -%}
-    Invalid incremental strategy provided: {{ strategy }}
-    Expected one of: 'merge', 'delete+insert'
-  {%- endset %}
-  {% if strategy not in ['merge', 'delete+insert'] %}
-    {% do exceptions.raise_compiler_error(invalid_strategy_msg) %}
-  {% endif %}
-
-  {% do return(strategy) %}
-{% endmacro %}
-
-{% macro dbt_snowflake_get_incremental_sql(strategy, tmp_relation, target_relation, unique_key, dest_columns) %}
-  {% if strategy == 'merge' %}
-    {% do return(get_merge_sql(target_relation, tmp_relation, unique_key, dest_columns)) %}
-  {% elif strategy == 'delete+insert' %}
-    {% do return(get_delete_insert_merge_sql(target_relation, tmp_relation, unique_key, dest_columns)) %}
-  {% else %}
-    {% do exceptions.raise_compiler_error('invalid strategy: ' ~ strategy) %}
-  {% endif %}
-{% endmacro %}
-
 {% materialization incremental, adapter='snowflake' -%}
 
   {% set original_query_tag = set_query_tag() %}
@@ -37,8 +11,6 @@
 
   {% set  grant_config = config.get('grants') %}
 
-  {#-- Validate early so we don't run SQL if the strategy is invalid --#}
-  {% set strategy = dbt_snowflake_validate_get_incremental_strategy(config) -%}
   {% set on_schema_change = incremental_validate_on_schema_change(config.get('on_schema_change'), default='ignore') %}
 
   {{ run_hooks(pre_hooks) }}
@@ -65,7 +37,13 @@
     {% if not dest_columns %}
       {% set dest_columns = adapter.get_columns_in_relation(existing_relation) %}
     {% endif %}
-    {% set build_sql = dbt_snowflake_get_incremental_sql(strategy, tmp_relation, target_relation, unique_key, dest_columns) %}
+
+    {#-- Get the incremental_strategy, the macro to use for the strategy, and build the sql --#}
+    {% set incremental_strategy = config.get('incremental_strategy') or 'default' %}
+    {% set incremental_predicates = config.get('incremental_predicates', none) %}
+    {% set strategy_sql_macro_func = adapter.get_incremental_strategy_macro(context, incremental_strategy) %}
+    {% set strategy_arg_dict = ({'target_relation': target_relation, 'temp_relation': tmp_relation, 'unique_key': unique_key, 'dest_columns': dest_columns, 'predicates': incremental_predicates }) %}
+    {% set build_sql = strategy_sql_macro_func(strategy_arg_dict) %}
 
   {% endif %}
 
@@ -88,3 +66,7 @@
   {{ return({'relations': [target_relation]}) }}
 
 {%- endmaterialization %}
+
+{% macro snowflake__get_incremental_default_sql(arg_dict) %}
+  {{ return(get_incremental_merge_sql(arg_dict)) }}
+{% endmacro %}
