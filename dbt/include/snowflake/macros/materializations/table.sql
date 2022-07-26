@@ -3,7 +3,7 @@
   {% set original_query_tag = set_query_tag() %}
 
   {%- set identifier = model['alias'] -%}
-  {%- set language = config.get('language') -%}
+  {%- set language = model['language'] -%}
 
   {% set grant_config = config.get('grants') %}
 

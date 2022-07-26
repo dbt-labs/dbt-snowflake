@@ -60,6 +60,13 @@ def model(dbt, session):
 """
 
 class TestIncrementalModelSnowflake:
+    
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "models": { "+incremental_strategy": "delete+insert" }
+        }
+
     @pytest.fixture(scope="class")
     def models(self):
         return {

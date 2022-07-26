@@ -5,7 +5,7 @@
   {#-- Set vars --#}
   {%- set unique_key = config.get('unique_key') -%}
   {%- set full_refresh_mode = (should_full_refresh()) -%}
-  {%- set language = config.get('language') -%}
+  {%- set language = model['language'] -%}
   {% set target_relation = this %}
   {% set existing_relation = load_relation(this) %}
   {% set tmp_relation = make_temp_relation(this) %}
