@@ -10,7 +10,6 @@ from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
-from dbt.adapters.base.meta import available
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
@@ -208,4 +207,3 @@ $$;
 
     def valid_incremental_strategies(self):
         return ["append", "merge", "delete+insert"]
-
