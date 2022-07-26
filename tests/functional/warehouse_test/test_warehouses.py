@@ -38,24 +38,14 @@ select '{{ env_var("SNOWFLAKE_TEST_ALT_WAREHOUSE", "DBT_TEST_ALT") }}' as wareho
 """
 
 
-@pytest.fixture(scope="class")
-def models():
-    return {
-        "override_warehouse.sql": models__override_warehouse_sql,
-        "expected_warehouse.sql": models__expected_warehouse_sql,
-        "invalid_warehouse.sql": models__invalid_warehouse_sql,
-    }
-
-
-@pytest.fixture(scope="class")
-def project_config_models():
-    return {
-        "override_warehouse.sql": project_config_models__override_warehouse_sql,
-        "expected_warehouse.sql": project_config_models__expected_warehouse_sql,
-    }
-
-
-class TestModelWarehouse():
+class TestModelWarehouse:
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "override_warehouse.sql": models__override_warehouse_sql,
+            "expected_warehouse.sql": models__expected_warehouse_sql,
+            "invalid_warehouse.sql": models__invalid_warehouse_sql,
+        }
     def test_snowflake_override_ok(self, project):
         run_dbt([
             'run',
@@ -67,8 +57,13 @@ class TestModelWarehouse():
         run_dbt(['run', '--models', 'invalid_warehouse'], expect_pass=False)
 
 
-class TestConfigWarehouse():
-
+class TestConfigWarehouse:
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "override_warehouse.sql": project_config_models__override_warehouse_sql,
+            "expected_warehouse.sql": project_config_models__expected_warehouse_sql,
+        }
 
     @pytest.fixture(scope="class")
     def project_config_update(self):
