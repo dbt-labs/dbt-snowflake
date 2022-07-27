@@ -46,6 +46,7 @@ class TestModelWarehouse:
             "expected_warehouse.sql": models__expected_warehouse_sql,
             "invalid_warehouse.sql": models__invalid_warehouse_sql,
         }
+
     def test_snowflake_override_ok(self, project):
         run_dbt([
             'run',
