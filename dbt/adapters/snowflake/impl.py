@@ -110,7 +110,17 @@ class SnowflakeAdapter(SQLAdapter):
     def list_relations_without_caching(self, schema_relation: SnowflakeRelation) -> List[SnowflakeRelation]:  # type: ignore
         kwargs = {"schema_relation": schema_relation}
         try:
-            results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
+            tables_list = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
+            # remove agate table if empty. Otherwise, creating a tableset will fail
+            for t in tables_list:
+                if len(t.rows) == 0:
+                    tables_list.remove(t)
+            results = (
+                agate.TableSet(tables_list, keys=range(len(tables_list)))
+                .merge()
+                .exclude(["group"])
+            )
+
         except DatabaseException as exc:
             # if the schema doesn't exist, we just want to return.
             # Alternatively, we could query the list of schemas before we start
@@ -125,7 +135,8 @@ class SnowflakeAdapter(SQLAdapter):
         columns = ["database_name", "schema_name", "name", "kind"]
         for _database, _schema, _identifier, _type in results.select(columns):
             try:
-                _type = self.Relation.get_relation_type(_type.lower())
+                # replace underscore with space for MATERIALIZED_VIEW return value
+                _type = self.Relation.get_relation_type(_type.lower().replace("_", " "))
             except ValueError:
                 _type = self.Relation.External
             relations.append(
