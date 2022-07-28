@@ -1,5 +1,8 @@
 ## dbt-snowflake 1.3.0b1 (Release TBD)
 
+### Features
+- support python model through create stored procedure with python in it, currently supported materializations are table and incremental. ([#182](https://github.com/dbt-labs/dbt-snowflake/pull/182))
+
 ### Under the Hood
 - Reformat overridden macro location of grants work to a apply_grants.sql file in snowflake ([#193](https://github.com/dbt-labs/dbt-snowflake/issues/193), [#192](https://github.com/dbt-labs/dbt-snowflake/pull/192))
 - Support dbt Core incremental materialization refactor ([#195](https://github.com/dbt-labs/dbt-snowflake/issues/195), [#196](https://github.com/dbt-labs/dbt-snowflake/pull/196))
