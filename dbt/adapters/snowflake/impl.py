@@ -18,6 +18,9 @@ from dbt.exceptions import raise_compiler_error, RuntimeException, DatabaseExcep
 from dbt.utils import filter_null_values
 
 
+SNOWFLAKE_WAREHOUSE_MACRO_NAME = 'snowflake_warehouse'
+
+
 @dataclass
 class SnowflakeConfig(AdapterConfig):
     transient: Optional[bool] = None
@@ -72,7 +75,15 @@ class SnowflakeAdapter(SQLAdapter):
 
     def _use_warehouse(self, warehouse: str):
         """Use the given warehouse. Quotes are never applied."""
-        self.execute("use warehouse {}".format(warehouse))
+        kwargs = {
+            'warehouse': warehouse
+        }
+        warehouse = self.execute_macro(
+            SNOWFLAKE_WAREHOUSE_MACRO_NAME,
+            kwargs=kwargs
+        )
+        self.execute('use warehouse {}'.format(warehouse))
+
 
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:
         default_warehouse = self.config.credentials.warehouse
