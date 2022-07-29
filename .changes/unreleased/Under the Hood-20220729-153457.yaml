@@ -1,0 +1,7 @@
+kind: Under the Hood
+body: Bring changie over to dbt-snowflake and incorproate reusable gha
+time: 2022-07-29T15:34:57.193086-05:00
+custom:
+  Author: McKnight-42
+  Issue: "209"
+  PR: "212"
