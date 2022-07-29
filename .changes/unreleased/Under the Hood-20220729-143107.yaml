@@ -1,0 +1,8 @@
+kind: Under the Hood
+body: Fix test related to preventing coercion of boolean values (True, False) to numeric
+  values (0, 1) in query results.
+time: 2022-07-29T14:31:07.820316-05:00
+custom:
+  Author: anthu
+  Issue: "216"
+  PR: "76"

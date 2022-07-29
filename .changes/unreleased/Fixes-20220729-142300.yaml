@@ -1,0 +1,7 @@
+kind: Fixes
+body: Apply query tags for Seed and Snapshot materialisations.
+time: 2022-07-29T14:23:00.90573-05:00
+custom:
+  Author: anthu
+  Issue: "20"
+  PR: "48"

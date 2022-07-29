@@ -1,0 +1,8 @@
+kind: Fixes
+body: When on_schema_change is set, pass common columns as dest_columns in incremental
+  merge macros.
+time: 2022-07-29T14:27:45.1476-05:00
+custom:
+  Author: Kayrnt
+  Issue: "4144"
+  PR: "51, 37"

@@ -1,0 +1,7 @@
+kind: Features
+body: Enables mfa token caching for linux when using the username_password_mfa authenticator.
+time: 2022-07-29T13:50:26.913356-05:00
+custom:
+  Author: tekumara
+  Issue: "64"
+  PR: "65"

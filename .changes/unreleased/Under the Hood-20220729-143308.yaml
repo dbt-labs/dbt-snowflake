@@ -1,0 +1,7 @@
+kind: Under the Hood
+body: Add optional profile parameters for atypical local connection setups.
+time: 2022-07-29T14:33:08.396985-05:00
+custom:
+  Author: laxjesse
+  Issue: "21"
+  PR: "36"

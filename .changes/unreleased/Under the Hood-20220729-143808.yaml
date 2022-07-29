@@ -1,0 +1,8 @@
+kind: Under the Hood
+body: Remove official support for python 3.6, which is reaching end of life on December
+  23, 2021.
+time: 2022-07-29T14:38:08.086364-05:00
+custom:
+  Author: jtcohen6
+  Issue: "4134"
+  PR: "45"
