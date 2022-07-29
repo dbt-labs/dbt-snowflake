@@ -1,0 +1,8 @@
+kind: Under the Hood
+body: Reformat overridden macro location of grants work to a apply_grants.sql file
+  in snowflake
+time: 2022-07-29T13:23:35.007032-05:00
+custom:
+  Author: McKnight-42
+  Issue: "193"
+  PR: "192"

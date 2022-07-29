@@ -1,0 +1,7 @@
+kind: Under the Hood
+body: Bump upper bound on `snowflake-connector-python`.
+time: 2022-07-29T14:35:37.827477-05:00
+custom:
+  Author: jtcohen6
+  Issue: "216"
+  PR: "44"

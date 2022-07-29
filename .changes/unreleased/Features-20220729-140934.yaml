@@ -1,0 +1,7 @@
+kind: Features
+body: Adds 4 optional profile parameters for configuring retries on Snowflake errors
+time: 2022-07-29T14:09:34.353923-05:00
+custom:
+  Author: mhmcdonald
+  Issue: "14"
+  PR: "6"
