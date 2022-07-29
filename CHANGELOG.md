@@ -1,4 +1,6 @@
-## dbt-snowflake 1.3.0b1 (Release TBD)
+## dbt-snowflake 1.3.0b2 (Release TBD)
+
+## dbt-snowflake 1.3.0b1 (July 29, 2022)
 
 ### Features
 - support python model through create stored procedure with python in it, currently supported materializations are table and incremental. ([#182](https://github.com/dbt-labs/dbt-snowflake/pull/182))
