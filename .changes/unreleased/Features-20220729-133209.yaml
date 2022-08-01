@@ -1,7 +1,0 @@
-kind: Features
-body: Add set_query_tag and unset_query_tag to the dbt macro namespace.
-time: 2022-07-29T13:32:09.963477-05:00
-custom:
-  Author: robscriva
-  Issue: "133"
-  PR: "132"

@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: Add `query_id` for a query to `run_result.json`.
-time: 2022-07-29T14:00:58.092727-05:00
-custom:
-  Author: joshuataylor
-  Issue: "7"
-  PR: "40"

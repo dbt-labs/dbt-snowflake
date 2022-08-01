@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: Use dbt.tests.adapter.basic in test suite (new test framework).
-time: 2022-07-29T14:06:14.709052-05:00
-custom:
-  Author: gshank
-  Issue: "105"
-  PR: "106"

@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: Add support for structured logging.
-time: 2022-07-29T14:39:03.284905-05:00
-custom:
-  Author: emmyoop
-  Issue: "4176"
-  PR: "42"
