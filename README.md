@@ -37,3 +37,5 @@ more information on using dbt with Snowflake, consult [the docs](https://docs.ge
 ## Code of Conduct
 
 Everyone interacting in the dbt project's codebases, issue trackers, chat rooms, and mailing lists is expected to follow the [dbt Code of Conduct](https://community.getdbt.com/code-of-conduct).
+
+USELESS CHANGE FOR TESTING ACTION
