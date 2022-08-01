@@ -11,4 +11,3 @@ For information on prior major and minor releases, see their changelogs:
 - [1.2](https://github.com/dbt-labs/dbt-snowflake/blob/1.2.latest/CHANGELOG.md)
 - [1.1](https://github.com/dbt-labs/dbt-snowflake/blob/1.1.latest/CHANGELOG.md)
 - [1.0](https://github.com/dbt-labs/dbt-snowflake/blob/1.0.latest/CHANGELOG.md)
-
