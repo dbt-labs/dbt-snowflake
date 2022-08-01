@@ -1,8 +1,0 @@
-kind: Under the Hood
-body: Replace `sample_profiles.yml` with `profile_template.yml`, for use with new
-  `dbt init`.
-time: 2022-07-29T14:40:20.579028-05:00
-custom:
-  Author: NiallRees
-  Issue: "216"
-  PR: "32"

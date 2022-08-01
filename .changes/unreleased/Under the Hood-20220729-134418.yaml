@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: Bump cryptography restraint upper bound to <37.0.0
-time: 2022-07-29T13:44:18.89287-05:00
-custom:
-  Author: hhobson
-  Issue: "170"
-  PR: "171"

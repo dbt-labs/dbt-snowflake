@@ -1,7 +1,0 @@
-kind: Fixes
-body: Adds column-level comments to Snowflake views.
-time: 2022-07-29T14:25:00.596307-05:00
-custom:
-  Author: spencer-taylor-workrise
-  Issue: "17"
-  PR: "53"

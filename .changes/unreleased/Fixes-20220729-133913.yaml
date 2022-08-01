@@ -1,7 +1,0 @@
-kind: Fixes
-body: Improve column comment handling when `persist_docs` is enabled.
-time: 2022-07-29T13:39:13.791237-05:00
-custom:
-  Author: LewisDavies
-  Issue: "73, 100"
-  PR: "161"

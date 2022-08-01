@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: Cleanup redundant precommit hook command
-time: 2022-07-29T13:41:56.976095-05:00
-custom:
-  Author: VersusFacit
-  Issue: "95"
-  PR: "145"
