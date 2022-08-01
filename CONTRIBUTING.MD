@@ -126,3 +126,6 @@ You don't need to worry about which `dbt-snowflake` version your change will go 
 A `dbt-snowflake` maintainer will review your PR and will determine if it has passed regression tests. They may suggest code revisions for style and clarity, or they may request that you add unit or integration tests. These are good things! We believe that, with a little bit of help, anyone can contribute high-quality code.
 
 Once all tests are passing and your PR has been approved, a `dbt-snowflake` maintainer will merge your changes into the active development branch. And that's it! Happy developing :tada:
+
+
+change for no reason
