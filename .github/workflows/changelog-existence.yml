@@ -34,7 +34,7 @@ permissions:
 
 jobs:
   changelog:
-    uses: dbt-labs/actions/.github/workflows/changelog-check.yml@er/changelog-check
+    uses: dbt-labs/actions/.github/workflows/changelog-existence.yml@er/changelog-check
     with:
       changelog_comment: 'Thank you for your pull request! We could not find a changelog entry for this change. For details on how to document a change, see [the dbt-core contributing guide](https://github.com/dbt-labs/dbt-core/blob/main/CONTRIBUTING.md#adding-changelog-entry), and the [dbt-snowflake contriubuting guide](https://github.com/dbt-labs/dbt-snowflake/blob/main/CONTRIBUTING.MD).'
       skip_label: 'Skip Changelog'
