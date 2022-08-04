@@ -1,0 +1,7 @@
+kind: Under the Hood
+body: Support dbt Core incrmental materialization refactor
+time: 2022-07-29T13:25:59.279755-05:00
+custom:
+  Author: gshank
+  Issue: "195"
+  PR: "196"
