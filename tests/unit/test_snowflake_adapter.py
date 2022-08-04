@@ -133,9 +133,9 @@ class TestSnowflakeAdapter(unittest.TestCase):
 
         # no query comment because wrapped in begin; + commit; for explicit DML
         self.mock_execute.assert_has_calls([
-            mock.call('/* dbt */\nbegin;', None),
-            mock.call('truncate table test_database."test_schema".test_table\n  ;', None),
-            mock.call('commit;', None)
+            mock.call('/* dbt */\nBEGIN', None),
+            mock.call('/* dbt */\ntruncate table test_database."test_schema".test_table\n  ;', None),
+            mock.call('/* dbt */\nCOMMIT', None)
         ])
 
     def test_quoting_on_rename(self):
@@ -315,7 +315,8 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 password='test_password', role=None, schema='public',
                 user='test_user', warehouse='test_warehouse',
                 authenticator='test_sso_url', private_key=None,
-                application='dbt', client_store_temporary_credential=True, insecure_mode=False)
+                application='dbt', client_request_mfa_token=True, 
+                client_store_temporary_credential=True, insecure_mode=False)
         ])
 
     def test_authenticator_externalbrowser_authentication(self):
@@ -333,7 +334,8 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 client_session_keep_alive=False, database='test_database',
                 role=None, schema='public', user='test_user',
                 warehouse='test_warehouse', authenticator='externalbrowser',
-                private_key=None, application='dbt', client_store_temporary_credential=True, insecure_mode=False)
+                private_key=None, application='dbt', client_request_mfa_token=True, 
+                client_store_temporary_credential=True, insecure_mode=False)
         ])
 
     def test_authenticator_oauth_authentication(self):
@@ -352,7 +354,8 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 client_session_keep_alive=False, database='test_database',
                 role=None, schema='public', user='test_user',
                 warehouse='test_warehouse', authenticator='oauth', token='my-oauth-token',
-                private_key=None, application='dbt', client_store_temporary_credential=True, insecure_mode=False)
+                private_key=None, application='dbt', client_request_mfa_token=True, 
+                client_store_temporary_credential=True, insecure_mode=False)
         ])
 
     @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')

@@ -37,18 +37,9 @@ defaults:
 
 jobs:
   code-quality:
-    name: ${{ matrix.toxenv }}
+    name: code-quality
 
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        toxenv: [flake8]
-
-    env:
-      TOXENV: ${{ matrix.toxenv }}
-      PYTEST_ADDOPTS: "-v --color=yes"
 
     steps:
       - name: Check out the repository
@@ -61,13 +52,15 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
-          pip install tox
-          pip --version
-          tox --version
+          python -m pip install --user --upgrade pip
+          python -m pip install -r dev-requirements.txt
+          python -m pip --version
+          pre-commit --version
+          mypy --version
+          dbt --version
 
-      - name: Run tox
-        run: tox
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files --show-diff-on-failure
 
   unit:
     name: unit test / python ${{ matrix.python-version }}
@@ -77,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8] # TODO: support unit testing for python 3.9 (https://github.com/dbt-labs/dbt/issues/3689)
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     env:
       TOXENV: "unit"
@@ -96,9 +89,9 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
-          pip install tox
-          pip --version
+          python -m pip install --user --upgrade pip
+          python -m pip install tox
+          python -m pip --version
           tox --version
 
       - name: Run tox
@@ -120,6 +113,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    outputs:
+      is_alpha: ${{ steps.check-is-alpha.outputs.is_alpha }}
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v2
@@ -133,13 +129,9 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
-          pip install --upgrade setuptools wheel twine check-wheel-contents
-          pip --version
-
-      - name: Install dbt-core latest
-        run: |
-          pip install "git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core"
+          python -m pip install --user --upgrade pip
+          python -m pip install --upgrade setuptools wheel twine check-wheel-contents
+          python -m pip --version
 
       - name: Build distributions
         run: ./scripts/build-dist.sh
@@ -155,6 +147,13 @@ jobs:
         run: |
           check-wheel-contents dist/*.whl --ignore W007,W008
 
+      - name: Check if this is an alpha version
+        id: check-is-alpha
+        run: |
+          export is_alpha=0
+          if [[ "$(ls -lh dist/)" == *"a1"* ]]; then export is_alpha=1; fi
+          echo "::set-output name=is_alpha::$is_alpha"
+
       - uses: actions/upload-artifact@v2
         with:
           name: dist
@@ -162,6 +161,8 @@ jobs:
 
   test-build:
     name: verify packages / python ${{ matrix.python-version }} / ${{ matrix.os }}
+
+    if: needs.build.outputs.is_alpha == 0
 
     needs: build
 
@@ -171,7 +172,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     steps:
       - name: Set up Python ${{ matrix.python-version }}
@@ -181,9 +182,9 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
-          pip install --upgrade wheel
-          pip --version
+          python -m pip install --user --upgrade pip
+          python -m pip install --upgrade wheel
+          python -m pip --version
 
       - uses: actions/download-artifact@v2
         with:
@@ -195,7 +196,7 @@ jobs:
 
       - name: Install wheel distributions
         run: |
-          find ./dist/*.whl -maxdepth 1 -type f | xargs pip install --force-reinstall --find-links=dist/
+          find ./dist/*.whl -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
 
       - name: Check wheel distributions
         run: |
@@ -203,7 +204,7 @@ jobs:
 
       - name: Install source distributions
         run: |
-          find ./dist/*.gz -maxdepth 1 -type f | xargs pip install --force-reinstall --find-links=dist/
+          find ./dist/*.gz -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
 
       - name: Check source distributions
         run: |
