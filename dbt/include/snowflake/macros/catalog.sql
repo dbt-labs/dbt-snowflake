@@ -37,7 +37,7 @@
                   {%- for schema in schemas -%}
                     upper("table_schema") = upper('{{ schema }}'){%- if not loop.last %} or {% endif -%}
                   {%- endfor -%}
-                )
+                 )
       ),
 
       columns as (
@@ -57,7 +57,7 @@
                   {%- for schema in schemas -%}
                     upper("table_schema") = upper('{{ schema }}'){%- if not loop.last %} or {% endif -%}
                   {%- endfor -%}
-                )
+                 )
       )
 
       select *
