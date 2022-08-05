@@ -8,7 +8,7 @@
        for faster overall incremental processing.
   #} */
 
-  {% if strategy in ('append', 'merge') or (unique_key is None) %}
+  {% if strategy in ('append', 'merge') or (unique_key is none) %}
     {% do return(create_view_as(tmp_relation, compiled_code)) %}
   {% elif strategy == 'delete+insert' %}
     {% do return(create_table_as(True, tmp_relation, compiled_code, language)) %}
