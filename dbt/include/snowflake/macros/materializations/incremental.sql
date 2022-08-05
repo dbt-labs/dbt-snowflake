@@ -1,19 +1,18 @@
 {% macro dbt_snowflake_create_temp_relation(strategy, unique_key, tmp_relation, compiled_code, language) %}
 
   /* {#
-       If we are running multiple statements (DELETE + INSERT), we must first save the model query results as a temporary table
+       If we are running multiple statements (DELETE + INSERT), we must first
+       save the model query results as a temporary table
        in order to guarantee consistent inputs to both statements.
 
        If we are running a single statement (MERGE or INSERT alone), we can save the model query definition as a view instead,
        for faster overall incremental processing.
   #} */
 
-  {% if strategy in ('append', 'merge') or (unique_key is none) %}
+  {% if strategy in ('default', 'append', 'merge') or (unique_key is none) %}
     {% do return(create_view_as(tmp_relation, compiled_code)) %}
-  {% elif strategy == 'delete+insert' %}
+  {% else %}  -- {# play it safe #}
     {% do return(create_table_as(True, tmp_relation, compiled_code, language)) %}
-  {% else %}
-    {% do exceptions.raise_compiler_error('invalid strategy: ' ~ strategy) %}
   {% endif %}
 {% endmacro %}
 
@@ -53,8 +52,9 @@
     {%- endcall -%}
 
   {% else %}
+    {% set incremental_strategy = config.get('incremental_strategy') or 'default' %}
     {%- call statement('create_tmp_relation', language=language) -%}
-      {{ dbt_snowflake_create_temp_relation(strategy, unique_key, tmp_relation, compiled_code, language) }}
+      {{ dbt_snowflake_create_temp_relation(incremental_strategy, unique_key, tmp_relation, compiled_code, language) }}
     {%- endcall -%}
 
     {% do adapter.expand_target_column_types(
@@ -67,7 +67,6 @@
     {% endif %}
 
     {#-- Get the incremental_strategy, the macro to use for the strategy, and build the sql --#}
-    {% set incremental_strategy = config.get('incremental_strategy') or 'default' %}
     {% set incremental_predicates = config.get('incremental_predicates', none) %}
     {% set strategy_sql_macro_func = adapter.get_incremental_strategy_macro(context, incremental_strategy) %}
     {% set strategy_arg_dict = ({'target_relation': target_relation, 'temp_relation': tmp_relation, 'unique_key': unique_key, 'dest_columns': dest_columns, 'predicates': incremental_predicates }) %}
