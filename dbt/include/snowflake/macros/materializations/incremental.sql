@@ -1,4 +1,4 @@
-{% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key) %}
+{% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key, language) %}
 
   /* {#
        If we are running multiple statements (DELETE + INSERT),
@@ -10,7 +10,7 @@
        for faster overall incremental processing.
   #} */
 
-  {% if strategy in ('default', 'append', 'merge') or (unique_key is none) %}
+  {% if language == 'sql' and (strategy in ('default', 'append', 'merge') or (unique_key is none)) %}
     {{ return('view') }}
   {% else %}  {#--  play it safe -- #}
     {{ return('table') }}
@@ -26,11 +26,11 @@
   {%- set language = model['language'] -%}
   {% set target_relation = this %}
   {% set existing_relation = load_relation(this) %}
-  
+
   {#-- The temp relation will be a view (faster) or temp table, depending on upsert/merge strategy --#}
   {%- set unique_key = config.get('unique_key') -%}
   {% set incremental_strategy = config.get('incremental_strategy') or 'default' %}
-  {% set tmp_relation_type = dbt_snowflake_get_tmp_relation_type(incremental_strategy, unique_key) %}
+  {% set tmp_relation_type = dbt_snowflake_get_tmp_relation_type(incremental_strategy, unique_key, language) %}
   {% set tmp_relation = make_temp_relation(this).incorporate(type=tmp_relation_type) %}
 
   {% set grant_config = config.get('grants') %}
