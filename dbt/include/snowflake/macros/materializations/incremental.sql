@@ -1,13 +1,13 @@
 {% macro dbt_snowflake_create_temp_relation(strategy, unique_key, tmp_relation, compiled_code, language) %}
-  
+
   /* {#
        If we are running multiple statements (DELETE + INSERT), we must first save the model query results as a temporary table
        in order to guarantee consistent inputs to both statements.
-       
+
        If we are running a single statement (MERGE or INSERT alone), we can save the model query definition as a view instead,
        for faster overall incremental processing.
   #} */
-  
+
   {% if strategy in ('append', 'merge') or (unique_key is None) %}
     {% do return(create_view_as(tmp_relation, compiled_code)) %}
   {% elif strategy == 'delete+insert' %}
