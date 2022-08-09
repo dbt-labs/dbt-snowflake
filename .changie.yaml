@@ -15,6 +15,7 @@ kinds:
 - label: Dependencies
   changeFormat: '- {{.Body}} ({{if ne .Custom.Issue ""}}[#{{.Custom.Issue}}](https://github.com/dbt-labs/dbt-snowflake/issues/{{.Custom.Issue}}), {{end}}[#{{.Custom.PR}}](https://github.com/dbt-labs/dbt-snowflake/pull/{{.Custom.PR}}))'
 - label: Security
+  changeFormat: '- {{.Body}} ({{if ne .Custom.Issue ""}}[#{{.Custom.Issue}}](https://github.com/dbt-labs/dbt-snowflake/issues/{{.Custom.Issue}}), {{end}}[#{{.Custom.PR}}](https://github.com/dbt-labs/dbt-snowflake/pull/{{.Custom.PR}}))'
 custom:
 - key: Author
   label: GitHub Username(s) (separated by a single space if multiple)
