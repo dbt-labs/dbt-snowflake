@@ -44,5 +44,5 @@
 - [@Kayrnt](https://github.com/Kayrnt) ([#38](https://github.com/dbt-labs/dbt-snowflake/pull/38))
 
 ## Previous Releases
-For information on prior major and minor releases of dbt-snowflake prior to 1.0.0 please see the dbt-core repo.
+For information on prior releases of dbt-snowflake prior to 1.0.0 please see the dbt-core repo.
 
