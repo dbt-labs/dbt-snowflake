@@ -34,7 +34,7 @@ class TestSeedWithQueryTag(DBTIntegrationTest):
                 },
             },
         }
-        
+
     def build_all_with_query_tags(self):
         self.run_dbt(['build', '--vars', '{{"query_tag": "{}"}}'.format(self.prefix)])
 
@@ -43,4 +43,3 @@ class TestSeedWithQueryTag(DBTIntegrationTest):
         self.build_all_with_query_tags()
         self.build_all_with_query_tags()
 
-    
