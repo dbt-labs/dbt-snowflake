@@ -84,8 +84,32 @@ class TestQueryTag:
             "seed_query_tag.csv": seeds__seed_query_tag_csv
             }
 
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            'config-version': 2,
+            'models': {
+                'tests': {
+                    'query_tag': self.prefix,
+                    'post-hook': '{{ check_tag() }}'
+                },
+            },
+            'seeds': {
+                'tests': {
+                    'query_tag': self.prefix,
+                    'post-hook': '{{ check_tag() }}'
+                },
+            },
+            'snapshots': {
+                'tests': {
+                    'query_tag': self.prefix,
+                    'post-hook': '{{ check_tag() }}'
+                },
+            },
+        }
+
     def build_all_with_query_tags(self, project):
-        run_dbt(['build', '--vars', '{{"query_tag": "{}"}}'.format(self.prefix)])
+        run_dbt(['build', '--vars', '{{"check_tag": "{}"}}'.format(self.prefix)])
 
     def test_snowflake_query_tag(self, project):
         self.build_all_with_query_tags(project)
