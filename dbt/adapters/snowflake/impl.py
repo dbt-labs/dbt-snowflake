@@ -184,9 +184,9 @@ class SnowflakeAdapter(SQLAdapter):
         # adding default packages we need to make python model work
         default_packages = ["pandas", "snowflake-snowpark-python"]
         package_names = [package.split("==")[0] for package in packages]
-        for defualt_package in default_packages:
-            if defualt_package not in package_names:
-                packages.append(defualt_package)
+        for default_package in default_packages:
+            if default_package not in package_names:
+                packages.append(default_package)
         packages = "', '".join(packages)
         python_stored_procedure = f"""
 CREATE OR REPLACE PROCEDURE {proc_name} ()
