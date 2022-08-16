@@ -17,6 +17,7 @@ from dbt.tests.adapter.basic.expected_catalog import base_expected_catalog, no_s
 from tests.functional.adapter.expected_stats import snowflake_stats
 
 
+
 class TestSimpleMaterializationsSnowflake(BaseSimpleMaterializations):
     pass
 
