@@ -9,7 +9,7 @@
 ## dbt-snowflake 1.3.0-b1 - August 03, 2022
 ### Features
 - Support python model through create stored procedure with python in it, currently supported materializations are table and incremental. ([#216](https://github.com/dbt-labs/dbt-snowflake/issues/216), [#182](https://github.com/dbt-labs/dbt-snowflake/pull/182))
-- Support applying query tags in dbt tests using the `+query_tag` config in `dbt_project.yml`. ([#211](https://github.com/dbt-labs/dbt-snowflake/issues/211))
+- Support applying query tags in dbt tests using the `+query_tag` config in `dbt_project.yml`. ([#211](https://github.com/dbt-labs/dbt-snowflake/issues/211), [#210](https://github.com/dbt-labs/dbt-snowflake/pull/210)).
 
 
 ### Under the Hood
