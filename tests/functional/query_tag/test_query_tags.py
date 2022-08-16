@@ -85,35 +85,35 @@ class TestQueryTag:
             }
 
     @pytest.fixture(scope="class")
-    def project_config_update(self):
+    def project_config_update(self, prefix):
         return {
             'config-version': 2,
             'models': {
                 'tests': {
-                    'query_tag': self.prefix,
+                    'query_tag': prefix,
                     'post-hook': '{{ check_tag() }}'
                 },
             },
             'seeds': {
                 'tests': {
-                    'query_tag': self.prefix,
+                    'query_tag': prefix,
                     'post-hook': '{{ check_tag() }}'
                 },
             },
             'snapshots': {
                 'tests': {
-                    'query_tag': self.prefix,
+                    'query_tag': prefix,
                     'post-hook': '{{ check_tag() }}'
                 },
             },
         }
 
-    def build_all_with_query_tags(self, project):
-        run_dbt(['build', '--vars', '{{"check_tag": "{}"}}'.format(self.prefix)])
+    def build_all_with_query_tags(self, project, prefix):
+        run_dbt(['build', '--vars', '{{"check_tag": "{}"}}'.format(prefix)])
 
-    def test_snowflake_query_tag(self, project):
-        self.build_all_with_query_tags(project)
-        self.build_all_with_query_tags(project)
+    def test_snowflake_query_tag(self, project, prefix):
+        self.build_all_with_query_tags(project, prefix)
+        self.build_all_with_query_tags(project, prefix)
 
 
 
