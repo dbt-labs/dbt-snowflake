@@ -8,7 +8,6 @@
               table_name as "table_name",
               table_type as "table_type",
               comment as "table_comment",
-
               -- note: this is the _role_ that owns the table
               table_owner as "table_owner",
 
@@ -59,7 +58,7 @@
                   {%- endfor -%}
                  )
       )
-
+      --separating filtering the ctes make in larger schemas a lot faster to query
       select *
       from tables
       join columns using ("table_database", "table_schema", "table_name")
