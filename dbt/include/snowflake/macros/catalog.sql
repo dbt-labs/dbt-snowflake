@@ -59,6 +59,7 @@
                  )
       )
       --separating filtering the ctes make in larger schemas a lot faster to query
+      
       select *
       from tables
       join columns using ("table_database", "table_schema", "table_name")
