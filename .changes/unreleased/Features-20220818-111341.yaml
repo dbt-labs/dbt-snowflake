@@ -1,0 +1,7 @@
+kind: Features
+body: Wrap predicates in parentheses for correct evaluation order when anded
+time: 2022-08-18T11:13:41.777792+01:00
+custom:
+  Author: NiallRees
+  Issue: "231"
+  PR: "238"
