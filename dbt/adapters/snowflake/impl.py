@@ -182,7 +182,7 @@ class SnowflakeAdapter(SQLAdapter):
         proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
         packages = parsed_model["config"].get("packages", [])
         # adding default packages we need to make python model work
-        default_packages = ["pandas", "snowflake-snowpark-python"]
+        default_packages = ["snowflake-snowpark-python"]
         package_names = [package.split("==")[0] for package in packages]
         for default_package in default_packages:
             if default_package not in package_names:
