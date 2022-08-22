@@ -33,6 +33,12 @@ class TestSeedWithQueryTag(DBTIntegrationTest):
                     'post-hook': '{{ check_query_tag() }}'
                 },
             },
+            'tests': {
+                'test': {
+                    'query_tag': self.prefix,
+                    'post-hook': '{{ check_query_tag() }}'
+                }
+            },
         }
 
     def build_all_with_query_tags(self):
