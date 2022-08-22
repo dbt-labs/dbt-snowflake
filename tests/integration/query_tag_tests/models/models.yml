@@ -1,8 +1,0 @@
-version: 2
-
-models:
-  - name: view_model_query_tag
-    columns:
-      - name: id
-        tests:
-          - unique

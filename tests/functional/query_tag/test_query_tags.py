@@ -25,6 +25,18 @@ select 1 as id
 
 """
 
+models__models_config_yml = """
+version: 2
+
+models:
+  - name: view_model_query_tag
+    columns:
+      - name: id
+        tests:
+          - unique
+
+"""
+
 models__view_model_query_tag_sql = """
 {{ config(materialized = 'view') }}
 
@@ -63,7 +75,8 @@ class TestQueryTag:
         return {
             "table_model_query_tag.sql": models__table_model_query_tag_sql,
             "view_model_query_tag.sql": models__view_model_query_tag_sql,
-            "incremental_model_query_tag.sql": models__incremental_model_query_tag_sql
+            "incremental_model_query_tag.sql": models__incremental_model_query_tag_sql,
+            "models_config.yml": models__models_config_yml,
             }
 
     @pytest.fixture(scope="class")
@@ -105,6 +118,12 @@ class TestQueryTag:
                     'query_tag': prefix,
                     'post-hook': '{{ check_tag() }}'
                 },
+            },
+            'tests': {
+                'test': {
+                    'query_tag': prefix,
+                    'post-hook': '{{ check_query_tag() }}'
+                }
             },
         }
 
