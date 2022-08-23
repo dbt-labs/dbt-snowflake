@@ -133,7 +133,3 @@ class TestQueryTag:
     def test_snowflake_query_tag(self, project, prefix):
         self.build_all_with_query_tags(project, prefix)
         self.build_all_with_query_tags(project, prefix)
-
-
-
-
