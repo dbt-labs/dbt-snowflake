@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: Pytest conversion of query_tag_tests to new format
-time: 2022-08-15T15:11:11.606012-05:00
-custom:
-  Author: mcknight-42
-  Issue: "216"
-  PR: "235"
