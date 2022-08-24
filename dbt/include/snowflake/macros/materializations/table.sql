@@ -41,11 +41,14 @@
 {% macro py_write_table(compiled_code, target_relation, temporary=False) %}
 {{ compiled_code }}
 def materialize(session, df, target_relation):
-    # we have to make sure pandas is imported
-    import pandas
-    if isinstance(df, pandas.core.frame.DataFrame):
-        # session.write_pandas does not have overwrite function
-        df = session.createDataFrame(df)
+    # make sure pandas exists
+    import importlib.util
+    package_name = 'pandas'
+    if importlib.util.find_spec(package_name):
+        import pandas
+        if isinstance(df, pandas.core.frame.DataFrame):
+          # session.write_pandas does not have overwrite function
+          df = session.createDataFrame(df)
     df.write.mode("overwrite").save_as_table("{{ target_relation }}", create_temp_table={{temporary}})
 
 def main(session):
