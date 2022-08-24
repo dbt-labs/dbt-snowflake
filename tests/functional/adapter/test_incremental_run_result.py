@@ -1,7 +1,10 @@
 import pytest
 
 from dbt.tests.util import run_dbt
-from dbt.tests.adapter.basic.test_incremental import BaseIncremental
+from dbt.tests.adapter.basic.test_incremental import BaseIncremental, BaseIncrementalNotSchemaChange
+
+class TestBaseIncrementalNotSchemaChange(BaseIncrementalNotSchemaChange):
+    pass
 
 class TestIncrementalRunResultSnowflake(BaseIncremental):
     """Bonus test to verify that incremental models return the number of rows affected"""
