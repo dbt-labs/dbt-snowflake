@@ -1,4 +1,4 @@
-{% materialization incremental, adapter='snowflake' -%}
+{% materialization incremental, adapter='snowflake', supported_languages=['sql', 'python'] -%}
 
   {% set original_query_tag = set_query_tag() %}
 

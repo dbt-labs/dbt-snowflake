@@ -180,7 +180,13 @@ class SnowflakeAdapter(SQLAdapter):
         database = getattr(parsed_model, "database", self.config.credentials.database)
         identifier = parsed_model["alias"]
         proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
-        packages = ["snowflake-snowpark-python"] + parsed_model["config"].get("packages", [])
+        packages = parsed_model["config"].get("packages", [])
+        # adding default packages we need to make python model work
+        default_packages = ["snowflake-snowpark-python"]
+        package_names = [package.split("==")[0] for package in packages]
+        for default_package in default_packages:
+            if default_package not in package_names:
+                packages.append(default_package)
         packages = "', '".join(packages)
         python_stored_procedure = f"""
 CREATE OR REPLACE PROCEDURE {proc_name} ()
