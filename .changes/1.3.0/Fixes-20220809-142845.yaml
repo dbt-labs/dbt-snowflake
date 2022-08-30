@@ -1,0 +1,7 @@
+kind: Fixes
+body: Add pandas as a default package for python models
+time: 2022-08-09T14:28:45.731748-07:00
+custom:
+  Author: ChenyuLInx
+  Issue: "228"
+  PR: "229"

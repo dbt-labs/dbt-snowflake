@@ -1,0 +1,7 @@
+kind: Under the Hood
+body: specify supported_languages for materialization that support python models
+time: 2022-08-25T07:36:53.40541-07:00
+custom:
+  Author: ChenyuLinx
+  Issue: "241"
+  PR: "242"
