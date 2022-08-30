@@ -1,0 +1,7 @@
+kind: Features
+body: retry once by default. exponential backoff for more than one retry.
+time: 2022-08-04T15:11:21.965514-04:00
+custom:
+  Author: nathaniel-may
+  Issue: "205"
+  PR: "207"
