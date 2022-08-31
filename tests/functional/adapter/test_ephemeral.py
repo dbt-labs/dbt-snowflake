@@ -7,4 +7,4 @@ class TestEphemeralMultiSnowflake(BaseEphemeralMulti):
     def test_ephemeral_multi_snowflake(self, project):
         results = run_dbt(["run"])
         assert len(results) == 3
-        check_relations_equal(project.adapter, ["seed", "dependent", "double_dependent", "super_dependent"])
+        check_relations_equal(project.adapter, ["SEED", "DEPENDENT", "DOUBLE_DEPENDENT", "SUPER_DEPENDENT"])
