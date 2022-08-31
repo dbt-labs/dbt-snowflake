@@ -176,8 +176,8 @@ class SnowflakeAdapter(SQLAdapter):
 
     @available.parse_none
     def submit_python_job(self, parsed_model: dict, compiled_code: str):
-        schema = getattr(parsed_model, "schema", self.config.credentials.schema)
-        database = getattr(parsed_model, "database", self.config.credentials.database)
+        schema = dict.get(parsed_model, "schema", self.config.credentials.schema)
+        database = dict.get(parsed_model, "database", self.config.credentials.database)
         identifier = parsed_model["alias"]
         proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
         packages = parsed_model["config"].get("packages", [])
