@@ -179,8 +179,10 @@ class SnowflakeAdapter(SQLAdapter):
         schema = parsed_model["schema"]
         database = parsed_model["database"]
         identifier = parsed_model["alias"]
-        proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
+
         packages = parsed_model["config"].get("packages", [])
+        python_version = parsed_model["config"].get("python_version", "3.8")
+        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", False)
         # adding default packages we need to make python model work
         default_packages = ["snowflake-snowpark-python"]
         package_names = [package.split("==")[0] for package in packages]
@@ -188,7 +190,25 @@ class SnowflakeAdapter(SQLAdapter):
             if default_package not in package_names:
                 packages.append(default_package)
         packages = "', '".join(packages)
-        python_stored_procedure = f"""
+        if use_anonymous_sproc:
+            proc_name = f"{identifier}__dbt_sp"
+            python_stored_procedure = f"""
+WITH {proc_name} AS PROCEDURE ()
+RETURNS STRING
+LANGUAGE PYTHON
+RUNTIME_VERSION = '{python_version}'
+PACKAGES = ('{packages}')
+HANDLER = 'main'
+EXECUTE AS CALLER
+AS
+$$
+{compiled_code}
+$$
+CALL {proc_name}();
+            """
+        else:
+            proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
+            python_stored_procedure = f"""
 CREATE OR REPLACE PROCEDURE {proc_name} ()
 RETURNS STRING
 LANGUAGE PYTHON
@@ -199,16 +219,17 @@ EXECUTE AS CALLER
 AS
 $$
 {compiled_code}
-
 $$;
-        """
-        self.execute(python_stored_procedure, auto_begin=False, fetch=False)
-        response, _ = self.execute(f"CALL {proc_name}()", auto_begin=False, fetch=False)
-        self.execute(
-            f"drop procedure if exists {proc_name}(string)",
-            auto_begin=False,
-            fetch=False,
-        )
+CALL {proc_name}();
+
+            """
+        response, _ = self.execute(python_stored_procedure, auto_begin=False, fetch=False)
+        if not use_anonymous_sproc:
+            self.execute(
+                f"drop procedure if exists {proc_name}(string)",
+                auto_begin=False,
+                fetch=False,
+            )
         return response
 
     def valid_incremental_strategies(self):
