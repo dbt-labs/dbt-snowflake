@@ -3,7 +3,11 @@ from dbt.tests.util import run_dbt, write_file
 from dbt.tests.adapter.python_model.test_python_model import BasePythonModelTests, BasePythonIncrementalTests
 
 class TestPythonModelSnowflake(BasePythonModelTests):
-    pass
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "models":{ "use_anonymous_sproc": True}
+        }
 
 class TestIncrementalSnowflake(BasePythonIncrementalTests):
     pass
