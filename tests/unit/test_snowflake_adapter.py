@@ -318,7 +318,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 password='test_password', role=None, schema='public',
                 user='test_user', warehouse='test_warehouse',
                 authenticator='test_sso_url', private_key=None,
-                application='dbt', client_request_mfa_token=True, 
+                application='dbt', client_request_mfa_token=True,
                 client_store_temporary_credential=True, insecure_mode=False,
                 session_parameters={})
         ])
@@ -338,7 +338,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 client_session_keep_alive=False, database='test_database',
                 role=None, schema='public', user='test_user',
                 warehouse='test_warehouse', authenticator='externalbrowser',
-                private_key=None, application='dbt', client_request_mfa_token=True, 
+                private_key=None, application='dbt', client_request_mfa_token=True,
                 client_store_temporary_credential=True, insecure_mode=False,
                 session_parameters={})
         ])
@@ -359,13 +359,13 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 client_session_keep_alive=False, database='test_database',
                 role=None, schema='public', user='test_user',
                 warehouse='test_warehouse', authenticator='oauth', token='my-oauth-token',
-                private_key=None, application='dbt', client_request_mfa_token=True, 
+                private_key=None, application='dbt', client_request_mfa_token=True,
                 client_store_temporary_credential=True, insecure_mode=False,
                 session_parameters={})
         ])
 
     @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')
-    def test_authenticator_private_key_authentication(self, mock_get_private_key):
+    def test_authenticator_private_key_path_authentication(self, mock_get_private_key):
         self.config.credentials = self.config.credentials.replace(
             private_key_path='/tmp/test_key.p8',
             private_key_passphrase='p@ssphr@se',
@@ -387,7 +387,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         ])
 
     @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')
-    def test_authenticator_private_key_authentication_no_passphrase(self, mock_get_private_key):
+    def test_authenticator_private_key_path_authentication_no_passphrase(self, mock_get_private_key):
         self.config.credentials = self.config.credentials.replace(
             private_key_path='/tmp/test_key.p8',
             private_key_passphrase=None,
@@ -423,6 +423,25 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 user='test_user', warehouse='test_warehouse', private_key=None,
                 application='dbt', insecure_mode=False,
                 session_parameters={"QUERY_TAG": "test_query_tag"})
+        ])
+
+    def test_authenticator_private_key_authentication(self, mock_get_private_key):
+        self.config.credentials = self.config.credentials.replace(
+            private_key='test_key'
+        )
+
+        self.adapter = SnowflakeAdapter(self.config)
+        conn = self.adapter.connections.set_connection_name(name='new_connection_with_new_config')
+
+        self.snowflake.assert_not_called()
+        conn.handle
+        self.snowflake.assert_has_calls([
+            mock.call(
+                account='test_account', autocommit=True,
+                client_session_keep_alive=False, database='test_database',
+                role=None, schema='public', user='test_user',
+                warehouse='test_warehouse', private_key='test_key',
+                application='dbt', insecure_mode=False)
         ])
 
 

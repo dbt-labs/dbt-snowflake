@@ -60,6 +60,7 @@ class SnowflakeCredentials(Credentials):
     role: Optional[str] = None
     password: Optional[str] = None
     authenticator: Optional[str] = None
+    private_key: Optional[str] = None
     private_key_path: Optional[str] = None
     private_key_passphrase: Optional[str] = None
     token: Optional[str] = None
@@ -208,6 +209,9 @@ class SnowflakeCredentials(Credentials):
         return result_json["access_token"]
 
     def _get_private_key(self):
+        if self.private_key:
+            return self.private_key
+
         """Get Snowflake private key by path or None."""
         if not self.private_key_path:
             return None
