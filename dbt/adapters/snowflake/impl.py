@@ -191,6 +191,9 @@ class SnowflakeAdapter(SQLAdapter):
                 packages.append(default_package)
         packages = "', '".join(packages)
         imports = "', '".join(imports)
+        # we can't pass empty imports clause to snowflake
+        if imports:
+            imports = f"IMPORTS = ('{imports}')"
 
         use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", False)
         common_procedure_code = f"""
@@ -198,7 +201,7 @@ RETURNS STRING
 LANGUAGE PYTHON
 RUNTIME_VERSION = '{python_version}'
 PACKAGES = ('{packages}')
-IMPORTS = ('{imports}')
+{imports}
 HANDLER = 'main'
 EXECUTE AS CALLER
 AS
