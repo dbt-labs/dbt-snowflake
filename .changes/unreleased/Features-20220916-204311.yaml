@@ -1,0 +1,7 @@
+kind: Features
+body: Authentication with string private key
+time: 2022-09-16T20:43:11.704581+01:00
+custom:
+  Author: ZeRego
+  Issue: "41"
+  PR: "265"
