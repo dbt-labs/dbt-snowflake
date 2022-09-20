@@ -240,6 +240,13 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
             if "Empty SQL statement" in msg:
                 logger.debug("got empty sql statement, moving on")
+            elif "Row Values:" in msg:
+                # On merge failures on duplicate rows, Snowflake includes the offending row
+                # in the error message i.e. [12345, "col_a_value", "col_b_value", etc...]
+                # we don't want to log that potentially sensitive user data
+                values_start = msg.find("Row Values:")
+                values_end = msg.find("]", values_start) + 1
+                raise DatabaseException((msg[:values_start] + msg[values_end:]).strip())
             elif "This session does not have a current database" in msg:
                 raise FailedToConnectException(
                     (
