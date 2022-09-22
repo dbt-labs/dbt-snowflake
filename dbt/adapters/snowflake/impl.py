@@ -175,7 +175,6 @@ class SnowflakeAdapter(SQLAdapter):
     def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
         return f"DATEADD({interval}, {number}, {add_to})"
 
-    @available.parse_none
     def submit_python_job(self, parsed_model: dict, compiled_code: str):
         schema = parsed_model["schema"]
         database = parsed_model["database"]
@@ -227,7 +226,7 @@ CALL {proc_name}();
         response, _ = self.execute(python_stored_procedure, auto_begin=False, fetch=False)
         if not use_anonymous_sproc:
             self.execute(
-                f"drop procedure if exists {proc_name}(string)",
+                f"drop procedure if exists {proc_name}()",
                 auto_begin=False,
                 fetch=False,
             )

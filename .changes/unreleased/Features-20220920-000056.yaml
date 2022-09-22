@@ -1,0 +1,7 @@
+kind: Features
+body: implement type boolean test for snowflake
+time: 2022-09-20T00:00:56.540293+01:00
+custom:
+  Author: jpmmcneill
+  Issue: "267"
+  PR: "268"
