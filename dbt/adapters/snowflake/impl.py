@@ -174,15 +174,14 @@ class SnowflakeAdapter(SQLAdapter):
     def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
         return f"DATEADD({interval}, {number}, {add_to})"
 
-    @available.parse_none
     def submit_python_job(self, parsed_model: dict, compiled_code: str):
         schema = parsed_model["schema"]
         database = parsed_model["database"]
         identifier = parsed_model["alias"]
+        python_version = parsed_model["config"].get("python_version", "3.8")
 
         packages = parsed_model["config"].get("packages", [])
-        python_version = parsed_model["config"].get("python_version", "3.8")
-        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", False)
+        imports = parsed_model["config"].get("imports", [])
         # adding default packages we need to make python model work
         default_packages = ["snowflake-snowpark-python"]
         package_names = [package.split("==")[0] for package in packages]
@@ -190,43 +189,43 @@ class SnowflakeAdapter(SQLAdapter):
             if default_package not in package_names:
                 packages.append(default_package)
         packages = "', '".join(packages)
-        if use_anonymous_sproc:
-            proc_name = f"{identifier}__dbt_sp"
-            python_stored_procedure = f"""
-WITH {proc_name} AS PROCEDURE ()
+        imports = "', '".join(imports)
+        # we can't pass empty imports clause to snowflake
+        if imports:
+            imports = f"IMPORTS = ('{imports}')"
+
+        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", False)
+        common_procedure_code = f"""
 RETURNS STRING
 LANGUAGE PYTHON
 RUNTIME_VERSION = '{python_version}'
 PACKAGES = ('{packages}')
+{imports}
 HANDLER = 'main'
 EXECUTE AS CALLER
 AS
 $$
 {compiled_code}
-$$
+$$"""
+        if use_anonymous_sproc:
+            proc_name = f"{identifier}__dbt_sp"
+            python_stored_procedure = f"""
+WITH {proc_name} AS PROCEDURE ()
+{common_procedure_code}
 CALL {proc_name}();
             """
         else:
             proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
             python_stored_procedure = f"""
 CREATE OR REPLACE PROCEDURE {proc_name} ()
-RETURNS STRING
-LANGUAGE PYTHON
-RUNTIME_VERSION = '3.8' -- TODO should this be configurable?
-PACKAGES = ('{packages}')
-HANDLER = 'main'
-EXECUTE AS CALLER
-AS
-$$
-{compiled_code}
-$$;
+{common_procedure_code};
 CALL {proc_name}();
 
             """
         response, _ = self.execute(python_stored_procedure, auto_begin=False, fetch=False)
         if not use_anonymous_sproc:
             self.execute(
-                f"drop procedure if exists {proc_name}(string)",
+                f"drop procedure if exists {proc_name}()",
                 auto_begin=False,
                 fetch=False,
             )
