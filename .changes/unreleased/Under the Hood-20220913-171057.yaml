@@ -1,0 +1,7 @@
+kind: Under the Hood
+body: Support anonymous sproc as submission method
+time: 2022-09-13T17:10:57.647598-07:00
+custom:
+  Author: ChenyuLInx
+  Issue: "256"
+  PR: "260"
