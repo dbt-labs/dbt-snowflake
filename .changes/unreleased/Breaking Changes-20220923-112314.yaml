@@ -1,0 +1,7 @@
+kind: Breaking Changes
+body: Add timestamps.sql to consolidate timestamp macros
+time: 2022-09-23T11:23:14.312738-07:00
+custom:
+  Author: colin-rogers-dbt
+  Issue: "5521"
+  PR: "273"
