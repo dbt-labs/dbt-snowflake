@@ -81,6 +81,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false
+          
+      - name: Find matching dbt-core branch for testing
+        uses: dbt-labs/actions/.github/workflows/update-dev-requirements.yml@leahwicz/devreq
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
