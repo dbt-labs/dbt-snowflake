@@ -3,7 +3,7 @@ from dbt.tests.adapter.utils import test_timestamps
 
 _MODEL_CURRENT_TIMESTAMP = """
 SELECT {{current_timestamp()}} as current_timestamp,
-       {{current_timestamp_in_utc()}} as current_timestamp_in_utc,
+       {{current_timestamp_in_utc_backcompat()}} as current_timestamp_in_utc_backcompat,
        {{current_timestamp_backcompat()}} as current_timestamp_backcompat
 """
 
@@ -16,6 +16,6 @@ class TestCurrentTimestampSnowflake(test_timestamps.TestCurrentTimestamps):
     def expected_schema(self):
         return {
                 "CURRENT_TIMESTAMP": "TIMESTAMP_TZ",
-                "CURRENT_TIMESTAMP_IN_UTC": "TIMESTAMP_TZ",
+                "CURRENT_TIMESTAMP_IN_UTC_BACKCOMPAT": "TIMESTAMP_NTZ",
                 "CURRENT_TIMESTAMP_BACKCOMPAT": "TIMESTAMP_NTZ",
             }
