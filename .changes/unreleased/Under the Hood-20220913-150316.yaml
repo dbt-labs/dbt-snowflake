@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: ignore adapter mypy check
-time: 2022-09-13T15:03:16.641976-07:00
-custom:
-  Author: colin-rogers-dbt
-  Issue: "259"
-  PR: "258"
