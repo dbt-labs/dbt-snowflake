@@ -12,7 +12,7 @@
 {%- endmacro %}
 
 {% macro snowflake__current_timestamp_backcompat() %}
-  current_timestamp()::timestamp_ntz
+  current_timestamp::{{ type_timestamp() }}
 {% endmacro %}
 
 {% macro snowflake__current_timestamp_in_utc_backcompat() %}

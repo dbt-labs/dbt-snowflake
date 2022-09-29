@@ -19,3 +19,11 @@ class TestCurrentTimestampSnowflake(test_timestamps.TestCurrentTimestamps):
                 "CURRENT_TIMESTAMP_IN_UTC_BACKCOMPAT": "TIMESTAMP_NTZ",
                 "CURRENT_TIMESTAMP_BACKCOMPAT": "TIMESTAMP_NTZ",
             }
+
+    @pytest.fixture(scope="class")
+    def expected_sql(self):
+        return """
+                select convert_timezone('UTC', current_timestamp()) as current_timestamp,
+                       convert_timezone('UTC', current_timestamp::TIMESTAMP)::TIMESTAMP as current_timestamp_in_utc_backcompat,
+                       current_timestamp::TIMESTAMP as current_timestamp_backcompat
+                """
