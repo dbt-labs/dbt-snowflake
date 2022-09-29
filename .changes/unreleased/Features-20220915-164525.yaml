@@ -1,8 +1,0 @@
-kind: Features
-body: Support passing imports to python model(dbt will assume the imports exists in
-  snowflake stage)
-time: 2022-09-15T16:45:25.065911-07:00
-custom:
-  Author: ChenyuLInx
-  Issue: "245"
-  PR: "263"
