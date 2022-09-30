@@ -1,5 +1,6 @@
+import imp
 import pytest
-from dbt.tests.adapter.utils import test_timestamps
+from dbt.tests.adapter.utils.test_timestamps import BaseCurrentTimestamps
 
 _MODEL_CURRENT_TIMESTAMP = """
 SELECT {{current_timestamp()}} as current_timestamp,
@@ -8,7 +9,7 @@ SELECT {{current_timestamp()}} as current_timestamp,
 """
 
 
-class TestCurrentTimestampSnowflake(test_timestamps.BaseCurrentTimestamps):
+class TestCurrentTimestampSnowflake(BaseCurrentTimestamps):
     @pytest.fixture(scope="class")
     def models(self):
         return {"get_current_timestamp.sql": _MODEL_CURRENT_TIMESTAMP}
