@@ -7,7 +7,8 @@ SELECT {{current_timestamp()}} as current_timestamp,
        {{current_timestamp_backcompat()}} as current_timestamp_backcompat
 """
 
-class TestCurrentTimestampSnowflake(test_timestamps.TestCurrentTimestamps):
+
+class TestCurrentTimestampSnowflake(test_timestamps.BaseCurrentTimestamps):
     @pytest.fixture(scope="class")
     def models(self):
         return {"get_current_timestamp.sql": _MODEL_CURRENT_TIMESTAMP}
