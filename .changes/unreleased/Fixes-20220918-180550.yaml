@@ -1,7 +1,0 @@
-kind: Fixes
-body: Skip grants on share objects
-time: 2022-09-18T18:05:50.156214-06:00
-custom:
-  Author: aaron-ortega
-  Issue: "264"
-  PR: "266"

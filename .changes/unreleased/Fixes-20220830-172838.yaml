@@ -1,7 +1,0 @@
-kind: Fixes
-body: fix incorrect UDF name
-time: 2022-08-30T17:28:38.640902-07:00
-custom:
-  Author: ChenyuLInx
-  Issue: "247"
-  PR: "246"
