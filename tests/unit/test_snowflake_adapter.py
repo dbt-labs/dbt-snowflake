@@ -400,6 +400,48 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 application='dbt', insecure_mode=False)
         ])
 
+    @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')
+    def test_authenticator_private_key_string_authentication(self, mock_get_private_key):
+        self.config.credentials = self.config.credentials.replace(
+            private_key='dGVzdF9rZXk=',
+            private_key_passphrase='p@ssphr@se',
+        )
+
+        self.adapter = SnowflakeAdapter(self.config)
+        conn = self.adapter.connections.set_connection_name(name='new_connection_with_new_config')
+
+        self.snowflake.assert_not_called()
+        conn.handle
+        self.snowflake.assert_has_calls([
+            mock.call(
+                account='test_account', autocommit=True,
+                client_session_keep_alive=False, database='test_database',
+                role=None, schema='public', user='test_user',
+                warehouse='test_warehouse', private_key='test_key',
+                application='dbt', insecure_mode=False)
+        ])
+
+    @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')
+    def test_authenticator_private_key_string_authentication_no_passphrase(self, mock_get_private_key):
+        self.config.credentials = self.config.credentials.replace(
+            private_key='dGVzdF9rZXk=',
+            private_key_passphrase=None,
+        )
+
+        self.adapter = SnowflakeAdapter(self.config)
+        conn = self.adapter.connections.set_connection_name(name='new_connection_with_new_config')
+
+        self.snowflake.assert_not_called()
+        conn.handle
+        self.snowflake.assert_has_calls([
+            mock.call(
+                account='test_account', autocommit=True,
+                client_session_keep_alive=False, database='test_database',
+                role=None, schema='public', user='test_user',
+                warehouse='test_warehouse', private_key='test_key',
+                application='dbt', insecure_mode=False)
+        ])
+
 
 class TestSnowflakeAdapterConversions(TestAdapterConversions):
     def test_convert_text_type(self):
