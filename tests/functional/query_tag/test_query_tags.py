@@ -133,3 +133,26 @@ class TestQueryTag:
     def test_snowflake_query_tag(self, project, prefix):
         self.build_all_with_query_tags(project, prefix)
         self.build_all_with_query_tags(project, prefix)
+
+class TestSnowflakeProfileQueryTag:
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "table_model_query_tag.sql": models__table_model_query_tag_sql,
+            "view_model_query_tag.sql": models__view_model_query_tag_sql,
+            "incremental_model_query_tag.sql": models__incremental_model_query_tag_sql,
+            "models_config.yml": models__models_config_yml,
+            }
+            
+    @pytest.fixture(scope="class")
+    def profiles_config_update(self, prefix):
+        return {
+            "query_tag": prefix
+        }
+
+    def build_all_with_query_tags(self, project, prefix):
+        run_dbt(['build', '--vars', '{{"check_tag": "{}"}}'.format(prefix)])
+
+    def test_snowflake_query_tag(self, project, prefix):
+        self.build_all_with_query_tags(project, prefix)
+        self.build_all_with_query_tags(project, prefix)
