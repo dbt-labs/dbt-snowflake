@@ -1,7 +1,0 @@
-kind: Features
-body: Support query tags in dbt tests using the `+query_tag` config in `dbt_project.yml`
-time: 2022-08-15T23:35:05.967484-06:00
-custom:
-  Author: matt-winkler
-  Issue: "211"
-  PR: "210"
