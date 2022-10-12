@@ -295,11 +295,6 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 **creds.auth_args(),
             )
 
-            if creds.query_tag:
-                handle.cursor().execute(
-                    ("alter session set query_tag = '{}'").format(creds.query_tag)
-                )
-
             return handle
 
         def exponential_backoff(attempt: int):
