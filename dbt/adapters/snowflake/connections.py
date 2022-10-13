@@ -275,6 +275,11 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         timeout = creds.connect_timeout
 
         def connect():
+            session_parameters = {}
+
+            if creds.query_tag:
+                session_parameters.update({"QUERY_TAG": creds.query_tag})
+
             handle = snowflake.connector.connect(
                 account=creds.account,
                 user=creds.user,
@@ -286,13 +291,9 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 client_session_keep_alive=creds.client_session_keep_alive,
                 application="dbt",
                 insecure_mode=creds.insecure_mode,
+                session_parameters=session_parameters,
                 **creds.auth_args(),
             )
-
-            if creds.query_tag:
-                handle.cursor().execute(
-                    ("alter session set query_tag = '{}'").format(creds.query_tag)
-                )
 
             return handle
 
