@@ -6,6 +6,7 @@ import yaml
 
 import dbt.tracking
 import dbt.version
+from dbt.events.functions import reset_metadata_vars
 from tests.integration.base import DBTIntegrationTest, use_profile, AnyFloat, \
     AnyStringWith
 
@@ -47,7 +48,7 @@ class BaseSourcesTest(DBTIntegrationTest):
         return self.run_dbt(cmd, *args, **kwargs)
 
 
-class SuccessfulSourcesTest(BaseSourcesTest):
+class TestSourceFreshness(BaseSourcesTest):
     def setUp(self):
         super().setUp()
         self.run_dbt_with_vars(['seed'])
@@ -90,46 +91,6 @@ class SuccessfulSourcesTest(BaseSourcesTest):
         )
         self.last_inserted_time = insert_time.strftime(
             "%Y-%m-%dT%H:%M:%S+00:00")
-
-
-class TestSources(SuccessfulSourcesTest):
-    @property
-    def project_config(self):
-        cfg = super().project_config
-        cfg.update({
-            'macro-paths': ['macros'],
-        })
-        return cfg
-
-    def _create_schemas(self):
-        super()._create_schemas()
-        self._create_schema_named(self.default_database,
-                                  self.alternative_schema())
-
-    def alternative_schema(self):
-        return self.unique_schema() + '_other'
-
-    def setUp(self):
-        super().setUp()
-        self.run_sql(
-            'create table {}.dummy_table (id int)'.format(self.unique_schema())
-        )
-        self.run_sql(
-            'create view {}.external_view as (select * from {}.dummy_table)'
-            .format(self.alternative_schema(), self.unique_schema())
-        )
-
-    def run_dbt_with_vars(self, cmd, *args, **kwargs):
-        vars_dict = {
-            'test_run_schema': self.unique_schema(),
-            'test_run_alt_schema': self.alternative_schema(),
-            'test_loaded_at': self.adapter.quote('updated_at'),
-        }
-        cmd.extend(['--vars', yaml.safe_dump(vars_dict)])
-        return self.run_dbt(cmd, *args, **kwargs)
-
-
-class TestSourceFreshness(SuccessfulSourcesTest):
 
     def _assert_freshness_results(self, path, state):
         self.assertTrue(os.path.exists(path))
@@ -216,4 +177,5 @@ class TestSourceFreshness(SuccessfulSourcesTest):
 
     @use_profile('snowflake')
     def test_snowflake_source_freshness(self):
+        reset_metadata_vars()
         self._run_source_freshness()
