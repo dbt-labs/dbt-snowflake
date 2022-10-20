@@ -6,13 +6,28 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
 from time import sleep
-from typing import Optional
+from typing import Optional, Tuple
+
+import agate
+import dbt.clients.agate_helper
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import requests
 import snowflake.connector
 import snowflake.connector.errors
+from snowflake.connector.errors import (
+    Error,
+    DatabaseError,
+    InternalError,
+    InternalServerError,
+    ServiceUnavailableError,
+    GatewayTimeoutError,
+    RequestTimeoutError,
+    BadGatewayError,
+    OtherHTTPRetryableError,
+    BindUploadError,
+)
 
 from dbt.exceptions import (
     InternalException,
@@ -56,8 +71,8 @@ class SnowflakeCredentials(Credentials):
     proxy_host: Optional[str] = None
     proxy_port: Optional[int] = None
     protocol: Optional[str] = None
-    connect_retries: int = 0
-    connect_timeout: int = 10
+    connect_retries: int = 1
+    connect_timeout: Optional[int] = None
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
@@ -257,103 +272,58 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             return connection
 
         creds = connection.credentials
-        error = None
-        for attempt in range(1 + creds.connect_retries):
-            try:
-                handle = snowflake.connector.connect(
-                    account=creds.account,
-                    user=creds.user,
-                    database=creds.database,
-                    schema=creds.schema,
-                    warehouse=creds.warehouse,
-                    role=creds.role,
-                    autocommit=True,
-                    client_session_keep_alive=creds.client_session_keep_alive,
-                    application="dbt",
-                    insecure_mode=creds.insecure_mode,
-                    **creds.auth_args(),
-                )
+        timeout = creds.connect_timeout
 
-                if creds.query_tag:
-                    handle.cursor().execute(
-                        ("alter session set query_tag = '{}'").format(creds.query_tag)
-                    )
+        def connect():
+            session_parameters = {}
 
-                connection.handle = handle
-                connection.state = "open"
-                break
+            if creds.query_tag:
+                session_parameters.update({"QUERY_TAG": creds.query_tag})
 
-            except snowflake.connector.errors.DatabaseError as e:
-                if (
-                    creds.retry_on_database_errors or creds.retry_all
-                ) and creds.connect_retries > 0:
-                    error = e
-                    logger.warning(
-                        "Got an error when attempting to open a "
-                        "snowflake connection. Retrying due to "
-                        "either retry configuration set to true."
-                        "This was attempt number: {attempt} of "
-                        "{retry_limit}. "
-                        "Retrying in {timeout} "
-                        "seconds. Error: '{error}'".format(
-                            attempt=attempt,
-                            retry_limit=creds.connect_retries,
-                            timeout=creds.connect_timeout,
-                            error=e,
-                        )
-                    )
-                    sleep(creds.connect_timeout)
-                else:
-                    logger.debug(
-                        "Got an error when attempting to open a "
-                        "snowflake connection. No retries "
-                        "attempted: '{}'".format(e)
-                    )
-
-                    connection.handle = None
-                    connection.state = "fail"
-
-                    raise FailedToConnectException(str(e))
-
-            except snowflake.connector.errors.Error as e:
-                if creds.retry_all and creds.connect_retries > 0:
-                    error = e
-                    logger.warning(
-                        "Got an error when attempting to open a "
-                        "snowflake connection. Retrying due to "
-                        "'retry_all' configuration set to true."
-                        "This was attempt number: {attempt} of "
-                        "{retry_limit}. "
-                        "Retrying in {timeout} "
-                        "seconds. Error: '{error}'".format(
-                            attempt=attempt,
-                            retry_limit=creds.connect_retries,
-                            timeout=creds.connect_timeout,
-                            error=e,
-                        )
-                    )
-                    sleep(creds.connect_timeout)
-                else:
-                    logger.debug(
-                        "Got an error when attempting to open a "
-                        "snowflake connection. No retries "
-                        "attempted: '{}'".format(e)
-                    )
-
-                    connection.handle = None
-                    connection.state = "fail"
-
-                    raise FailedToConnectException(str(e))
-
-        else:
-            logger.debug(
-                "Got an error when attempting to open a snowflake "
-                "connection: '{}'".format(error)
+            handle = snowflake.connector.connect(
+                account=creds.account,
+                user=creds.user,
+                database=creds.database,
+                schema=creds.schema,
+                warehouse=creds.warehouse,
+                role=creds.role,
+                autocommit=True,
+                client_session_keep_alive=creds.client_session_keep_alive,
+                application="dbt",
+                insecure_mode=creds.insecure_mode,
+                session_parameters=session_parameters,
+                **creds.auth_args(),
             )
 
-            connection.handle = None
-            connection.state = "fail"
-            raise FailedToConnectException(str(error))
+            return handle
+
+        def exponential_backoff(attempt: int):
+            return attempt * attempt
+
+        retryable_exceptions = [
+            InternalError,
+            InternalServerError,
+            ServiceUnavailableError,
+            GatewayTimeoutError,
+            RequestTimeoutError,
+            BadGatewayError,
+            OtherHTTPRetryableError,
+            BindUploadError,
+        ]
+        # these two options are for backwards compatibility
+        if creds.retry_all:
+            retryable_exceptions = [Error]
+        elif creds.retry_on_database_errors:
+            retryable_exceptions.insert(0, DatabaseError)
+
+        return cls.retry_connection(
+            connection,
+            connect=connect,
+            logger=logger,
+            retry_limit=creds.connect_retries,
+            retry_timeout=timeout if timeout is not None else exponential_backoff,
+            retryable_exceptions=retryable_exceptions,
+        )
 
     def cancel(self, connection):
         handle = connection.handle
@@ -430,6 +400,19 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
         return super().process_results(column_names, fixed)
 
+    def execute(
+        self, sql: str, auto_begin: bool = False, fetch: bool = False
+    ) -> Tuple[AdapterResponse, agate.Table]:
+        # don't apply the query comment here
+        # it will be applied after ';' queries are split
+        _, cursor = self.add_query(sql, auto_begin)
+        response = self.get_response(cursor)
+        if fetch:
+            table = self.get_result_from_cursor(cursor)
+        else:
+            table = dbt.clients.agate_helper.empty_table()
+        return response, table
+
     def add_query(self, sql, auto_begin=True, bindings=None, abridge_sql_log=False):
 
         connection = None
@@ -454,6 +437,24 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
             if without_comments == "":
                 continue
+
+            # Even though we turn off transactions by default for Snowflake,
+            # the user/macro has passed them *explicitly*, probably to wrap a DML statement
+            # Let their wish be granted!
+            # This also has the effect of ignoring "commit" in the RunResult for this model
+            # https://github.com/dbt-labs/dbt-snowflake/issues/147
+            if individual_query.lower() == "begin;":
+                super().add_begin_query()
+                continue
+
+            elif individual_query.lower() == "commit;":
+                super().add_commit_query()
+                continue
+
+            # add a query comment to *every* statement
+            # needed for models with multi-step materializations
+            # https://github.com/dbt-labs/dbt-snowflake/issues/140
+            individual_query = self._add_query_comment(individual_query)
 
             connection, cursor = super().add_query(
                 individual_query, auto_begin, bindings=bindings, abridge_sql_log=abridge_sql_log

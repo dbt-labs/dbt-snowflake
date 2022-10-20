@@ -259,6 +259,7 @@ class TestSnowflakeIncrementalOverwrite(BaseTestSimpleCopy):
         results = self.run_dbt(["run"])
         self.assertEqual(len(results),  1)
 
+        # Fails using 'merge' strategy because there's a duplicate 'id'
         results = self.run_dbt(["run"], expect_pass=False)
         self.assertEqual(len(results),  1)
 

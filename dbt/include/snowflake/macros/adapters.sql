@@ -1,56 +1,73 @@
-{% macro snowflake__create_table_as(temporary, relation, sql) -%}
-  {%- set transient = config.get('transient', default=true) -%}
-  {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
-  {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
-  {%- set copy_grants = config.get('copy_grants', default=false) -%}
+{% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
+  {%- if language == 'sql' -%}
+    {%- set transient = config.get('transient', default=true) -%}
+    {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
+    {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
+    {%- set copy_grants = config.get('copy_grants', default=false) -%}
 
-  {%- if cluster_by_keys is not none and cluster_by_keys is string -%}
-    {%- set cluster_by_keys = [cluster_by_keys] -%}
-  {%- endif -%}
-  {%- if cluster_by_keys is not none -%}
-    {%- set cluster_by_string = cluster_by_keys|join(", ")-%}
-  {% else %}
-    {%- set cluster_by_string = none -%}
-  {%- endif -%}
-  {%- set sql_header = config.get('sql_header', none) -%}
-
-  {{ sql_header if sql_header is not none }}
-
-      create or replace {% if temporary -%}
-        temporary
-      {%- elif transient -%}
-        transient
-      {%- endif %} table {{ relation }} {% if copy_grants and not temporary -%} copy grants {%- endif %} as
-      (
-        {%- if cluster_by_string is not none -%}
-          select * from(
-            {{ sql }}
-            ) order by ({{ cluster_by_string }})
-        {%- else -%}
-          {{ sql }}
-        {%- endif %}
-      );
-    {% if cluster_by_string is not none and not temporary -%}
-      alter table {{relation}} cluster by ({{cluster_by_string}});
+    {%- if cluster_by_keys is not none and cluster_by_keys is string -%}
+      {%- set cluster_by_keys = [cluster_by_keys] -%}
     {%- endif -%}
-    {% if enable_automatic_clustering and cluster_by_string is not none and not temporary  -%}
-      alter table {{relation}} resume recluster;
+    {%- if cluster_by_keys is not none -%}
+      {%- set cluster_by_string = cluster_by_keys|join(", ")-%}
+    {% else %}
+      {%- set cluster_by_string = none -%}
     {%- endif -%}
+    {%- set sql_header = config.get('sql_header', none) -%}
+
+    {{ sql_header if sql_header is not none }}
+
+        create or replace {% if temporary -%}
+          temporary
+        {%- elif transient -%}
+          transient
+        {%- endif %} table {{ relation }} {% if copy_grants and not temporary -%} copy grants {%- endif %} as
+        (
+          {%- if cluster_by_string is not none -%}
+            select * from(
+              {{ compiled_code }}
+              ) order by ({{ cluster_by_string }})
+          {%- else -%}
+            {{ compiled_code }}
+          {%- endif %}
+        );
+      {% if cluster_by_string is not none and not temporary -%}
+        alter table {{relation}} cluster by ({{cluster_by_string}});
+      {%- endif -%}
+      {% if enable_automatic_clustering and cluster_by_string is not none and not temporary  -%}
+        alter table {{relation}} resume recluster;
+      {%- endif -%}
+
+  {%- elif language == 'python' -%}
+    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, temporary=temporary) }}
+  {%- else -%}
+      {% do exceptions.raise_compiler_error("snowflake__create_table_as macro didn't get supported language, it got %s" % language) %}
+  {%- endif -%}
+
 {% endmacro %}
 
-{% macro get_column_comment_sql(column_name, column_dict) %}
-  {{ adapter.quote(column_name) if column_dict[column_name]['quote'] else column_name }} COMMENT $${{ column_dict[column_name]['description'] | replace('$', '[$]') }}$$
+{% macro get_column_comment_sql(column_name, column_dict) -%}
+  {% if (column_name|upper in column_dict) -%}
+    {% set matched_column = column_name|upper -%}
+  {% elif (column_name|lower in column_dict) -%}
+    {% set matched_column = column_name|lower -%}
+  {% elif (column_name in column_dict) -%}
+    {% set matched_column = column_name -%}
+  {% else -%}
+    {% set matched_column = None -%}
+  {% endif -%}
+  {% if matched_column -%}
+    {{ adapter.quote(column_name) }} COMMENT $${{ column_dict[matched_column]['description'] | replace('$', '[$]') }}$$
+  {%- else -%}
+    {{ adapter.quote(column_name) }} COMMENT $$$$
+  {%- endif -%}
 {% endmacro %}
 
 {% macro get_persist_docs_column_list(model_columns, query_columns) %}
 (
   {% for column_name in query_columns %}
-    {% if (column_name|upper in model_columns) or (column_name in model_columns) %}
-      {{ get_column_comment_sql(column_name, model_columns) }}
-    {% else %}
-      {{column_name}}
-    {% endif %}
-    {{ ", " if not loop.last else "" }}
+    {{ get_column_comment_sql(column_name, model_columns) }}
+    {{- ", " if not loop.last else "" }}
   {% endfor %}
 )
 {% endmacro %}
@@ -144,21 +161,6 @@
   {{ return(load_result('check_schema_exists').table) }}
 {%- endmacro %}
 
-{% macro snowflake__current_timestamp() -%}
-  convert_timezone('UTC', current_timestamp())
-{%- endmacro %}
-
-
-{% macro snowflake__snapshot_string_as_time(timestamp) -%}
-    {%- set result = "to_timestamp_ntz('" ~ timestamp ~ "')" -%}
-    {{ return(result) }}
-{%- endmacro %}
-
-
-{% macro snowflake__snapshot_get_time() -%}
-  to_timestamp_ntz({{ current_timestamp() }})
-{%- endmacro %}
-
 
 {% macro snowflake__rename_relation(from_relation, to_relation) -%}
   {% call statement('rename_relation') -%}
@@ -181,8 +183,8 @@
 {% macro snowflake__alter_column_comment(relation, column_dict) -%}
     {% set existing_columns = adapter.get_columns_in_relation(relation) | map(attribute="name") | list %}
     alter {{ relation.type }} {{ relation }} alter
-    {% for column_name in column_dict if (column_name in existing_columns) or (column_name|upper in existing_columns) %}
-        {{ get_column_comment_sql(column_name, column_dict) }} {{ ',' if not loop.last else ';' }}
+    {% for column_name in existing_columns if (column_name in existing_columns) or (column_name|lower in existing_columns) %}
+        {{ get_column_comment_sql(column_name, column_dict) }} {{- ',' if not loop.last else ';' }}
     {% endfor %}
 {% endmacro %}
 
@@ -193,6 +195,11 @@
 
 
 {% macro set_query_tag() -%}
+    {{ return(adapter.dispatch('set_query_tag', 'dbt')()) }}
+{% endmacro %}
+
+
+{% macro snowflake__set_query_tag() -%}
   {% set new_query_tag = config.get('query_tag') %}
   {% if new_query_tag %}
     {% set original_query_tag = get_current_query_tag() %}
@@ -203,7 +210,13 @@
   {{ return(none)}}
 {% endmacro %}
 
+
 {% macro unset_query_tag(original_query_tag) -%}
+    {{ return(adapter.dispatch('unset_query_tag', 'dbt')(original_query_tag)) }}
+{% endmacro %}
+
+
+{% macro snowflake__unset_query_tag(original_query_tag) -%}
   {% set new_query_tag = config.get('query_tag') %}
   {% if new_query_tag %}
     {% if original_query_tag %}

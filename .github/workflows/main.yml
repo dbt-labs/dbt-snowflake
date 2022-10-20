@@ -52,9 +52,9 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
-          pip install -r dev_requirements.txt
-          pip --version
+          python -m pip install --user --upgrade pip
+          python -m pip install -r dev-requirements.txt
+          python -m pip --version
           pre-commit --version
           mypy --version
           dbt --version
@@ -70,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8] # TODO: support unit testing for python 3.9 (https://github.com/dbt-labs/dbt/issues/3689)
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     env:
       TOXENV: "unit"
@@ -89,9 +89,9 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
-          pip install tox
-          pip --version
+          python -m pip install --user --upgrade pip
+          python -m pip install tox
+          python -m pip --version
           tox --version
 
       - name: Run tox
@@ -129,9 +129,9 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
-          pip install --upgrade setuptools wheel twine check-wheel-contents
-          pip --version
+          python -m pip install --user --upgrade pip
+          python -m pip install --upgrade setuptools wheel twine check-wheel-contents
+          python -m pip --version
 
       - name: Build distributions
         run: ./scripts/build-dist.sh
@@ -172,7 +172,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     steps:
       - name: Set up Python ${{ matrix.python-version }}
@@ -182,9 +182,9 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          pip install --user --upgrade pip
-          pip install --upgrade wheel
-          pip --version
+          python -m pip install --user --upgrade pip
+          python -m pip install --upgrade wheel
+          python -m pip --version
 
       - uses: actions/download-artifact@v2
         with:
@@ -196,7 +196,7 @@ jobs:
 
       - name: Install wheel distributions
         run: |
-          find ./dist/*.whl -maxdepth 1 -type f | xargs pip install --force-reinstall --find-links=dist/
+          find ./dist/*.whl -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
 
       - name: Check wheel distributions
         run: |
@@ -204,7 +204,7 @@ jobs:
 
       - name: Install source distributions
         run: |
-          find ./dist/*.gz -maxdepth 1 -type f | xargs pip install --force-reinstall --find-links=dist/
+          find ./dist/*.gz -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
 
       - name: Check source distributions
         run: |

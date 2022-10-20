@@ -79,7 +79,7 @@ WARNING: The parameters in your `test.env` file must link to a valid Snowflake a
 There are a few methods for running tests locally.
 
 #### `tox`
-`tox` automatically runs unit tests against several Python versions using its own virtualenvs. Run `tox -p` to run unit tests for Python 3.7, Python 3.8, Python 3.9, and `flake8` in parallel. Run `tox -e py37` to invoke tests on Python version 3.7 only (use py37, py38, or py39). Tox recipes are found in `tox.ini`.
+`tox` automatically runs unit tests against several Python versions using its own virtualenvs. Run `tox -p` to run unit tests for Python 3.7, Python 3.8, Python 3.9, Python 3.10, and `flake8` in parallel. Run `tox -e py37` to invoke tests on Python version 3.7 only (use py37, py38, py39, or py310). Tox recipes are found in `tox.ini`.
 
 #### `pytest`
 You may run a specific test or group of tests using `pytest` directly. Activate a Python virtualenv active with dev dependencies installed. Then, run tests like so:
@@ -110,6 +110,16 @@ Many changes will require an update to `dbt-snowflake` documentation. Here are s
 - The docs repo for making changes is located [here](https://github.com/dbt-labs/docs.getdbt.com).
 - The changes made are likely to impact one or both of [Snowflake Profile](https://docs.getdbt.com/reference/warehouse-profiles/snowflake-profile), or [Snowflake Configs](https://docs.getdbt.com/reference/resource-configs/snowflake-configs).
 - We ask every community member who makes a user-facing change to open an issue or PR regarding doc changes.
+
+## Adding CHANGELOG Entry
+
+We use [changie](https://changie.dev) to generate `CHANGELOG` entries. **Note:** Do not edit the `CHANGELOG.md` directly. Your modifications will be lost.
+
+Follow the steps to [install `changie`](https://changie.dev/guide/installation/) for your system.
+
+Once changie is installed and your PR is created, simply run `changie new` and changie will walk you through the process of creating a changelog entry.  Commit the file that's created and your changelog entry is complete!
+
+You don't need to worry about which `dbt-snowflake` version your change will go into. Just create the changelog entry with `changie`, and open your PR against the `main` branch. All merged changes will be included in the next minor version of `dbt-snowflake`. The Core maintainers _may_ choose to "backport" specific changes in order to patch older minor versions. In that case, a maintainer will take care of that backport after merging your PR, before releasing the new version of `dbt-snowflake`.
 
 ## Submitting a Pull Request
 
