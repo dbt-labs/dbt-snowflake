@@ -228,7 +228,6 @@ class SnowflakeCredentials(Credentials):
 
 class SnowflakeConnectionManager(SQLConnectionManager):
     TYPE = "snowflake"
-
     # Used for determining if the connection should be released.
     # As this feature is new, we don't want to break existing integrations, instead make it opt-in for users to test.
     # Reusing connections can see a big performance improvement, as you don't need to reauthenticate.
