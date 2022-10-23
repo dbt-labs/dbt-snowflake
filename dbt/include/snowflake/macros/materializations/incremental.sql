@@ -1,16 +1,39 @@
+{% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key, language) %}
+
+  /* {#
+       If we are running multiple statements (DELETE + INSERT),
+       we must first save the model query results as a temporary table
+       in order to guarantee consistent inputs to both statements.
+
+       If we are running a single statement (MERGE or INSERT alone),
+       we can save the model query definition as a view instead,
+       for faster overall incremental processing.
+  #} */
+
+  {% if language == 'sql' and (strategy in ('default', 'append', 'merge') or (unique_key is none)) %}
+    {{ return('view') }}
+  {% else %}  {#--  play it safe -- #}
+    {{ return('table') }}
+  {% endif %}
+{% endmacro %}
+
 {% materialization incremental, adapter='snowflake', supported_languages=['sql', 'python'] -%}
 
   {% set original_query_tag = set_query_tag() %}
 
   {#-- Set vars --#}
-  {%- set unique_key = config.get('unique_key') -%}
   {%- set full_refresh_mode = (should_full_refresh()) -%}
   {%- set language = model['language'] -%}
   {% set target_relation = this %}
   {% set existing_relation = load_relation(this) %}
-  {% set tmp_relation = make_temp_relation(this) %}
 
-  {% set  grant_config = config.get('grants') %}
+  {#-- The temp relation will be a view (faster) or temp table, depending on upsert/merge strategy --#}
+  {%- set unique_key = config.get('unique_key') -%}
+  {% set incremental_strategy = config.get('incremental_strategy') or 'default' %}
+  {% set tmp_relation_type = dbt_snowflake_get_tmp_relation_type(incremental_strategy, unique_key, language) %}
+  {% set tmp_relation = make_temp_relation(this).incorporate(type=tmp_relation_type) %}
+
+  {% set grant_config = config.get('grants') %}
 
   {% set on_schema_change = incremental_validate_on_schema_change(config.get('on_schema_change'), default='ignore') %}
 
@@ -34,9 +57,16 @@
     {%- endcall -%}
 
   {% else %}
-    {%- call statement('create_tmp_relation', language=language) -%}
-      {{ create_table_as(True, tmp_relation, compiled_code, language) }}
-    {%- endcall -%}
+    {#-- Create the temp relation, either as a view or as a temp table --#}
+    {% if tmp_relation_type == 'view' %}
+        {%- call statement('create_tmp_relation') -%}
+          {{ create_view_as(tmp_relation, compiled_code) }}
+        {%- endcall -%}
+    {% else %}
+        {%- call statement('create_tmp_relation', language=language) -%}
+          {{ create_table_as(True, tmp_relation, compiled_code, language) }}
+        {%- endcall -%}
+    {% endif %}
 
     {% do adapter.expand_target_column_types(
            from_relation=tmp_relation,
@@ -48,7 +78,6 @@
     {% endif %}
 
     {#-- Get the incremental_strategy, the macro to use for the strategy, and build the sql --#}
-    {% set incremental_strategy = config.get('incremental_strategy') or 'default' %}
     {% set incremental_predicates = config.get('incremental_predicates', none) %}
     {% set strategy_sql_macro_func = adapter.get_incremental_strategy_macro(context, incremental_strategy) %}
     {% set strategy_arg_dict = ({'target_relation': target_relation, 'temp_relation': tmp_relation, 'unique_key': unique_key, 'dest_columns': dest_columns, 'predicates': incremental_predicates }) %}
@@ -57,6 +86,8 @@
       {{ strategy_sql_macro_func(strategy_arg_dict) }}
     {%- endcall -%}
   {% endif %}
+
+  {% do drop_relation_if_exists(tmp_relation) %}
 
   {{ run_hooks(post_hooks) }}
 
@@ -73,6 +104,7 @@
   {{ return({'relations': [target_relation]}) }}
 
 {%- endmaterialization %}
+
 
 {% macro snowflake__get_incremental_default_sql(arg_dict) %}
   {{ return(get_incremental_merge_sql(arg_dict)) }}
