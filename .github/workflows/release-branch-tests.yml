@@ -20,7 +20,7 @@ name: Release branch scheduled testing
 
 on:
   schedule:
-    - cron: '0 9,13,18 * * *' # 9:00, 13:00, 18:00 UTC
+    - cron: "0 9,13,18 * * *" # 9:00, 13:00, 18:00 UTC
 
   workflow_dispatch: # for manual triggering
 
@@ -43,21 +43,21 @@ jobs:
         workflow_name: [main.yml, integration.yml]
 
     steps:
-    - name: Call CI workflow for ${{ matrix.branch }} branch
-      id: trigger-step
-      uses: aurelien-baudet/workflow-dispatch@v2.1.1
-      with:
-        workflow: ${{ matrix.workflow_name }}
-        ref: ${{ matrix.branch }}
-        token: ${{ secrets.FISHTOWN_BOT_PAT }}
+      - name: Call CI workflow for ${{ matrix.branch }} branch
+        id: trigger-step
+        uses: aurelien-baudet/workflow-dispatch@v2.1.1
+        with:
+          workflow: ${{ matrix.workflow_name }}
+          ref: ${{ matrix.branch }}
+          token: ${{ secrets.FISHTOWN_BOT_PAT }}
 
-    - name: Post failure to Slack
-      uses: ravsamhq/notify-slack-action@v1
-      if: ${{ always() && !contains(steps.trigger-step.outputs.workflow-conclusion,'success') }}
-      with:
-        status: ${{ job.status }}
-        notification_title: 'dbt-snowflake scheduled run of ${{ matrix.workflow_name }} on "${{ matrix.branch }}" branch not successful'
-        message_format: ':x: ${{ matrix.workflow_name }} CI on branch "${{ matrix.branch }}" ${{ steps.trigger-step.outputs.workflow-conclusion }}'
-        footer: 'Linked failed CI run ${{ steps.trigger-step.outputs.workflow-url }}'
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_CORE_ALERTS }}
+      - name: Post failure to Slack
+        uses: ravsamhq/notify-slack-action@v1
+        if: ${{ always() && !contains(steps.trigger-step.outputs.workflow-conclusion,'success') }}
+        with:
+          status: ${{ job.status }}
+          notification_title: 'dbt-snowflake scheduled run of ${{ matrix.workflow_name }} on "${{ matrix.branch }}" branch not successful'
+          message_format: ':x: ${{ matrix.workflow_name }} CI on branch "${{ matrix.branch }}" ${{ steps.trigger-step.outputs.workflow-conclusion }}'
+          footer: "Linked failed CI run ${{ steps.trigger-step.outputs.workflow-url }}"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_CORE_ALERTS }}
