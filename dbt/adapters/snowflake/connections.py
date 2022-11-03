@@ -34,7 +34,7 @@ from dbt.exceptions import (
     RuntimeException,
     FailedToConnectException,
     DatabaseException,
-    warn_or_error,
+    warn_or_error, # type: ignore[attr-defined]
 )
 from dbt.adapters.base import Credentials  # type: ignore
 from dbt.contracts.connection import AdapterResponse
