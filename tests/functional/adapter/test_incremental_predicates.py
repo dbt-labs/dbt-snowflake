@@ -13,7 +13,7 @@ class TestIncrementalPredicatesMergeSnowflake(BaseIncrementalPredicates):
             "models": { 
                 "+incremental_predicates": [
                     "dbt_internal_dest.id != 2"
-                    ],
+                ],
                 "+incremental_strategy": "merge"
             }
         }
