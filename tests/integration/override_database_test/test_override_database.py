@@ -70,29 +70,6 @@ class BaseOverrideDatabase(DBTIntegrationTest):
         }
 
 
-class TestModelOverride(BaseOverrideDatabase):
-    def run_database_override(self):
-        if self.adapter_type == 'snowflake':
-            func = lambda x: x.upper()
-        else:
-            func = lambda x: x
-
-        self.run_dbt(['seed'])
-
-        self.assertEqual(len(self.run_dbt(['run'])), 4)
-        self.assertManyRelationsEqual([
-            (func('seed'), self.unique_schema(), self.default_database),
-            (func('view_2'), self.unique_schema(), self.alternative_database),
-            (func('view_1'), self.unique_schema(), self.default_database),
-            (func('view_3'), self.unique_schema(), self.default_database),
-            (func('view_4'), self.unique_schema(), self.alternative_database),
-        ])
-
-    @use_profile('snowflake')
-    def test_snowflake_database_override(self):
-        self.run_database_override()
-
-
 class BaseTestProjectModelOverride(BaseOverrideDatabase):
     # this is janky, but I really want to access self.default_database in
     # project_config
@@ -190,27 +167,4 @@ class TestProjectModelAliasOverride(BaseTestProjectModelOverride):
         }
 
 
-class TestProjectSeedOverride(BaseOverrideDatabase):
-    def run_database_override(self):
-        func = lambda x: x.upper()
 
-        self.use_default_project({
-            'config-version': 2,
-            'seeds': {
-                'database': self.alternative_database
-            },
-        })
-        self.run_dbt(['seed'])
-
-        self.assertEqual(len(self.run_dbt(['run'])), 4)
-        self.assertManyRelationsEqual([
-            (func('seed'), self.unique_schema(), self.alternative_database),
-            (func('view_2'), self.unique_schema(), self.alternative_database),
-            (func('view_1'), self.unique_schema(), self.default_database),
-            (func('view_3'), self.unique_schema(), self.default_database),
-            (func('view_4'), self.unique_schema(), self.alternative_database),
-        ])
-
-    @use_profile('snowflake')
-    def test_snowflake_database_override(self):
-        self.run_database_override()
