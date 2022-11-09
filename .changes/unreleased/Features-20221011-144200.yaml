@@ -1,0 +1,8 @@
+kind: Features
+body: change when query_tag is set to cut down number of connections needed to increase
+  performance at long distances to conversation with databases
+time: 2022-10-11T14:42:00.119571-05:00
+custom:
+  Author: joshuataylor
+  Issue: "199"
+  PR: "294"
