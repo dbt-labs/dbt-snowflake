@@ -34,12 +34,13 @@ from dbt.exceptions import (
     RuntimeException,
     FailedToConnectException,
     DatabaseException,
-    warn_or_error,
 )
 from dbt.adapters.base import Credentials  # type: ignore
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLConnectionManager  # type: ignore
 from dbt.events import AdapterLogger  # type: ignore
+from dbt.events.functions import warn_or_error
+from dbt.events.types import AdapterEventWarning
 
 
 logger = AdapterLogger("Snowflake")
@@ -84,8 +85,9 @@ class SnowflakeCredentials(Credentials):
         ):
             # the user probably forgot to set 'authenticator' like I keep doing
             warn_or_error(
-                "Authenticator is not set to oauth, but an oauth-only "
-                "parameter is set! Did you mean to set authenticator: oauth?"
+                AdapterEventWarning(
+                    base_msg="Authenticator is not set to oauth, but an oauth-only parameter is set! Did you mean to set authenticator: oauth?"
+                )
             )
 
     @property
@@ -133,13 +135,15 @@ class SnowflakeCredentials(Credentials):
                     token = self._get_access_token()
                 elif self.oauth_client_id:
                     warn_or_error(
-                        "Invalid profile: got an oauth_client_id, but not an "
-                        "oauth_client_secret!"
+                        AdapterEventWarning(
+                            base_msg="Invalid profile: got an oauth_client_id, but not an oauth_client_secret!"
+                        )
                     )
                 elif self.oauth_client_secret:
                     warn_or_error(
-                        "Invalid profile: got an oauth_client_secret, but not "
-                        "an oauth_client_id!"
+                        AdapterEventWarning(
+                            base_msg="Invalid profile: got an oauth_client_secret, but not an oauth_client_id!"
+                        )
                     )
 
                 result["token"] = token
