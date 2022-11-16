@@ -82,18 +82,20 @@ class TestSnowflakeOauth:
             "model_4.sql": _MODELS__MODEL_4_SQL,
             }
 
-    def snowflake_profile(self):
-        profile = super().snowflake_profile()
-        profile['test']['target'] = 'oauth'
-        missing = ', '.join(
-            k for k in ('oauth_client_id', 'oauth_client_secret', 'token')
-            if k not in profile['test']['outputs']['oauth']
-        )
-        if missing:
-            raise ValueError(f'Cannot run test - {missing} not configured')
-        del profile['test']['outputs']['default2']
-        del profile['test']['outputs']['noaccess']
-        return profile
+    @pytest.fixture(scope="class")
+    def profiles_config_update(self):
+        return {
+            "type": "snowflake",
+            "threads": 4,
+            "account": os.getenv("SNOWFLAKE_TEST_ACCOUNT"),
+            "user": os.getenv("SNOWFLAKE_TEST_USER"),
+            "oauth_client_id": os.getenv("SNOWFLAKE_TEST_OAUTH_CLIENT_ID"),
+            "oauth_client_secret": os.getenv("SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET"),
+            "token": os.getenv("SNOWFLAKE_TEST_OAUTH_REFRESH_TOKEN"),
+            "database": os.getenv("SNOWFLAKE_TEST_DATABASE"),
+            "warehouse": os.getenv("SNOWFLAKE_TEST_WAREHOUSE"),
+            "authenticator": "oauth",
+        }
 
     @pytest.mark.skipif(OAUTH_TESTS_DISABLED, reason='oauth tests disabled')
     def test_snowflake_basic(self, project):
