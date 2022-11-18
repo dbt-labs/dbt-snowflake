@@ -106,7 +106,7 @@ class TestSnowflakeLateBindingViewDependency:
             'dependent_model': 'view'
         }
 
-        # ensure that the model actually was materialized as a table
+        # ensure that the model actually was materialized as a view
         for result in results:
             node_name = result.node.name
             node_type = result.node.config.materialized
