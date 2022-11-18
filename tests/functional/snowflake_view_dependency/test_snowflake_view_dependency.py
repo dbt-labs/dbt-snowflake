@@ -61,6 +61,15 @@ class TestSnowflakeLateBindingViewDependency:
             }
         }
 
+    def compare_relations(self, project):
+        results = run_dbt(["seed"])
+        assert len(results) == 1
+
+        results = run_dbt(["run"])
+        assert len(results) == 2
+        check_relations_equal(project.adapter, ["PEOPLE", "BASE_TABLE"])
+        check_relations_equal(project.adapter, ["PEOPLE", "DEPENDENT_MODEL"])
+
     """
     Snowflake views are not bound to the relations they select from. A Snowflake view
     can have entirely invalid SQL if, for example, the table it selects from is dropped
@@ -74,13 +83,7 @@ class TestSnowflakeLateBindingViewDependency:
     """
 
     def test__snowflake__changed_table_schema_for_downstream_view(self, project):
-        results = run_dbt(["seed"])
-        assert len(results) == 1
-
-        results = run_dbt(["run"])
-        assert len(results) == 2
-        check_relations_equal(project.adapter, ["PEOPLE", "BASE_TABLE"])
-        check_relations_equal(project.adapter, ["PEOPLE", "DEPENDENT_MODEL"])
+        self.compare_relations(project)
 
         # Change the schema of base_table, assert that dependent_model doesn't fail
         results = run_dbt(["run", "--vars", "{add_table_field: true, dependent_type: view}"])
@@ -94,13 +97,9 @@ class TestSnowflakeLateBindingViewDependency:
     """
 
     def test__snowflake__changed_table_schema_for_downstream_view_changed_to_table(self, project):
-        results = run_dbt(["seed"])
-        assert len(results) == 1
+        self.compare_relations(project)
 
         results = run_dbt(["run"])
-        assert len(results) == 2
-        check_relations_equal(project.adapter, ["PEOPLE", "BASE_TABLE"])
-        check_relations_equal(project.adapter, ["PEOPLE", "DEPENDENT_MODEL"])
 
         expected_types = {
             'base_table': 'table',
@@ -110,7 +109,8 @@ class TestSnowflakeLateBindingViewDependency:
         # ensure that the model actually was materialized as a table
         for result in results:
             node_name = result.node.name
-            assert result.node.config.materialized == expected_types[node_name]
+            node_type = result.node.config.materialized
+            assert node_type == expected_types[node_name]
 
         results = run_dbt(["run", "--vars", "{add_table_field: true, dependent_type: table}"])
         assert len(results) == 2
@@ -124,4 +124,5 @@ class TestSnowflakeLateBindingViewDependency:
         # ensure that the model actually was materialized as a table
         for result in results:
             node_name = result.node.name
-            assert result.node.config.materialized == expected_types[node_name]
+            node_type = result.node.config.materialized
+            assert node_type == expected_types[node_name]
