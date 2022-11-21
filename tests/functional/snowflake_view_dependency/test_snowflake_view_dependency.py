@@ -2,7 +2,6 @@ import pytest
 from dbt.tests.util import run_dbt, check_relations_equal
 
 _MODELS__DEPENDENT_MODEL_SQL = """
-
 {% if var('dependent_type', 'view') == 'view' %}
     {{ config(materialized='view') }}
 {% else %}
@@ -10,22 +9,18 @@ _MODELS__DEPENDENT_MODEL_SQL = """
 {% endif %}
 
 select * from {{ ref('base_table') }}
-
 """
 
 
 
 _MODELS__BASE_TABLE_SQL = """
-
 {{ config(materialized='table') }}
-
 select *
     {% if var('add_table_field', False) %}
         , 1 as new_field
     {% endif %}
 
 from {{ ref('people') }}
-
 """
 
 _SEEDS__PEOPLE_CSV = """id,name
@@ -50,8 +45,6 @@ class TestSnowflakeLateBindingViewDependency:
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {
-            'config-version': 2,
-            'seed-paths': ['seeds'],
             'seeds': {
                 'quote_columns': False,
             },
@@ -61,14 +54,20 @@ class TestSnowflakeLateBindingViewDependency:
             }
         }
 
-    def compare_relations(self, project):
+    @pytest.fixture(scope="class", autouse=True)
+    def setup_method(self, project):
         results = run_dbt(["seed"])
         assert len(results) == 1
-
         results = run_dbt(["run"])
         assert len(results) == 2
         check_relations_equal(project.adapter, ["PEOPLE", "BASE_TABLE"])
         check_relations_equal(project.adapter, ["PEOPLE", "DEPENDENT_MODEL"])
+
+    def check_result(self, project, results, expected_types):
+        for result in results:
+            node_name = result.node.name
+            node_type = result.node.config.materialized
+            assert node_type == expected_types[node_name]
 
     """
     Snowflake views are not bound to the relations they select from. A Snowflake view
@@ -83,8 +82,7 @@ class TestSnowflakeLateBindingViewDependency:
     """
 
     def test__snowflake__changed_table_schema_for_downstream_view(self, project):
-        self.compare_relations(project)
-
+        run_dbt(["seed"])
         # Change the schema of base_table, assert that dependent_model doesn't fail
         results = run_dbt(["run", "--vars", "{add_table_field: true, dependent_type: view}"])
         assert len(results) == 2
@@ -97,32 +95,20 @@ class TestSnowflakeLateBindingViewDependency:
     """
 
     def test__snowflake__changed_table_schema_for_downstream_view_changed_to_table(self, project):
-        self.compare_relations(project)
-
+        run_dbt(["seed"])
         results = run_dbt(["run"])
-
         expected_types = {
             'base_table': 'table',
             'dependent_model': 'view'
         }
-
         # ensure that the model actually was materialized as a view
-        for result in results:
-            node_name = result.node.name
-            node_type = result.node.config.materialized
-            assert node_type == expected_types[node_name]
-
+        self.check_result(project, results, expected_types)
         results = run_dbt(["run", "--vars", "{add_table_field: true, dependent_type: table}"])
         assert len(results) == 2
         check_relations_equal(project.adapter, ["BASE_TABLE", "DEPENDENT_MODEL"])
-
         expected_types = {
             'base_table': 'table',
             'dependent_model': 'table'
         }
-
         # ensure that the model actually was materialized as a table
-        for result in results:
-            node_name = result.node.name
-            node_type = result.node.config.materialized
-            assert node_type == expected_types[node_name]
+        self.check_result(project, results, expected_types)
