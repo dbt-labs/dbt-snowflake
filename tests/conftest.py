@@ -18,5 +18,3 @@ def dbt_profile_target():
         "database": os.getenv("SNOWFLAKE_TEST_DATABASE"),
         "warehouse": os.getenv("SNOWFLAKE_TEST_WAREHOUSE"),
     }
-
-

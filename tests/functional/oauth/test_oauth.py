@@ -33,57 +33,35 @@ integration the same, just the refresh token changed)
 
 import pytest
 import os
-from dbt.tests.util import run_dbt, check_relations_equal
+from dbt.tests.util import (
+    run_dbt,
+    check_relations_equal
+)
 
 _MODELS__MODEL_1_SQL = """
 select 1 as id
-
 """
 
 _MODELS__MODEL_2_SQL = """
 select 2 as id
-
 """
 
 _MODELS__MODEL_3_SQL = """
 select * from {{ ref('model_1') }}
 union all
 select * from {{ ref('model_2') }}
-
 """
 
 _MODELS__MODEL_4_SQL = """
 select 1 as id
 union all
 select 2 as id
-
 """
-
-def env_set_truthy(key):
-    """Return the value if it was set to a "truthy" string value, or None
-    otherwise.
-    """
-    value = os.getenv(key)
-    if not value or value.lower() in ('0', 'false', 'f'):
-        return None
-    return value
-
-
-OAUTH_TESTS_DISABLED = env_set_truthy('DBT_INTEGRATION_TEST_SNOWFLAKE_OAUTH_DISABLED')
 
 
 class TestSnowflakeOauth:
-    @pytest.fixture(scope="class")
-    def models(self):
-        return {
-            "model_1.sql": _MODELS__MODEL_1_SQL,
-            "model_2.sql": _MODELS__MODEL_2_SQL,
-            "model_3.sql": _MODELS__MODEL_3_SQL,
-            "model_4.sql": _MODELS__MODEL_4_SQL,
-            }
-
-    @pytest.fixture(scope="class")
-    def profiles_config_update(self):
+    @pytest.fixture(scope="class", autouse=True)
+    def dbt_profile_target(self):
         return {
             "type": "snowflake",
             "threads": 4,
@@ -97,7 +75,15 @@ class TestSnowflakeOauth:
             "authenticator": "oauth",
         }
 
-    @pytest.mark.skipif(OAUTH_TESTS_DISABLED, reason='oauth tests disabled')
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "model_1.sql": _MODELS__MODEL_1_SQL,
+            "model_2.sql": _MODELS__MODEL_2_SQL,
+            "model_3.sql": _MODELS__MODEL_3_SQL,
+            "model_4.sql": _MODELS__MODEL_4_SQL,
+            }
+
     def test_snowflake_basic(self, project):
         run_dbt()
         check_relations_equal(project.adapter, ["MODEL_3", "MODEL_4"])
