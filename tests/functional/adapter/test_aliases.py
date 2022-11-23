@@ -1,16 +1,14 @@
 import pytest
+from dbt.tests.util import run_dbt
 from dbt.tests.adapter.aliases.test_aliases import BaseAliases
 
 MACROS__SNOWFLAKE_CAST_SQL = """
-
 {% macro snowflake__string_literal(s) %}
     cast('{{ s }}' as string)
 {% endmacro %}
-
 """
 
 MACROS__EXPECT_VALUE_SQL = """
-
 -- cross-db compatible test, similar to accepted_values
 
 {% test expect_value(model, field, value) %}
@@ -20,10 +18,18 @@ from {{ model }}
 where {{ field }} != '{{ value }}'
 
 {% endtest %}
-
 """
+
 
 class TestAliasesSnowflake(BaseAliases):
     @pytest.fixture(scope="class")
     def macros(self):
-        return {"snowflake_cast.sql": MACROS__SNOWFLAKE_CAST_SQL, "expect_value.sql": MACROS__EXPECT_VALUE_SQL}
+        return {
+            "snowflake_cast.sql": MACROS__SNOWFLAKE_CAST_SQL,
+            "expect_value.sql": MACROS__EXPECT_VALUE_SQL
+        }
+
+    def test_alias_model_name(self, project):
+        results = run_dbt(["run"])
+        assert len(results) == 4
+        run_dbt(["test"])
