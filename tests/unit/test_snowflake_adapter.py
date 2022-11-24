@@ -408,7 +408,6 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 session_parameters={})
         ])
 
-    @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')
     def test_authenticator_private_key_authentication(self, mock_get_private_key):
         self.config.credentials = self.config.credentials.replace(
             private_key='test_key'
