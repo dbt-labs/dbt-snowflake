@@ -1,0 +1,7 @@
+kind: Dependency
+body: "Bump SCP upper bound to <2.9"
+time: 2022-09-28T10:01:13.00000Z
+custom:
+  Author: jtcohen6
+  Issue: 216
+  PR: 280
