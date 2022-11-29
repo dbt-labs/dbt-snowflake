@@ -82,7 +82,7 @@ class TestSnowflakeOauth:
             "model_2.sql": _MODELS__MODEL_2_SQL,
             "model_3.sql": _MODELS__MODEL_3_SQL,
             "model_4.sql": _MODELS__MODEL_4_SQL,
-            }
+        }
 
     def test_snowflake_basic(self, project):
         run_dbt()
