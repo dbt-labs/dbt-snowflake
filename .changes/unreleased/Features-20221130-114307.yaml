@@ -1,0 +1,7 @@
+kind: Features
+body: change to anonymous sprocs as the default
+time: 2022-11-30T11:43:07.168903-06:00
+custom:
+  Author: McKnight-42
+  Issue: "305"
+  PR: "334"
