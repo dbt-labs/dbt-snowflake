@@ -195,7 +195,7 @@ class SnowflakeAdapter(SQLAdapter):
         if imports:
             imports = f"IMPORTS = ('{imports}')"
 
-        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", False)
+        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", True)
         common_procedure_code = f"""
 RETURNS STRING
 LANGUAGE PYTHON
