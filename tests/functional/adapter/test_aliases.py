@@ -1,5 +1,4 @@
 import pytest
-from dbt.tests.util import run_dbt
 from dbt.tests.adapter.aliases.test_aliases import BaseAliases
 
 MACROS__SNOWFLAKE_CAST_SQL = """
