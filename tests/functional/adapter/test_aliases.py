@@ -28,8 +28,3 @@ class TestAliasesSnowflake(BaseAliases):
             "snowflake_cast.sql": MACROS__SNOWFLAKE_CAST_SQL,
             "expect_value.sql": MACROS__EXPECT_VALUE_SQL
         }
-
-    def test_alias_model_name(self, project):
-        results = run_dbt(["run"])
-        assert len(results) == 4
-        run_dbt(["test"])
