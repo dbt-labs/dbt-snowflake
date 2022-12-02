@@ -51,6 +51,7 @@ def model( dbt, session):
     dbt.config(
         materialized='table',
         imports = ['@dbt_integration_test/iris.csv'],
+        use_anonymous_sproc = False
     )
     schema_for_data_file = StructType([
         StructField("length1", FloatType()),
