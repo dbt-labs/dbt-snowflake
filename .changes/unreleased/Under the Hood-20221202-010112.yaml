@@ -1,0 +1,8 @@
+kind: Under the Hood
+body: changing python_model test configs to take into account swap for anonymous_sproc
+  as new default
+time: 2022-12-02T01:01:12.129993-06:00
+custom:
+  Author: McKnight-42
+  Issue: "305"
+  PR: "337"
