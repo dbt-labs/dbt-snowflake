@@ -6,9 +6,11 @@
     {% for i in user_provided_columns -%}
       {%- set col = user_provided_columns[i] -%}
       {% set constraints = col['constraint'] -%}
-      {%- set check = col['check'] -%}
-      {# do we want to raise a warning if there are "checks" as they are not supported in Snowflake #}
-      {{ col['name'] }} {{ col['data_type'] }} {% for x in constraints %} {{ x or "" }} {% endfor %} {% if check -%} check {{ check or "" }} {%- endif %} {{ "," if not loop.last }}
+      {%- set checks = col['checks'] -%}
+      {%- if checks -%}
+        {{exceptions.warn("We noticed you have `checks` in your configs, these are NOT compatible with Snowflake and will be ignored")}}
+      {%- endif %}
+      {{ col['name'] }} {{ col['data_type'] }} {% for x in constraints %} {{ x or "" }} {% endfor %} {% if check -%} {%- endif %} {{ "," if not loop.last }}
     {%- endfor %}
   )
   {% endif %}
