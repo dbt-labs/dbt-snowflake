@@ -185,7 +185,6 @@ class BaseProjectModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
   def assertExpectedRelations(self, project):
         check_relations_equal_with_relations(project.adapter, [
             project.adapter.Relation.create(
-                database=project.database,
                 schema=project.test_schema,
                 identifier=self.check_caps(project, "seed")
             ),
@@ -200,7 +199,6 @@ class BaseProjectModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
                 identifier=self.check_caps(project, "view_2")
             ),
             project.adapter.Relation.create(
-                database=project.database,
                 schema=project.test_schema,
                 identifier=self.check_caps(project, "view_3")
             ),
