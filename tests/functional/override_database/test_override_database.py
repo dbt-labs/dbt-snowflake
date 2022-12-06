@@ -77,7 +77,7 @@ class BaseOverrideDatabaseSnowflake:
             }
         }
 
-  @pytest.fixture(scope="class", autouse=True)
+  @pytest.fixture(scope="class")
   def clean_up(self, project):
     yield
     with project.adapter.connection_named('__test'):
@@ -124,7 +124,7 @@ class TestModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
             )
           ])
 
-  def test_snowflake_database_override(self, project):
+  def test_snowflake_database_override(self, project, clean_up):
     self.run_database_override(project)
 
 
@@ -171,7 +171,7 @@ class TestProjectSeedOverrideSnowflake(BaseOverrideDatabaseSnowflake):
         )
       ])
 
-  def test_snwoflake_database_override(self, project):
+  def test_snwoflake_database_override(self, project, clean_up):
     self.run_database_override(project)
 
 
@@ -238,7 +238,7 @@ class TestProjectModelOverrideSnowflake(BaseProjectModelOverrideSnowflake):
             }
         }
 
-    def test_snowflake_database_override(self, project):
+    def test_snowflake_database_override(self, project, clean_up):
       self.run_database_override(project)
 
 
@@ -270,5 +270,5 @@ class TestProjectModelAliasOverrideSnowflake(BaseProjectModelOverrideSnowflake):
             }
         }
 
-    def test_snowflake_project_override(self, project):
+    def test_snowflake_project_override(self, project, clean_up):
         self.run_database_override(project)
