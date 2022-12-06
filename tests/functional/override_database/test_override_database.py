@@ -46,6 +46,7 @@ _SEEDS__SEED_CSV = """id,name
 
 ALT_DATABASE = os.getenv("SNOWFLAKE_TEST_ALT_DATABASE")
 
+
 class BaseOverrideDatabaseSnowflake:
   @pytest.fixture(scope="class")
   def seeds(self):
@@ -76,11 +77,14 @@ class BaseOverrideDatabaseSnowflake:
             }
         }
 
-  @pytest.fixture(autouse=True)
+  @pytest.fixture(scope="class", autouse=True)
   def clean_up(self, project):
     yield
-    with project.adapter.connection_named('__test'):
-        relation = project.adapter.Relation.create(database=ALT_DATABASE, schema=project.test_schema)
+    with project.adapter.connection_named('_test'):
+        relation = project.adapter.Relation.create(
+            database=ALT_DATABASE,
+            schema=project.test_schema
+        )
         project.adapter.drop_schema(relation)
 
   def check_caps(self, project, name):
@@ -93,13 +97,31 @@ class BaseOverrideDatabaseSnowflake:
 class TestModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
   def run_database_override(self, project):
     run_dbt(["seed"])
-    assert len(run_dbt(["run"])) == 4
+    result = run_dbt(["run"])
+    assert len(result) == 4
     check_relations_equal_with_relations(project.adapter, [
-              project.adapter.Relation.create(schema=project.test_schema, identifier=self.check_caps(project, "seed")),
-              project.adapter.Relation.create(schema=project.test_schema, identifier=self.check_caps(project, "view_1")),
-              project.adapter.Relation.create(database=ALT_DATABASE, schema=project.test_schema, identifier=self.check_caps(project, "view_2")),
-              project.adapter.Relation.create(schema=project.test_schema, identifier=self.check_caps(project, "view_3")),
-              project.adapter.Relation.create(database=ALT_DATABASE, schema=project.test_schema, identifier=self.check_caps(project, "view_4"))
+              project.adapter.Relation.create(
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "seed")
+            ),
+              project.adapter.Relation.create(
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "view_1")
+            ),
+              project.adapter.Relation.create(
+                database=ALT_DATABASE,
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "view_2")
+            ),
+              project.adapter.Relation.create(
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "view_3")
+            ),
+              project.adapter.Relation.create(
+                database=ALT_DATABASE,
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "view_4")
+            )
           ])
 
   def test_snowflake_database_override(self, project):
@@ -119,15 +141,34 @@ class TestProjectSeedOverrideSnowflake(BaseOverrideDatabaseSnowflake):
                 "database": ALT_DATABASE
             }
         }
+
   def run_database_override(self, project):
       run_dbt(["seed"])
       assert len(run_dbt(["run"])) == 4
       check_relations_equal_with_relations(project.adapter, [
-          project.adapter.Relation.create(database=ALT_DATABASE, schema=project.test_schema, identifier=self.check_caps(project, "seed")),
-          project.adapter.Relation.create(schema=project.test_schema, identifier=self.check_caps(project, "view_1")),
-          project.adapter.Relation.create(database=ALT_DATABASE, schema=project.test_schema, identifier=self.check_caps(project, "view_2")),
-          project.adapter.Relation.create(schema=project.test_schema, identifier=self.check_caps(project, "view_3")),
-          project.adapter.Relation.create(database=ALT_DATABASE, schema=project.test_schema, identifier=self.check_caps(project, "view_4"))
+          project.adapter.Relation.create(
+            database=ALT_DATABASE,
+            schema=project.test_schema,
+            identifier=self.check_caps(project, "seed")
+        ),
+          project.adapter.Relation.create(
+            schema=project.test_schema,
+            identifier=self.check_caps(project, "view_1")
+        ),
+          project.adapter.Relation.create(
+            database=ALT_DATABASE,
+            schema=project.test_schema,
+            identifier=self.check_caps(project, "view_2")
+        ),
+          project.adapter.Relation.create(
+            schema=project.test_schema,
+            identifier=self.check_caps(project, "view_3")
+        ),
+          project.adapter.Relation.create(
+            database=ALT_DATABASE,
+            schema=project.test_schema,
+            identifier=self.check_caps(project, "view_4")
+        )
       ])
 
   def test_snwoflake_database_override(self, project):
@@ -137,16 +178,36 @@ class TestProjectSeedOverrideSnowflake(BaseOverrideDatabaseSnowflake):
 class BaseProjectModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
   def run_database_override(self, project):
         run_dbt(["seed"])
-        assert len(run_dbt(["run"])) == 4
+        result = run_dbt(["run"])
+
+        assert len(result) == 4
         self.assertExpectedRelations(project)
 
   def assertExpectedRelations(self, project):
         check_relations_equal_with_relations(project.adapter, [
-            project.adapter.Relation.create(schema=project.test_schema, identifier=self.check_caps(project, "seed")),
-            project.adapter.Relation.create(database=ALT_DATABASE, schema=project.test_schema, identifier=self.check_caps(project, "view_1")),
-            project.adapter.Relation.create(database=ALT_DATABASE, schema=project.test_schema, identifier=self.check_caps(project, "view_2")),
-            project.adapter.Relation.create(schema=project.test_schema, identifier=self.check_caps(project, "view_3")),
-            project.adapter.Relation.create(database=ALT_DATABASE, schema=project.test_schema, identifier=self.check_caps(project, "view_4"))
+            project.adapter.Relation.create(
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "seed")
+            ),
+            project.adapter.Relation.create(
+                database=ALT_DATABASE,
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "view_1")
+            ),
+            project.adapter.Relation.create(
+                database=ALT_DATABASE,
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "view_2")
+            ),
+            project.adapter.Relation.create(
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "view_3")
+            ),
+            project.adapter.Relation.create(
+                database=ALT_DATABASE,
+                schema=project.test_schema,
+                identifier=self.check_caps(project, "view_4")
+            )
         ])
 
 
