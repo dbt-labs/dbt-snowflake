@@ -77,10 +77,10 @@ class BaseOverrideDatabaseSnowflake:
             }
         }
 
-  @pytest.fixture(scope="class", autouse=True)
+  @pytest.fixture(autouse=True)
   def clean_up(self, project):
     yield
-    with project.adapter.connection_named('_test'):
+    with project.adapter.connection_named('__test'):
         relation = project.adapter.Relation.create(
             database=ALT_DATABASE,
             schema=project.test_schema
@@ -179,13 +179,13 @@ class BaseProjectModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
   def run_database_override(self, project):
         run_dbt(["seed"])
         result = run_dbt(["run"])
-
         assert len(result) == 4
         self.assertExpectedRelations(project)
 
   def assertExpectedRelations(self, project):
         check_relations_equal_with_relations(project.adapter, [
             project.adapter.Relation.create(
+                database=project.database,
                 schema=project.test_schema,
                 identifier=self.check_caps(project, "seed")
             ),
@@ -200,6 +200,7 @@ class BaseProjectModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
                 identifier=self.check_caps(project, "view_2")
             ),
             project.adapter.Relation.create(
+                database=project.database,
                 schema=project.test_schema,
                 identifier=self.check_caps(project, "view_3")
             ),
