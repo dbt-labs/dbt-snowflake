@@ -17,10 +17,20 @@ on:
         description: "The last commit sha in the release"
         type: string
         required: true
+      changelog_path:
+        description: "Path to changes log"
+        type: string
+        default: "./CHANGELOG.md"
+        required: false
       version_number:
         description: "The release version number (i.e. 1.0.0b1)"
         type: string
         required: true
+      test_run:
+        description: "Test run (Publish release as draft to GitHub)"
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: write # this is the permission that allows creating a new release
@@ -40,10 +50,12 @@ jobs:
     steps:
       - name: "[DEBUG] Print Variables"
         run: |
-          echo The last commit sha in the release: ${{ inputs.sha }}
-          echo The release version number:         ${{ inputs.version_number }}
-          echo Python target version:              ${{ env.PYTHON_TARGET_VERSION }}
-          echo Artifact retention days:            ${{ env.ARTIFACT_RETENTION_DAYS }}
+          echo The last commit sha in the release:  ${{ inputs.sha }}
+          echo The release version number:          ${{ inputs.version_number }}
+          echo The path to the changelog markdpown: ${{ inputs.changelog_path }}
+          echo This is a test run:                  ${{ inputs.test_run }}
+          echo Python target version:               ${{ env.PYTHON_TARGET_VERSION }}
+          echo Artifact retention days:             ${{ env.ARTIFACT_RETENTION_DAYS }}
 
   unit:
     name: Unit Test
