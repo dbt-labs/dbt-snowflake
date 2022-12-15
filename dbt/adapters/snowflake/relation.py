@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dbt.adapters.base.relation import BaseRelation, Policy
 
 
@@ -11,4 +11,4 @@ class SnowflakeQuotePolicy(Policy):
 
 @dataclass(frozen=True, eq=False, repr=False)
 class SnowflakeRelation(BaseRelation):
-    quote_policy: SnowflakeQuotePolicy = SnowflakeQuotePolicy()
+    quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
