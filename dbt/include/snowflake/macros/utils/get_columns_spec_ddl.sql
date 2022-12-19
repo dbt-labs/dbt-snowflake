@@ -5,10 +5,10 @@
     (
     {% for i in user_provided_columns -%}
       {%- set col = user_provided_columns[i] -%}
-      {% set constraints = col['constraint'] -%}
-      {%- set checks = col['checks'] -%}
-      {%- if checks -%}
-        {{exceptions.warn("We noticed you have `checks` in your configs, these are NOT compatible with Snowflake and will be ignored")}}
+      {% set constraints = col['constraints'] -%}
+      {%- set check = col['check'] -%}
+      {%- if check -%}
+        {{exceptions.warn("We noticed you have `check` configs, these are NOT compatible with Snowflake and will be ignored")}}
       {%- endif %}
       {{ col['name'] }} {{ col['data_type'] }} {% for x in constraints %} {{ x or "" }} {% endfor %} {% if check -%} {%- endif %} {{ "," if not loop.last }}
     {%- endfor %}
