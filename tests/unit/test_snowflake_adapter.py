@@ -282,6 +282,26 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 session_parameters={})
         ])
 
+    def test_client_has_query_tag(self):
+        self.config.credentials = self.config.credentials.replace(
+                                          query_tag="test_query_tag")
+        self.adapter = SnowflakeAdapter(self.config)
+        conn = self.adapter.connections.set_connection_name(name='new_connection_with_new_config')
+
+        self.snowflake.assert_not_called()
+        conn.handle
+        self.snowflake.assert_has_calls([
+            mock.call(
+                account='test_account', autocommit=True,
+                client_session_keep_alive=False, database='test_database',
+                role=None, schema='public', user='test_user',
+                warehouse='test_warehouse', private_key=None, application='dbt', insecure_mode=False,
+                session_parameters={"QUERY_TAG": "test_query_tag"})
+        ])
+        
+        expected_connection_info = [(k,v) for (k, v) in self.config.credentials.connection_info() if k == "query_tag"]
+        self.assertEqual([("query_tag", "test_query_tag")], expected_connection_info)
+
     def test_user_pass_authentication(self):
         self.config.credentials = self.config.credentials.replace(
             password='test_password',
