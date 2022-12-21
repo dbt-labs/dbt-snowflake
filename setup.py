@@ -50,7 +50,7 @@ def _get_dbt_core_version():
 
 
 package_name = "dbt-snowflake"
-package_version = "1.4.0a1"
+package_version = "1.4.0b1"
 dbt_core_version = _get_dbt_core_version()
 description = """The Snowflake adapter plugin for dbt"""
 
