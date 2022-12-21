@@ -168,4 +168,4 @@ class TestMaterializedWithConstraints:
         """
         results = project.run_sql(sql, fetch="all")
         assert len(results) == 1
-        assert results[0][0] == 1
+        assert results[0][0] == 1000
