@@ -1,5 +1,7 @@
 import pytest
+import json
 from dbt.tests.util import run_dbt, run_dbt_and_capture
+import logging
 
 models__constraints_column_types_sql = """
 select
@@ -134,3 +136,36 @@ class TestMaterializedWithConstraints:
     def test_failing_not_null_constraint(self, project):
         result = run_dbt(["run", "--select", "constraints_not_null"], expect_pass=False)
         assert "NULL result in a non-nullable column" in result.results[0].message
+
+    def test_rollback(self, project):
+
+        # run the correct model and modify it to fail
+        run_dbt(["run", "--select", "constraints_column_types"])
+
+        with open("./models/constraints_column_types.sql", "r") as fp:
+            my_model_sql_original = fp.read()
+
+        my_model_sql_error = my_model_sql_original.replace(
+            "1000 as int_column", "'a' as int_column"
+        )
+
+        with open("./models/constraints_column_types.sql", "w") as fp:
+            fp.write(my_model_sql_error)
+
+        # run the failed model
+        results = run_dbt(["run", "--select", "constraints_column_types"], expect_pass=False)
+
+        with open("./target/manifest.json", "r") as fp:
+            generated_manifest = json.load(fp)
+
+        model_unique_id = "model.test.constraints_column_types"
+        schema_name_generated = generated_manifest["nodes"][model_unique_id]["schema"]
+        database_name_generated = generated_manifest["nodes"][model_unique_id]["database"]
+
+        # verify the previous table exists
+        sql = f"""
+            select int_column from {database_name_generated}.{schema_name_generated}.constraints_column_types where int_column = 1000
+        """
+        results = project.run_sql(sql, fetch="all")
+        assert len(results) == 1
+        assert results[0][0] == 1
