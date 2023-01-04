@@ -1,0 +1,7 @@
+kind: Dependencies
+body: Raise upperbound on cryptography to avoid vulnerabilities.
+time: 2023-01-04T15:18:50.449286-08:00
+custom:
+  Author: versusfacit
+  Issue: "359"
+  PR: "376"
