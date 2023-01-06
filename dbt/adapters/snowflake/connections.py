@@ -45,6 +45,7 @@ from dbt.events.types import AdapterEventWarning
 
 logger = AdapterLogger("Snowflake")
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
+ROW_VALUE_REGEX = re.compile(r"Row Values: \[.*\]")
 
 
 @dataclass
@@ -243,7 +244,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             # duplicate rows -- includes row values in the error message, i.e.
             # [12345, "col_a_value", "col_b_value", etc...]. We don't want to log potentially
             # sensitive user data.
-            msg = re.sub(r"Row Values: \[.*\]", "Row Values: [redacted]", unscrubbed_msg)
+            msg = re.sub(ROW_VALUE_REGEX, "Row Values: [redacted]", unscrubbed_msg)
 
             logger.debug("Snowflake query id: {}".format(e.sfqid))
             logger.debug("Snowflake error: {}".format(msg))
