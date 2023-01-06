@@ -6,6 +6,7 @@ import yaml
 
 import dbt.tracking
 import dbt.version
+from dbt.events.functions import reset_metadata_vars
 from tests.integration.base import DBTIntegrationTest, use_profile, AnyFloat, \
     AnyStringWith
 
@@ -216,4 +217,5 @@ class TestSourceFreshness(SuccessfulSourcesTest):
 
     @use_profile('snowflake')
     def test_snowflake_source_freshness(self):
+        reset_metadata_vars()
         self._run_source_freshness()
