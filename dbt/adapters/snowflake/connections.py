@@ -237,20 +237,20 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         try:
             yield
         except snowflake.connector.errors.ProgrammingError as e:
-            msg = str(e)
+            unscrubbed_msg = str(e)
+
+            if "Row Values:" in unscrubbed_msg:
+                # A class of Snowflake errors -- such as a failure from attempting to merge
+                # duplicate rows -- includes row values in the error message, i.e.
+                # [12345, "col_a_value", "col_b_value", etc...]. We don't want to log potentially
+                # sensitive user data.
+                msg = re.sub(r"Row Values: \[.*\]", "Row Values: [redacted]", unscrubbed_msg)
 
             logger.debug("Snowflake query id: {}".format(e.sfqid))
             logger.debug("Snowflake error: {}".format(msg))
 
             if "Empty SQL statement" in msg:
                 logger.debug("got empty sql statement, moving on")
-            elif "Row Values:" in msg:
-                # On merge failures on duplicate rows, Snowflake includes the offending row
-                # in the error message i.e. [12345, "col_a_value", "col_b_value", etc...]
-                # we don't want to log that potentially sensitive user data
-                values_start = msg.find("Row Values:")
-                values_end = msg.find("]", values_start) + 1
-                raise DatabaseException((msg[:values_start] + msg[values_end:]).strip())
             elif "This session does not have a current database" in msg:
                 raise FailedToConnectException(
                     (
