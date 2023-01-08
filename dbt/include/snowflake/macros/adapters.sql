@@ -78,9 +78,10 @@
   {%- set sql_header = config.get('sql_header', none) -%}
 
   {{ sql_header if sql_header is not none }}
+  -- CHECK ORDER
   create or replace {% if secure -%}
     secure
-  {%- endif %} view {{ relation }}
+  {%- endif %} temporary view {{ relation }}
   {% if config.persist_column_docs() -%}
     {% set model_columns = model.columns %}
     {% set query_columns = get_columns_in_query(sql) %}
