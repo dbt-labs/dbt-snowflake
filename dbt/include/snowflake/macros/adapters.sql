@@ -72,16 +72,17 @@
 )
 {% endmacro %}
 
-{% macro snowflake__create_view_as(relation, sql) -%}
+{% macro create_view_as_with_temp_flag(temporary, relation, sql) -%}
   {%- set secure = config.get('secure', default=false) -%}
   {%- set copy_grants = config.get('copy_grants', default=false) -%}
   {%- set sql_header = config.get('sql_header', none) -%}
 
   {{ sql_header if sql_header is not none }}
-  -- CHECK ORDER
   create or replace {% if secure -%}
     secure
-  {%- endif %} temporary view {{ relation }}
+  {%- endif %} {% if temporary -%}
+    temporary
+  {%- endif %} view {{ relation }}
   {% if config.persist_column_docs() -%}
     {% set model_columns = model.columns %}
     {% set query_columns = get_columns_in_query(sql) %}
@@ -91,6 +92,10 @@
   {% if copy_grants -%} copy grants {%- endif %} as (
     {{ sql }}
   );
+{% endmacro %}
+
+{% macro snowflake__create_view_as(relation, sql) -%}
+  {{ create_view_as_with_temp_flag(False, relation, sql) }}
 {% endmacro %}
 
 {% macro snowflake__get_columns_in_relation(relation) -%}
