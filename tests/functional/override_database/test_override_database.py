@@ -77,7 +77,7 @@ class BaseOverrideDatabaseSnowflake:
             }
         }
 
-  @pytest.fixture(scope="class")
+  @pytest.fixture(scope="function")
   def clean_up(self, project):
     yield
     with project.adapter.connection_named('__test'):
@@ -180,9 +180,6 @@ class BaseProjectModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
         run_dbt(["seed"])
         result = run_dbt(["run"])
         assert len(result) == 4
-        self.assertExpectedRelations(project)
-
-  def assertExpectedRelations(self, project):
         check_relations_equal_with_relations(project.adapter, [
             project.adapter.Relation.create(
                 schema=project.test_schema,
