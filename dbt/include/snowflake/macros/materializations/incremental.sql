@@ -60,7 +60,7 @@
     {#-- Create the temp relation, either as a view or as a temp table --#}
     {% if tmp_relation_type == 'view' %}
         {%- call statement('create_tmp_relation') -%}
-          {{ snowflake__create_view_as_with_temp_flag(True, tmp_relation, compiled_code) }}
+          {{ create_view_as(tmp_relation, compiled_code, True) }}
         {%- endcall -%}
     {% else %}
         {%- call statement('create_tmp_relation', language=language) -%}
