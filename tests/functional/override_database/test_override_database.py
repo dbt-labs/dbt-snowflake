@@ -64,8 +64,6 @@ class BaseOverrideDatabaseSnowflake:
   @pytest.fixture(scope="class")
   def project_config_update(self):
         return {
-            "config-version": 2,
-            "seed-paths": ["seeds"],
             "vars": {
                 "alternate_db": ALT_DATABASE,
             },
@@ -132,8 +130,6 @@ class TestProjectSeedOverrideSnowflake(BaseOverrideDatabaseSnowflake):
   @pytest.fixture(scope="class")
   def project_config_update(self):
       return {
-            "config-version": 2,
-            "seed-paths": ["seeds"],
             "vars": {
                 "alternate_db": ALT_DATABASE,
             },
@@ -181,37 +177,37 @@ class BaseProjectModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
         result = run_dbt(["run"])
         assert len(result) == 4
         check_relations_equal_with_relations(project.adapter, [
-            project.adapter.Relation.create(
+              project.adapter.Relation.create(
                 schema=project.test_schema,
                 identifier=self.check_caps(project, "seed")
             ),
-            project.adapter.Relation.create(
+              project.adapter.Relation.create(
                 database=ALT_DATABASE,
                 schema=project.test_schema,
                 identifier=self.check_caps(project, "view_1")
             ),
-            project.adapter.Relation.create(
+              project.adapter.Relation.create(
                 database=ALT_DATABASE,
                 schema=project.test_schema,
                 identifier=self.check_caps(project, "view_2")
             ),
-            project.adapter.Relation.create(
+              project.adapter.Relation.create(
                 schema=project.test_schema,
                 identifier=self.check_caps(project, "view_3")
             ),
-            project.adapter.Relation.create(
+              project.adapter.Relation.create(
                 database=ALT_DATABASE,
                 schema=project.test_schema,
                 identifier=self.check_caps(project, "view_4")
             )
-        ])
+          ])
+
 
 
 class TestProjectModelOverrideSnowflake(BaseProjectModelOverrideSnowflake):
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {
-            "config-version": 2,
             "vars": {
                 "alternate_db": ALT_DATABASE,
             },
@@ -223,16 +219,9 @@ class TestProjectModelOverrideSnowflake(BaseProjectModelOverrideSnowflake):
                     }
                 }
             },
-            "seed-paths": ["seeds"],
             "vars": {
                 "alternate_db": ALT_DATABASE,
             },
-            "quoting": {
-                "database": True,
-            },
-            "seeds": {
-                "quote_columns": False,
-            }
         }
 
     def test_snowflake_database_override(self, project, clean_up):
@@ -243,7 +232,6 @@ class TestProjectModelAliasOverrideSnowflake(BaseProjectModelOverrideSnowflake):
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {
-            "config-version": 2,
             "vars": {
                 "alternate_db": ALT_DATABASE,
             },
@@ -255,16 +243,9 @@ class TestProjectModelAliasOverrideSnowflake(BaseProjectModelOverrideSnowflake):
                     }
                 }
             },
-            "seed-paths": ["seeds"],
             "vars": {
                 "alternate_db": ALT_DATABASE,
             },
-            "quoting": {
-                "database": True,
-            },
-            "seeds": {
-                "quote_columns": False,
-            }
         }
 
     def test_snowflake_project_override(self, project, clean_up):
