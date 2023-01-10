@@ -72,7 +72,7 @@
 )
 {% endmacro %}
 
-{% macro snowflake__create_view_as_with_temp_flag(relation, sql, temporary=False) -%}
+{% macro snowflake__create_view_as_with_temp_flag(relation, sql, is_temporary=False) -%}
   {%- set secure = config.get('secure', default=false) -%}
   {%- set copy_grants = config.get('copy_grants', default=false) -%}
   {%- set sql_header = config.get('sql_header', none) -%}
@@ -80,7 +80,7 @@
   {{ sql_header if sql_header is not none }}
   create or replace {% if secure -%}
     secure
-  {%- endif %} {% if temporary -%}
+  {%- endif %} {% if is_temporary -%}
     temporary
   {%- endif %} view {{ relation }}
   {% if config.persist_column_docs() -%}
