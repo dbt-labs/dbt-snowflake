@@ -60,7 +60,7 @@
     {#-- Create the temp relation, either as a view or as a temp table --#}
     {% if tmp_relation_type == 'view' %}
         {%- call statement('create_tmp_relation') -%}
-          {{ create_view_as(tmp_relation, compiled_code) }}
+          {{ snowflake__create_view_as_with_temp_flag(tmp_relation, compiled_code, True) }}
         {%- endcall -%}
     {% else %}
         {%- call statement('create_tmp_relation', language=language) -%}
@@ -78,9 +78,9 @@
     {% endif %}
 
     {#-- Get the incremental_strategy, the macro to use for the strategy, and build the sql --#}
-    {% set incremental_predicates = config.get('incremental_predicates', none) %}
+    {% set incremental_predicates = config.get('predicates', none) or config.get('incremental_predicates', none) %}
     {% set strategy_sql_macro_func = adapter.get_incremental_strategy_macro(context, incremental_strategy) %}
-    {% set strategy_arg_dict = ({'target_relation': target_relation, 'temp_relation': tmp_relation, 'unique_key': unique_key, 'dest_columns': dest_columns, 'predicates': incremental_predicates }) %}
+    {% set strategy_arg_dict = ({'target_relation': target_relation, 'temp_relation': tmp_relation, 'unique_key': unique_key, 'dest_columns': dest_columns, 'incremental_predicates': incremental_predicates }) %}
 
     {%- call statement('main') -%}
       {{ strategy_sql_macro_func(strategy_arg_dict) }}
