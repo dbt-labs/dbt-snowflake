@@ -1,0 +1,7 @@
+kind: Under the Hood
+body: Update exceptions to match dbt-core naming.
+time: 2023-01-10T08:44:13.032365-06:00
+custom:
+  Author: emmyoop
+  Issue: "366"
+  PR: "384"
