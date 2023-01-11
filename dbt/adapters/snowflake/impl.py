@@ -210,6 +210,8 @@ HANDLER = 'main'
 EXECUTE AS CALLER
 AS
 $$
+{snowpark_telemetry_snippet}
+
 {compiled_code}
 $$"""
         
