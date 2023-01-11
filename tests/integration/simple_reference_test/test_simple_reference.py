@@ -1,7 +1,5 @@
 import os
 
-from dbt.exceptions import CompilationException
-
 from tests.integration.base import DBTIntegrationTest, use_profile
 
 
