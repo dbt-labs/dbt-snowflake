@@ -1,5 +1,5 @@
 {% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key, language) %}
-
+  {%- set merge_tmp_relation_type = config.get('merge_tmp_relation_type', default="view") -%}
   /* {#
        If we are running multiple statements (DELETE + INSERT),
        we must first save the model query results as a temporary table
@@ -10,7 +10,7 @@
        for faster overall incremental processing.
   #} */
 
-  {% if language == 'sql' and (strategy in ('default', 'append', 'merge') or (unique_key is none)) %}
+  {% if language == 'sql' and (strategy in ('default', 'append') or (strategy == 'merge' and merge_tmp_relation_type == 'view') or (unique_key is none)) %}
     {{ return('view') }}
   {% else %}  {#--  play it safe -- #}
     {{ return('table') }}
