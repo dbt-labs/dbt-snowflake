@@ -20,7 +20,7 @@ name: Release branch scheduled testing
 
 on:
   schedule:
-    - cron: '0 9,13,18 * * *' # 9:00, 13:00, 18:00 UTC
+    - cron: '0 12 * * *' # 12:00 UTC
 
   workflow_dispatch: # for manual triggering
 
