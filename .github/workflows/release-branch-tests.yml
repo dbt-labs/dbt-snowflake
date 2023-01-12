@@ -39,7 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         branch: [1.0.latest, 1.1.latest, 1.2.latest, 1.3.latest, 1.4.latest]
-        workflow_name: [integration.yml]
+        workflow_name: [main.yml, integration.yml]
 
     steps:
     - name: Call CI workflow for ${{ matrix.branch }} branch
