@@ -1,8 +1,8 @@
 # **what?**
-# The purpose of this workflow is to trigger CI to run for each
-# release branch and main branch on a regular cadence. If the CI workflow
-# fails for a branch, it will post to dev-core-alerts to raise awareness.
-# The 'aurelien-baudet/workflow-dispatch' Action triggers the existing
+# The purpose of this workflow is to trigger CI to run for each release
+# branch on a regular cadence. If the CI workflow fails for a branch, it
+# will post to dev-core-alerts to raise awareness. The
+# 'aurelien-baudet/workflow-dispatch' Action triggers the existing
 # CI worklow file on the given branch to run so that even if we change the
 # CI workflow file in the future, the one that is tailored for the given
 # release branch will be used.
