@@ -9,11 +9,16 @@
        we can save the model query definition as a view instead,
        for faster overall incremental processing.
   #} */
-  {% if language == "sql" and (strategy == "merge" and merge_tmp_relation_type == "table") %}
+
+  {% if language == "sql" and strategy in ("default", "merge") and merge_tmp_relation_type == "table" %}
     {{ return("table") }}
-  {% elif language == "sql" and (strategy in ("default", "append") or (strategy == "merge" and merge_tmp_relation_type == "view") or (unique_key is none)) %}
+  {% elif language == "sql" and strategy in ("default", "merge") and merge_tmp_relation_type == "view" %}
     {{ return("view") }}
-  {% else %}  {#--  play it safe -- #}
+  {% elif language == "sql" and strategy == "append" %}
+    {{ return("view") }}
+  {% elif language == "sql" and unique_key is none %}
+    {{ return("view") }}
+  {% else %}
     {{ return("table") }}
   {% endif %}
 {% endmacro %}
