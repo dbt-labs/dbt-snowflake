@@ -8,18 +8,19 @@
 # release branch will be used.
 
 # **why?**
-# Ensures release branches are always shippable and not broken.
-# Also, can catch any dependencies shifting beneath us that might
-# introduce breaking changes (could also impact Cloud).
+# Ensures main is always shippable and not broken. Also, can catch any
+# dependencies shifting beneath us that might introduce breaking changes
+# (could also impact Cloud).
 
 # **when?**
-# Once each morning. Manual trigger can also test on demand
+# Mainly on a schedule of 9:00, 13:00, 18:00 UTC everyday.
+# Manual trigger can also test on demand
 
-name: Release branch scheduled testing
+name: Main branch scheduled testing
 
 on:
   schedule:
-    - cron: '0 12 * * *' # 12:00 UTC
+    - cron: '0 9,13,18 * * *' # 9:00, 13:00, 18:00 UTC
 
   workflow_dispatch: # for manual triggering
 
@@ -38,8 +39,8 @@ jobs:
       max-parallel: 1
       fail-fast: false
       matrix:
-        branch: [1.0.latest, 1.1.latest, 1.2.latest, 1.3.latest]
-        workflow_name: [integration.yml]
+        branch: [main]
+        workflow_name: [main.yml]
 
     steps:
     - name: Call CI workflow for ${{ matrix.branch }} branch
