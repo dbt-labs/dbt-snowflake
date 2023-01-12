@@ -1,7 +1,0 @@
-kind: Fixes
-body: change quote policy dataclass field to conform to 3.11 typing
-time: 2022-12-09T12:56:06.215959-08:00
-custom:
-  Author: colin-rogers-dbt
-  Issue: "351"
-  PR: "350"

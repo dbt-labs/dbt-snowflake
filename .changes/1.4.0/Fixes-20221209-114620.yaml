@@ -1,7 +1,0 @@
-kind: Fixes
-body: Update the Makefile command for `dev`
-time: 2022-12-09T11:46:20.225058+01:00
-custom:
-  Author: b-per
-  Issue: "340"
-  PR: "349"
