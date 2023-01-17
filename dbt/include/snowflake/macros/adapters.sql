@@ -23,6 +23,7 @@
           transient
         {%- endif %} table {{ relation }}
         {{ get_columns_spec_ddl() }}
+        {{ get_assert_columns_equivalent(sql) }}
         {% if copy_grants and not temporary -%} copy grants {%- endif %} as
         (
           {%- if cluster_by_string is not none -%}
