@@ -8,7 +8,7 @@ my_model_sql = """
         post_hook = '{{ my_silly_insert_macro() }}'
     )
 }}
-select 1 as id, current_timestamp as updated_at
+select 1 as id, 'blue' as color, current_timestamp as updated_at
 """
 
 my_macro_sql = """
@@ -16,7 +16,7 @@ my_macro_sql = """
     {#-- This is a bad pattern! Made obsolete by changes in v0.21 + v1.2 --#}
     {% do run_query('begin;') %}
     {% set query %}
-       insert into {{ this }} values (2, current_timestamp); 
+       insert into {{ this }} values (2, 'red', current_timestamp); 
     {% endset %}
     {% do run_query(query) %}
     {% do run_query('commit;') %}
