@@ -19,13 +19,13 @@
 
   {% if language != "sql" %}
     {{ return("table") }}
-  {% elif strategy in ('default', 'merge') and merge_tmp_relation_type == "table" %}
+  {% elif strategy in ("default", "merge") and merge_tmp_relation_type == "table" %}
     {{ return("table") }}
   {% elif strategy in ("default", "merge") and merge_tmp_relation_type == "view" %}
     {{ return("view") }}
-  {% elif strategy in ('default', 'merge', 'append') %}
+  {% elif strategy in ("default", "merge", "append") %}
     {{ return("view") }}
-  {% elif unique_key is none %}
+  {% elif strategy == "delete+insert" and unique_key is none %}
     {{ return("view") }}
   {% else %}
     {{ return("table") }}
