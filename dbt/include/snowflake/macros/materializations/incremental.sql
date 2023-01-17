@@ -16,7 +16,7 @@
     {{ return("table") }}
   {% elif strategy in ("default", "merge") and merge_tmp_relation_type == "view" %}
     {{ return("view") }}
-  {% elif if strategy in ('default', 'merge', 'append') %}
+  {% elif strategy in ('default', 'merge', 'append') %}
     {{ return("view") }}
   {% elif unique_key is none %}
     {{ return("view") }}
