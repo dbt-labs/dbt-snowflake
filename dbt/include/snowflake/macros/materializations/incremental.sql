@@ -1,19 +1,37 @@
 {% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key, language) %}
-
+  {%- set merge_tmp_relation_type = config.get('merge_tmp_relation_type', default="view") -%}
   /* {#
+       High-level principles:
        If we are running multiple statements (DELETE + INSERT),
-       we must first save the model query results as a temporary table
-       in order to guarantee consistent inputs to both statements.
-
+       and we want to guarantee identical inputs to both statements,
+       then we must first save the model query results as a temporary table
+       (which presumably comes with a performance cost).
        If we are running a single statement (MERGE or INSERT alone),
-       we can save the model query definition as a view instead,
-       for faster overall incremental processing.
+       we _may_ save the model query definition as a view instead,
+       for (presumably) faster overall incremental processing.
+
+       Low-level specifics:
+       Languages other than SQL (like Python) will use a temporary table.
+       With the default strategy of merge, the user may choose between a temporary
+       table and view (defaulting to view).
+       The append strategy can use a view because it will run a single INSERT statement.
+       When the unique_key is none,
+       then we can use a view because it will run a single INSERT statement.
+       Otherwise, play it safe by using a temporary table.
   #} */
 
-  {% if language == 'sql' and (strategy in ('default', 'append', 'merge') or (unique_key is none)) %}
-    {{ return('view') }}
-  {% else %}  {#--  play it safe -- #}
-    {{ return('table') }}
+  {% if language != "sql" %}
+    {{ return("table") }}
+  {% elif strategy in ("default", "merge") and merge_tmp_relation_type == "table" %}
+    {{ return("table") }}
+  {% elif strategy in ("default", "merge") and merge_tmp_relation_type == "view" %}
+    {{ return("view") }}
+  {% elif strategy in ("default", "merge", "append") %}
+    {{ return("view") }}
+  {% elif strategy == "delete+insert" and unique_key is none %}
+    {{ return("view") }}
+  {% else %}
+    {{ return("table") }}
   {% endif %}
 {% endmacro %}
 
