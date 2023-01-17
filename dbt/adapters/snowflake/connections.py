@@ -42,6 +42,7 @@ from dbt.adapters.sql import SQLConnectionManager  # type: ignore
 from dbt.events import AdapterLogger  # type: ignore
 from dbt.events.functions import warn_or_error
 from dbt.events.types import AdapterEventWarning
+from dbt.ui import line_wrap_message, warning_tag
 
 
 logger = AdapterLogger("Snowflake")
@@ -447,32 +448,43 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             bindings = tuple(bindings)
 
         queries = self._split_queries(sql)
-
-        for individual_query in queries:
+        stripped_queries = []
+        for query in queries:
             # hack -- after the last ';', remove comments and don't run
             # empty queries. this avoids using exceptions as flow control,
             # and also allows us to return the status of the last cursor
             without_comments = re.sub(
                 re.compile(r"(\".*?\"|\'.*?\')|(/\*.*?\*/|--[^\r\n]*$)", re.MULTILINE),
                 "",
-                individual_query,
+                query,
             ).strip()
 
-            if without_comments == "":
-                continue
+            if without_comments != "":
+                stripped_queries.append(without_comments)
 
+        for individual_query in stripped_queries:
             # Even though we turn off transactions by default for Snowflake,
             # the user/macro has passed them *explicitly*, probably to wrap a DML statement
-            # Let their wish be granted!
+            # Assuming this BEGIN/COMMIT is not all alone - let their wish be granted!
             # This also has the effect of ignoring "commit" in the RunResult for this model
             # https://github.com/dbt-labs/dbt-snowflake/issues/147
-            if individual_query.lower() == "begin;":
-                super().add_begin_query()
-                continue
+            # (Otherwise, if this 'BEGIN' or 'COMMIT' query *is* all by itself, let it be run as a standalone query)
+            if len(stripped_queries) == 1 and individual_query.lower() in ("begin;", "commit;"):
+                message = (
+                    "Explicit transactional logic should be used only to wrap "
+                    "DML logic (MERGE, DELETE, UPDATE, etc). The keywords BEGIN; and COMMIT; should "
+                    "be placed directly before and after your DML statement, rather than in separate "
+                    "statement calls or run_query() macros."
+                )
+                logger.warning(line_wrap_message(warning_tag(message)))
+            else:
+                if individual_query.lower() == "begin;":
+                    super().add_begin_query()
+                    continue
 
-            elif individual_query.lower() == "commit;":
-                super().add_commit_query()
-                continue
+                elif individual_query.lower() == "commit;":
+                    super().add_commit_query()
+                    continue
 
             # add a query comment to *every* statement
             # needed for models with multi-step materializations
