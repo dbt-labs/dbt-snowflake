@@ -10,13 +10,15 @@
        for faster overall incremental processing.
   #} */
 
-  {% if language == "sql" and strategy in ("default", "merge") and merge_tmp_relation_type == "table" %}
+  {% if language != "sql" %}
     {{ return("table") }}
-  {% elif language == "sql" and strategy in ("default", "merge") and merge_tmp_relation_type == "view" %}
+  {% elif strategy in ('default', 'merge') and merge_tmp_relation_type == "table"%}
+    {{ return("table") }}
+  {% elif strategy in ("default", "merge") and merge_tmp_relation_type == "view" %}
     {{ return("view") }}
-  {% elif language == "sql" and strategy == "append" %}
+  {% elif if strategy in ('default', 'merge', 'append') %}
     {{ return("view") }}
-  {% elif language == "sql" and unique_key is none %}
+  {% elif unique_key is none %}
     {{ return("view") }}
   {% else %}
     {{ return("table") }}
