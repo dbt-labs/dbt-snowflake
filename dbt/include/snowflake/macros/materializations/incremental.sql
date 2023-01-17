@@ -12,7 +12,7 @@
 
   {% if language != "sql" %}
     {{ return("table") }}
-  {% elif strategy in ('default', 'merge') and merge_tmp_relation_type == "table"%}
+  {% elif strategy in ('default', 'merge') and merge_tmp_relation_type == "table" %}
     {{ return("table") }}
   {% elif strategy in ("default", "merge") and merge_tmp_relation_type == "view" %}
     {{ return("view") }}
