@@ -3,17 +3,20 @@
   /* {#
        High-level principles:
        If we are running multiple statements (DELETE + INSERT),
-       and we want to guarantee identical inputs to both statements, then
-       we _must_ first save the model query results as a temporary table (which presumably comes with a performance cost).
+       and we want to guarantee identical inputs to both statements,
+       then we must first save the model query results as a temporary table
+       (which presumably comes with a performance cost).
        If we are running a single statement (MERGE or INSERT alone),
        we _may_ save the model query definition as a view instead,
        for (presumably) faster overall incremental processing.
 
        Low-level specifics:
        Languages other than SQL (like Python) will use a temporary table.
-       With the `default` strategy of `merge`, the user may choose between a temporary table and view (defaulting to view).
-       The `append` strategy can use a view because it will run a single INSERT statement.
-       When the `unique_key` is none, then we can use a view because it will run a single INSERT statement.
+       With the default strategy of merge, the user may choose between a temporary
+       table and view (defaulting to view).
+       The append strategy can use a view because it will run a single INSERT statement.
+       When the unique_key is none,
+       then we can use a view because it will run a single INSERT statement.
        Otherwise, play it safe by using a temporary table.
   #} */
 
