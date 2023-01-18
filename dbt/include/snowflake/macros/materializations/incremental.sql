@@ -1,7 +1,5 @@
 {% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key, language) %}
-  {% if language == "sql"%}
-    {%- set tmp_relation_type = config.get('tmp_relation_type', default="view") -%}
-  {% endif %}
+
 
   /* {#
        High-level principles:
@@ -30,7 +28,7 @@
     ) %}
   {% endif %}
 
-  {% if strategy == "delete+insert" and tmp_relation_type != "table" and unique_key is not none %}
+  {% if strategy == "delete+insert" and tmp_relation_type == "view" and unique_key is not none %}
     {% do exceptions.raise_compiler_error(
       "In order to maintain consistent results when `unique_key` is not none,
       the `delete+insert` strategy only supports `table` for `tmp_relation_type` but "
