@@ -1,4 +1,5 @@
 {% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key, language) %}
+{%- set tmp_relation_type = config.get('tmp_relation_type') -%}
   /* {#
        High-level principles:
        If we are running multiple statements (DELETE + INSERT),
