@@ -1,5 +1,5 @@
 {% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key, language) %}
-  {%- set merge_tmp_relation_type = config.get('merge_tmp_relation_type', default="view") -%}
+  {%- set tmp_relation_type = config.get('tmp_relation_type', default="view") -%}
   /* {#
        High-level principles:
        If we are running multiple statements (DELETE + INSERT),
@@ -20,15 +20,15 @@
        Otherwise, play it safe by using a temporary table.
   #} */
 
-  {% if language != "sql" %}
+  {% if language == "python" %}
     {{ return("table") }}
-  {% elif strategy in ("default", "merge") and merge_tmp_relation_type == "table" %}
+  {% elif tmp_relation_type == "table" %}
     {{ return("table") }}
-  {% elif strategy in ("default", "merge") and merge_tmp_relation_type == "view" %}
+  {% elif tmp_relation_type == "view" %}
     {{ return("view") }}
   {% elif strategy in ("default", "merge", "append") %}
     {{ return("view") }}
-  {% elif strategy == "delete+insert" and unique_key is none %}
+  {% elif unique_key is none %}
     {{ return("view") }}
   {% else %}
     {{ return("table") }}
