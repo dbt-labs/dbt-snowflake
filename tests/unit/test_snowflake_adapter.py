@@ -443,7 +443,8 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 client_session_keep_alive=False, database='test_database',
                 role=None, schema='public', user='test_user',
                 warehouse='test_warehouse', private_key='test_key',
-                application='dbt', insecure_mode=False)
+                application='dbt', insecure_mode=False,
+                session_parameters={})
         ])
 
     @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')
@@ -464,7 +465,8 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 client_session_keep_alive=False, database='test_database',
                 role=None, schema='public', user='test_user',
                 warehouse='test_warehouse', private_key='test_key',
-                application='dbt', insecure_mode=False)
+                application='dbt', insecure_mode=False,
+                session_parameters={})
         ])
 
 
