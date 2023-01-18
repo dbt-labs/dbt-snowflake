@@ -32,7 +32,7 @@
     ) %}
   {% endif %}
 
-  {% if strategy == "delete+insert" and tmp_relation_type != "table" and unique_key is not none %}
+  {% if strategy == "delete+insert" and tmp_relation_type is not none and tmp_relation_type != "table" and unique_key is not none %}
     {% do exceptions.raise_compiler_error(
       "In order to maintain consistent results when `unique_key` is not none,
       the `delete+insert` strategy only supports `table` for `tmp_relation_type` but "
