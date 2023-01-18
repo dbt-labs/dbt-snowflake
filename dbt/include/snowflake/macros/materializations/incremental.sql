@@ -23,7 +23,7 @@
        Otherwise, play it safe by using a temporary table.
   #} */
 
-  {% if language == "python" and tmp_relation_type != "None" %}
+  {% if language == "python" and tmp_relation_type is not none %}
     {% do exceptions.raise_compiler_error(
       "Python models currently only support 'view' for tmp_relation_type but "
        ~ tmp_relation_type ~ " was specified."
