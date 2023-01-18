@@ -25,13 +25,16 @@
 
   {% if language == "python" and tmp_relation_type != "None" %}
     {% do exceptions.raise_compiler_error(
-      "Python models currently only support 'view' for tmp_relation_type but" ~ tmp_relation_type ~ "was specified."
+      "Python models currently only support 'view' for tmp_relation_type but "
+       ~ tmp_relation_type ~ " was specified."
     ) %}
   {% endif %}
 
-  {% if strategy == "delete+insert" and tmp_relation_type == "table" %}
+  {% if strategy == "delete+insert" and tmp_relation_type != "table" and unique_key is not none %}
     {% do exceptions.raise_compiler_error(
-      "Possiblity of inconsistant results when using temp table with delete+insert"
+      "In order to maintain consistent results when `unique_key` is not none,
+      the `delete+insert` strategy only supports `table` for `tmp_relation_type` but "
+      ~ tmp_relation_type ~ " was specified."
       )
   %}
   {% endif %}
