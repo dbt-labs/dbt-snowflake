@@ -21,7 +21,7 @@
   #} */
   {% if language == "python" and tmp_relation_type == "table" %}
     {{ do exceptions.raise_compiler_error("Python models currently only support temp tables. ") }}
-  {% elif strategy == "delete+insert" and tmp_relation_type == "table" %}
+  {% else strategy == "delete+insert" and tmp_relation_type == "table" %}
     {{ do exceptions.raise_compiler_error("Possiblity of inconsistant results when using temp table with delete+insert") }}
 
   {% if language != "sql" %}
