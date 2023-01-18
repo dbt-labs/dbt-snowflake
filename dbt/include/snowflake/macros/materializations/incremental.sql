@@ -18,6 +18,8 @@
        With the default strategy of merge, the user may choose between a temporary
        table and view (defaulting to view).
 
+       The append strategy can use a view because it will run a single INSERT statement.
+
        When unique_key is none, the delete+insert strategy can use a view beacuse a
        single INSERT statement is run with no DELETES as part of the statement.
        Otherwise, play it safe by using a temporary table.
