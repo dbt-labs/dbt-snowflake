@@ -19,8 +19,12 @@
        then we can use a view because it will run a single INSERT statement.
        Otherwise, play it safe by using a temporary table.
   #} */
+  {% if language == "python" and tmp_relation_type == "table" %}
+    {{ do exceptions.raise_compiler_error("Python models currently only support temp tables. ") }}
+  {% elif strategy == "delete+insert" and tmp_relation_type == "table" %}
+    {{ do exceptions.raise_compiler_error("Possiblity of inconsistant results when using temp table with delete+insert") }}
 
-  {% if language == "python" %}
+  {% if language != "sql" %}
     {{ return("table") }}
   {% elif tmp_relation_type == "table" %}
     {{ return("table") }}
@@ -28,7 +32,7 @@
     {{ return("view") }}
   {% elif strategy in ("default", "merge", "append") %}
     {{ return("view") }}
-  {% elif unique_key is none %}
+  {% elif strategy == "delete+insert" and unique_key is none %}
     {{ return("view") }}
   {% else %}
     {{ return("table") }}
