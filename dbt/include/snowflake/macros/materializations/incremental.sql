@@ -1,6 +1,4 @@
 {% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key, language) %}
-
-
   /* {#
        High-level principles:
        If we are running multiple statements (DELETE + INSERT),
@@ -12,13 +10,18 @@
        for (presumably) faster overall incremental processing.
 
        Low-level specifics:
+       If an invalid option is specified, then we will raise an
+       excpetion with corresponding message.
+
        Languages other than SQL (like Python) will use a temporary table.
        With the default strategy of merge, the user may choose between a temporary
        table and view (defaulting to view).
-       The append strategy can use a view because it will run a single INSERT statement.
-       When the unique_key is none,
-       then we can use a view because it will run a single INSERT statement.
-       Otherwise, play it safe by using a temporary table.
+
+       The append strategy can use a view because it will run a single INSERT statement
+       when the unique_key is none.
+
+       When unique_key is none, the delete+insert strategy can use a view beacuse a
+       single INSERT statement is run with no DELETES as part of the statement.
   #} */
 
   {% if language == "python" and tmp_relation_type is not none %}
@@ -28,7 +31,7 @@
     ) %}
   {% endif %}
 
-  {% if strategy == "delete+insert" and tmp_relation_type == "view" and unique_key is not none %}
+  {% if strategy == "delete+insert" and tmp_relation_type != "table" and unique_key is not none %}
     {% do exceptions.raise_compiler_error(
       "In order to maintain consistent results when `unique_key` is not none,
       the `delete+insert` strategy only supports `table` for `tmp_relation_type` but "
