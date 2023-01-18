@@ -1,5 +1,8 @@
 {% macro dbt_snowflake_get_tmp_relation_type(strategy, unique_key, language) %}
-  {%- set tmp_relation_type = config.get('tmp_relation_type', default="view") -%}
+  {% if language == "sql"%}
+    {%- set tmp_relation_type = config.get('tmp_relation_type', default="view") -%}
+  {% endif %}
+
   /* {#
        High-level principles:
        If we are running multiple statements (DELETE + INSERT),
@@ -20,12 +23,17 @@
        Otherwise, play it safe by using a temporary table.
   #} */
 
-  {% if language == "python" and tmp_relation_type == "table" %}
-    {% do exceptions.raise_compiler_error("Python models currently only support temp tables. ") %}
+  {% if language == "python" and tmp_relation_type != "None" %}
+    {% do exceptions.raise_compiler_error(
+      "Python models currently only support 'view' for tmp_relation_type but" ~ tmp_relation_type ~ "was specified."
+    ) %}
   {% endif %}
 
   {% if strategy == "delete+insert" and tmp_relation_type == "table" %}
-    {% do exceptions.raise_compiler_error("Possiblity of inconsistant results when using temp table with delete+insert") %}
+    {% do exceptions.raise_compiler_error(
+      "Possiblity of inconsistant results when using temp table with delete+insert"
+      )
+  %}
   {% endif %}
 
   {% if language != "sql" %}
