@@ -14,7 +14,7 @@ from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.contracts.graph.manifest import Manifest
-from dbt.exceptions import raise_compiler_error, RuntimeException, DatabaseException
+from dbt.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt.utils import filter_null_values
 
 
@@ -27,6 +27,7 @@ class SnowflakeConfig(AdapterConfig):
     copy_grants: Optional[bool] = None
     snowflake_warehouse: Optional[str] = None
     query_tag: Optional[str] = None
+    merge_tmp_relation_type: Optional[str] = None
     merge_update_columns: Optional[str] = None
 
 
@@ -67,7 +68,7 @@ class SnowflakeAdapter(SQLAdapter):
         _, table = self.execute("select current_warehouse() as warehouse", fetch=True)
         if len(table) == 0 or len(table[0]) == 0:
             # can this happen?
-            raise RuntimeException("Could not get current warehouse: no results")
+            raise DbtRuntimeError("Could not get current warehouse: no results")
         return str(table[0][0])
 
     def _use_warehouse(self, warehouse: str):
@@ -90,9 +91,9 @@ class SnowflakeAdapter(SQLAdapter):
     def list_schemas(self, database: str) -> List[str]:
         try:
             results = self.execute_macro(LIST_SCHEMAS_MACRO_NAME, kwargs={"database": database})
-        except DatabaseException as exc:
+        except DbtDatabaseError as exc:
             msg = f"Database error while listing schemas in database " f'"{database}"\n{exc}'
-            raise RuntimeException(msg)
+            raise DbtRuntimeError(msg)
         # this uses 'show terse schemas in database', and the column name we
         # want is 'name'
 
@@ -101,7 +102,7 @@ class SnowflakeAdapter(SQLAdapter):
     def get_columns_in_relation(self, relation):
         try:
             return super().get_columns_in_relation(relation)
-        except DatabaseException as exc:
+        except DbtDatabaseError as exc:
             if "does not exist or not authorized" in str(exc):
                 return []
             else:
@@ -111,7 +112,7 @@ class SnowflakeAdapter(SQLAdapter):
         kwargs = {"schema_relation": schema_relation}
         try:
             results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
-        except DatabaseException as exc:
+        except DbtDatabaseError as exc:
             # if the schema doesn't exist, we just want to return.
             # Alternatively, we could query the list of schemas before we start
             # and skip listing the missing ones, which sounds expensive.
@@ -147,10 +148,11 @@ class SnowflakeAdapter(SQLAdapter):
         elif quote_config is None:
             pass
         else:
-            raise_compiler_error(
+            msg = (
                 f'The seed configuration value of "quote_columns" has an '
                 f"invalid type {type(quote_config)}"
             )
+            raise CompilationError(msg)
 
         if quote_columns:
             return self.quote(column)
