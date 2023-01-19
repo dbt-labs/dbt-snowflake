@@ -267,7 +267,6 @@ class TestSnowflakeIncrementalOverwrite(BaseTestSimpleCopy):
         self.use_default_project({
             "models": {
                 "incremental_strategy": "delete+insert",
-                "tmp_relation_type": "table"
             },
             "seed-paths": [self.dir("snowflake-seed-update")],
         })

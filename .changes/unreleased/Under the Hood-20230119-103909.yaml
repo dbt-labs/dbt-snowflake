@@ -1,7 +1,5 @@
 kind: Under the Hood
-body: 'expand logic from #389 to try and make to config option tmp_relation_type as
-  optional as possible while maintining saftey of table as default and adding a few
-  exceptions to raise in rare casses with clear messages on fix.'
+body: 'Enable a `tmp_relation_type` config for applicable incremental models'
 time: 2023-01-19T10:39:09.774872-06:00
 custom:
   Author: McKnight-42 dbeatty10
