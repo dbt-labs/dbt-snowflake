@@ -27,6 +27,7 @@ class SnowflakeConfig(AdapterConfig):
     copy_grants: Optional[bool] = None
     snowflake_warehouse: Optional[str] = None
     query_tag: Optional[str] = None
+    tmp_relation_type: Optional[str] = None
     merge_update_columns: Optional[str] = None
 
 
@@ -215,7 +216,7 @@ $$
 
 {compiled_code}
 $$"""
-        
+
         use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", True)
         if use_anonymous_sproc:
             proc_name = f"{identifier}__dbt_sp"
