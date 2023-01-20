@@ -2,11 +2,21 @@ import pytest
 from dbt.tests.util import run_dbt, write_file, run_sql_with_adapter
 from dbt.tests.adapter.python_model.test_python_model import BasePythonModelTests, BasePythonIncrementalTests
 
+
 class TestPythonModelSnowflake(BasePythonModelTests):
     pass
 
+
 class TestIncrementalSnowflake(BasePythonIncrementalTests):
     pass
+
+
+class TestIncrementalSnowflakeQuoting(BasePythonModelTests):
+    # ensure that 'dbt.ref()', 'dbt.this()', and py_write_table() all respect quoting
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"quoting": {"identifier": True}}
+
 
 models__simple_python_model = """
 import pandas
