@@ -49,7 +49,8 @@ def materialize(session, df, target_relation):
         if isinstance(df, pandas.core.frame.DataFrame):
           # session.write_pandas does not have overwrite function
           df = session.createDataFrame(df)
-    df.write.mode("overwrite").save_as_table("{{ target_relation }}", create_temp_table={{temporary}})
+    {% set target_relation_name = target_relation | string | replace('"', '\\"') %}
+    df.write.mode("overwrite").save_as_table("{{ target_relation_name }}", create_temp_table={{temporary}})
 
 def main(session):
     dbt = dbtObj(session.table)
@@ -58,7 +59,7 @@ def main(session):
     return "OK"
 {% endmacro %}
 
-{%macro py_script_comment()%}
+{% macro py_script_comment()%}
 # To run this in snowsight, you need to select entry point to be main
 # And you may have to modify the return type to text to get the result back
 # def main(session):
