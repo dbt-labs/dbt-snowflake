@@ -1,3 +1,28 @@
+import pytest
+from dbt.tests.adapter.column_types.test_column_types import BaseColumnTypes
+
+_MODEL_SQL ="""
+select
+    1::smallint as smallint_col,
+    2::int as int_col,
+    3::bigint as bigint_col,
+    4::integer as integer_col,
+    5::tinyint as tinyint_col,
+    6::byteint as byteint_col,
+    7.0::float as float_col,
+    8.0::float4 as float4_col,
+    9.0::float8 as float8_col,
+    10.0::double as double_col,
+    11.0::double precision as double_p_col,
+    12.0::real as real_col,
+    13.0::numeric as numeric_col,
+    14.0::decimal as decimal_col,
+    15.0::number as number_col,
+    '16'::text as text_col,
+    '17'::varchar(20) as varchar_col
+"""
+
+_SCHEMA_YML = """
 version: 2
 models:
   - name: model
@@ -21,3 +46,16 @@ models:
             number_col: ['numeric', 'number', 'not string', 'not float', 'not integer']
             text_col: ['string', 'not number']
             varchar_col: ['string', 'not number']
+"""
+
+class TestSnowflakeColumnTypes(BaseColumnTypes):
+
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "model.sql": _MODEL_SQL,
+            "schema.yml": _SCHEMA_YML
+        }
+
+    def test_run_and_test(self, project):
+        self.run_and_test()
