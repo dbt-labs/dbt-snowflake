@@ -1,8 +1,9 @@
-{% materialization table, adapter='snowflake' %}
+{% materialization table, adapter='snowflake', supported_languages=['sql', 'python']%}
 
   {% set original_query_tag = set_query_tag() %}
 
   {%- set identifier = model['alias'] -%}
+  {%- set language = model['language'] -%}
 
   {% set grant_config = config.get('grants') %}
 
@@ -20,9 +21,8 @@
     {{ drop_relation_if_exists(old_relation) }}
   {% endif %}
 
-  --build model
-  {% call statement('main') -%}
-    {{ create_table_as(false, target_relation, sql) }}
+  {% call statement('main', language=language) -%}
+      {{ create_table_as(False, target_relation, compiled_code, language) }}
   {%- endcall %}
 
   {{ run_hooks(post_hooks) }}
@@ -37,3 +37,38 @@
   {{ return({'relations': [target_relation]}) }}
 
 {% endmaterialization %}
+
+{% macro py_write_table(compiled_code, target_relation, temporary=False) %}
+{{ compiled_code }}
+def materialize(session, df, target_relation):
+    # make sure pandas exists
+    import importlib.util
+    package_name = 'pandas'
+    if importlib.util.find_spec(package_name):
+        import pandas
+        if isinstance(df, pandas.core.frame.DataFrame):
+          # session.write_pandas does not have overwrite function
+          df = session.createDataFrame(df)
+    {% set target_relation_name = target_relation | string | replace('"', '\\"') %}
+    df.write.mode("overwrite").save_as_table("{{ target_relation_name }}", create_temp_table={{temporary}})
+
+def main(session):
+    dbt = dbtObj(session.table)
+    df = model(dbt, session)
+    materialize(session, df, dbt.this)
+    return "OK"
+{% endmacro %}
+
+{% macro py_script_comment()%}
+# To run this in snowsight, you need to select entry point to be main
+# And you may have to modify the return type to text to get the result back
+# def main(session):
+#     dbt = dbtObj(session.table)
+#     df = model(dbt, session)
+#     return df.collect()
+
+# to run this in local notebook, you need to create a session following examples https://github.com/Snowflake-Labs/sfguide-getting-started-snowpark-python
+# then you can do the following to run model
+# dbt = dbtObj(session.table)
+# df = model(dbt, session)
+{%endmacro%}
