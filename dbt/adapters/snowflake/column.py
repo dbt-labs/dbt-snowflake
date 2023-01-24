@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from dbt.adapters.base.column import Column
-from dbt.exceptions import RuntimeException
+from dbt.exceptions import DbtRuntimeError
 
 
 @dataclass
@@ -35,7 +35,7 @@ class SnowflakeColumn(Column):
 
     def string_size(self) -> int:
         if not self.is_string():
-            raise RuntimeException("Called string_size() on non-string field!")
+            raise DbtRuntimeError("Called string_size() on non-string field!")
 
         if self.dtype == "text" or self.char_size is None:
             return 16777216
