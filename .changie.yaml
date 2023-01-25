@@ -10,7 +10,7 @@ changeFormat: |-
   {{- $IssueList := list }}
   {{- $changes := splitList " " $.Custom.Issue }}
   {{- range $issueNbr := $changes }}
-    {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-core/issues/nbr)" | replace "nbr" $issueNbr }}
+    {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-snowflake/issues/nbr)" | replace "nbr" $issueNbr }}
     {{- $IssueList = append $IssueList $changeLink  }}
   {{- end -}}
   - {{.Body}} ({{ range $index, $element := $IssueList }}{{if $index}}, {{end}}{{$element}}{{end}})
@@ -25,7 +25,7 @@ kinds:
     {{- $PRList := list }}
     {{- $changes := splitList " " $.Custom.PR }}
     {{- range $pullrequest := $changes }}
-      {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-core/pull/nbr)" | replace "nbr" $pullrequest }}
+      {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-snowflake/pull/nbr)" | replace "nbr" $pullrequest }}
       {{- $PRList = append $PRList $changeLink  }}
     {{- end -}}
     - {{.Body}} ({{ range $index, $element := $PRList }}{{if $index}}, {{end}}{{$element}}{{end}})
@@ -44,7 +44,7 @@ kinds:
     {{- $PRList := list }}
     {{- $changes := splitList " " $.Custom.PR }}
     {{- range $pullrequest := $changes }}
-      {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-core/pull/nbr)" | replace "nbr" $pullrequest }}
+      {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-snowflake/pull/nbr)" | replace "nbr" $pullrequest }}
       {{- $PRList = append $PRList $changeLink  }}
     {{- end -}}
     - {{.Body}} ({{ range $index, $element := $PRList }}{{if $index}}, {{end}}{{$element}}{{end}})
@@ -90,9 +90,9 @@ footerFormat: |
         {{- $changeList := splitList " " $change.Custom.Author }}
           {{- $changeLink := $change.Kind }}
           {{- if or (eq $change.Kind "Dependencies") (eq $change.Kind "Security") }}
-            {{- $changeLink = "[#nbr](https://github.com/dbt-labs/dbt-core/pull/nbr)" | replace "nbr" $change.Custom.PR }}
+            {{- $changeLink = "[#nbr](https://github.com/dbt-labs/dbt-snowflake/pull/nbr)" | replace "nbr" $change.Custom.PR }}
           {{- else }}
-            {{- $changeLink = "[#nbr](https://github.com/dbt-labs/dbt-core/issues/nbr)" | replace "nbr" $change.Custom.Issue }}
+            {{- $changeLink = "[#nbr](https://github.com/dbt-labs/dbt-snowflake/issues/nbr)" | replace "nbr" $change.Custom.Issue }}
           {{- end }}
           {{- /* check if this contributor has other changes associated with them already */}}
           {{- if hasKey $contributorDict $author }}
