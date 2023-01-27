@@ -124,7 +124,7 @@ class SnowflakeAdapter(SQLAdapter):
         quote_policy = {"database": True, "schema": True, "identifier": True}
 
         columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):
+        for _database, _schema, _identifier, _type in results.select(columns):  # type: ignore
             try:
                 _type = self.Relation.get_relation_type(_type.lower())
             except ValueError:
