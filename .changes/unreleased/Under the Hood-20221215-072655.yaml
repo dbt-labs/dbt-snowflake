@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: Bump upper bound on `cryptography` to `<39.0.0`
-time: 2022-12-15T07:26:55.392242-07:00
-custom:
-  Author: dbeatty10
-  Issue: "359"
-  PR: "359"
