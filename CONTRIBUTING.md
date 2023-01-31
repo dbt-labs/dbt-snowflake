@@ -88,13 +88,13 @@ You may run a specific test or group of tests using `pytest` directly. Activate 
 # Note: replace $strings with valid names
 
 # run all snowflake integration tests in a directory
-python -m pytest -m profile_snowflake tests/integration/$test_directory
+python -m pytest -m profile_snowflake tests/functional/$test_directory
 # run all snowflake integration tests in a module
-python -m pytest -m profile_snowflake tests/integration/$test_dir_and_filename.py
+python -m pytest -m profile_snowflake tests/functional/$test_dir_and_filename.py
 # run all snowflake integration tests in a class
-python -m pytest -m profile_snowflake tests/integration/$test_dir_and_filename.py::$test_class_name
+python -m pytest -m profile_snowflake tests/functional/$test_dir_and_filename.py::$test_class_name
 # run a specific snowflake integration test
-python -m pytest -m profile_snowflake tests/integration/$test_dir_and_filename.py::$test_class_name::$test__method_name
+python -m pytest -m profile_snowflake tests/functional/$test_dir_and_filename.py::$test_class_name::$test__method_name
 
 # run all unit tests in a module
 python -m pytest tests/unit/$test_file_name.py
