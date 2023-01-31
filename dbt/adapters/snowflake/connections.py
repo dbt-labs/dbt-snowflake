@@ -152,8 +152,19 @@ class SnowflakeCredentials(Credentials):
             result["client_store_temporary_credential"] = True
             # enable mfa token cache for linux
             result["client_request_mfa_token"] = True
-        result["private_key"] = self._get_private_key()
+
+        # Warning: This profile configuration can result in specific threads, even just one,
+        # hanging open during execution. While uncommon, this can cancel out any speed up and
+        # make run tasks take even longer than they might normally.
         result["release_connection"] = self.release_connection
+        if self.client_session_keep_alive and not self.release_connection:
+            warn_or_error(
+                AdapterEventWarning(
+                    base_msg="Invalid profile: release_connection is False. client_session_keep_alive must also be False!"
+                )
+            )
+
+        result["private_key"] = self._get_private_key()
         return result
 
     def _get_access_token(self) -> str:
