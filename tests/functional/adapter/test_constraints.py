@@ -5,8 +5,8 @@ from dbt.tests.util import (
     run_dbt_and_capture
 )
 from dbt.tests.adapter.constraints.test_constraints import (
-  BaseConstraintsColumnsEqual,
-  BaseConstraintsRuntimeEnforcement
+    BaseConstraintsColumnsEqual,
+    BaseConstraintsRuntimeEnforcement
 )
 
 _expected_sql_snowflake = """
@@ -15,9 +15,10 @@ create or replace transient table {0}.{1}.my_model (
     color text ,
     date_day date
 ) as (
-    select 1 as id,
-    'blue' as color,
-    cast('2019-01-01' as date) as date_day
+    select
+        1 as id,
+        'blue' as color,
+        cast('2019-01-01' as date) as date_day
 );
 """
 
@@ -32,4 +33,4 @@ class TestSnowflakeConstraintsRuntimeEnforcement(BaseConstraintsRuntimeEnforceme
 
     @pytest.fixture(scope="class")
     def expected_error_messages(self):
-        return ['NULL result in a non-nullable column']
+        return ["NULL result in a non-nullable column"]
