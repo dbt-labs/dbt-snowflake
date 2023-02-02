@@ -1,16 +1,12 @@
 import pytest
-from dbt.tests.util import (
-    run_dbt,
-    get_manifest,
-    run_dbt_and_capture
-)
+from dbt.tests.util import relation_from_name
 from dbt.tests.adapter.constraints.test_constraints import (
     BaseConstraintsColumnsEqual,
     BaseConstraintsRuntimeEnforcement
 )
 
 _expected_sql_snowflake = """
-create or replace transient table {0}.{1}.my_model (
+create or replace transient table {0} (
     id integer not null primary key ,
     color text ,
     date_day date
@@ -29,7 +25,8 @@ class TestSnowflakeConstraintsColumnsEqual(BaseConstraintsColumnsEqual):
 class TestSnowflakeConstraintsRuntimeEnforcement(BaseConstraintsRuntimeEnforcement):
     @pytest.fixture(scope="class")
     def expected_sql(self, project):
-        return _expected_sql_snowflake.format(project.database, project.test_schema)
+        relation = relation_from_name(project.adapter, "my_model")
+        return _expected_sql_snowflake.format(relation)
 
     @pytest.fixture(scope="class")
     def expected_error_messages(self):
