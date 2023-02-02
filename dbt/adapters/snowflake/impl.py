@@ -197,7 +197,11 @@ class SnowflakeAdapter(SQLAdapter):
         if imports:
             imports = f"IMPORTS = ('{imports}')"
 
-        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", True)
+        snowpark_telemetry_string = "dbtLabs_dbtPython"
+        snowpark_telemetry_snippet = f"""
+import sys
+sys._xoptions['snowflake_partner_attribution'].append("{snowpark_telemetry_string}")"""
+
         common_procedure_code = f"""
 RETURNS STRING
 LANGUAGE PYTHON
@@ -208,8 +212,12 @@ HANDLER = 'main'
 EXECUTE AS CALLER
 AS
 $$
+{snowpark_telemetry_snippet}
+
 {compiled_code}
 $$"""
+
+        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", True)
         if use_anonymous_sproc:
             proc_name = f"{identifier}__dbt_sp"
             python_stored_procedure = f"""
