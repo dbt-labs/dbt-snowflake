@@ -53,7 +53,7 @@ If you are a member of the `dbt Labs` GitHub organization, you will have push ac
 
 3. Install `dbt-core` in the active `virtualenv`. To confirm you installed dbt correctly, run `dbt --version` and `which dbt`.
 
-4. Install `dbt-snowflake` and development dependencies in the active `virtualenv`. Run `pip install -e . -r dev_requirements.txt`.
+4. Install `dbt-snowflake` and development dependencies in the active `virtualenv`. Run `pip install -e . -r dev-requirements.txt`.
 
 When `dbt-snowflake` is installed this way, any changes you make to the `dbt-snowflake` source code will be reflected immediately (i.e. in your next local dbt invocation against a Snowflake target).
 
