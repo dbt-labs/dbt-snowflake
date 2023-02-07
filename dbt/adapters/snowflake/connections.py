@@ -78,7 +78,7 @@ class SnowflakeCredentials(Credentials):
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
-    release_connection: Optional[bool] = True
+    reuse_connections: Optional[bool] = None
 
     def __post_init__(self):
         if self.authenticator != "oauth" and (
@@ -152,18 +152,7 @@ class SnowflakeCredentials(Credentials):
             result["client_store_temporary_credential"] = True
             # enable mfa token cache for linux
             result["client_request_mfa_token"] = True
-
-        # Warning: This profile configuration can result in specific threads, even just one,
-        # hanging open during execution. While uncommon, this can cancel out any speed up and
-        # make run tasks take even longer than they might normally.
-        result["release_connection"] = self.release_connection
-        if self.client_session_keep_alive and not self.release_connection:
-            warn_or_error(
-                AdapterEventWarning(
-                    base_msg="Invalid profile: release_connection is False. client_session_keep_alive must also be False!"
-                )
-            )
-
+        result["reuse_connections"] = self.reuse_connections
         result["private_key"] = self._get_private_key()
         return result
 
@@ -501,6 +490,10 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         return connection, cursor
 
     def release(self) -> None:
-        """If the release_connection param in profiles.yml is False, maintain the connection."""
-        if self.profile.credentials.release_connection:  # type: ignore
+        """Reuse connections by deferring release until adapter context manager in core
+        resets adapters. This cleanup_all happens before Python teardown. Idle connections
+        incur no costs while waiting in the connection pool."""
+        if self.profile.credentials.reuse_connections:  # type: ignore
+            return
+        else:
             super().release()
