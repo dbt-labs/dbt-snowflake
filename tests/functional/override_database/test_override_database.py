@@ -16,11 +16,7 @@ select * from {{ ref('seed') }}
 """
 
 _MODELS__VIEW_2_SQL = """
-{%- if target.type == 'bigquery' -%}
-  {{ config(project=var('alternate_db')) }}
-{%- else -%}
   {{ config(database=var('alternate_db')) }}
-{%- endif -%}
 select * from {{ ref('seed') }}
 """
 
@@ -72,9 +68,6 @@ class BaseOverrideDatabaseSnowflake:
             "quoting": {
                 "database": True,
             },
-            "seeds": {
-                "quote_columns": False,
-            }
         }
 
   @pytest.fixture(scope="function")
@@ -87,11 +80,9 @@ class BaseOverrideDatabaseSnowflake:
         )
         project.adapter.drop_schema(relation)
 
-  def check_caps(self, project, name):
-    if project.adapter == "snowflake":
-        return name.upper()
-    else:
-        return name
+  @staticmethod
+  def cap_name(name):
+    return name.upper()
 
 
 class TestModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
@@ -102,25 +93,25 @@ class TestModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
     check_relations_equal_with_relations(project.adapter, [
               project.adapter.Relation.create(
                 schema=project.test_schema,
-                identifier=self.check_caps(project, "seed")
+                identifier=self.cap_name("seed")
             ),
               project.adapter.Relation.create(
                 schema=project.test_schema,
-                identifier=self.check_caps(project, "view_1")
-            ),
-              project.adapter.Relation.create(
-                database=ALT_DATABASE,
-                schema=project.test_schema,
-                identifier=self.check_caps(project, "view_2")
-            ),
-              project.adapter.Relation.create(
-                schema=project.test_schema,
-                identifier=self.check_caps(project, "view_3")
+                identifier=self.cap_name("view_1")
             ),
               project.adapter.Relation.create(
                 database=ALT_DATABASE,
                 schema=project.test_schema,
-                identifier=self.check_caps(project, "view_4")
+                identifier=self.cap_name("view_2")
+            ),
+              project.adapter.Relation.create(
+                schema=project.test_schema,
+                identifier=self.cap_name("view_3")
+            ),
+              project.adapter.Relation.create(
+                database=ALT_DATABASE,
+                schema=project.test_schema,
+                identifier=self.cap_name("view_4")
             )
           ])
 
@@ -147,25 +138,25 @@ class TestProjectSeedOverrideSnowflake(BaseOverrideDatabaseSnowflake):
           project.adapter.Relation.create(
             database=ALT_DATABASE,
             schema=project.test_schema,
-            identifier=self.check_caps(project, "seed")
+            identifier=self.cap_name("seed")
         ),
           project.adapter.Relation.create(
             schema=project.test_schema,
-            identifier=self.check_caps(project, "view_1")
-        ),
-          project.adapter.Relation.create(
-            database=ALT_DATABASE,
-            schema=project.test_schema,
-            identifier=self.check_caps(project, "view_2")
-        ),
-          project.adapter.Relation.create(
-            schema=project.test_schema,
-            identifier=self.check_caps(project, "view_3")
+            identifier=self.cap_name("view_1")
         ),
           project.adapter.Relation.create(
             database=ALT_DATABASE,
             schema=project.test_schema,
-            identifier=self.check_caps(project, "view_4")
+            identifier=self.cap_name("view_2")
+        ),
+          project.adapter.Relation.create(
+            schema=project.test_schema,
+            identifier=self.cap_name("view_3")
+        ),
+          project.adapter.Relation.create(
+            database=ALT_DATABASE,
+            schema=project.test_schema,
+            identifier=self.cap_name("view_4")
         )
       ])
 
@@ -178,30 +169,29 @@ class BaseProjectModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
         run_dbt(["seed"])
         result = run_dbt(["run"])
         assert len(result) == 4
-        # breakpoint()
         check_relations_equal_with_relations(project.adapter, [
               project.adapter.Relation.create(
                 schema=project.test_schema,
-                identifier=self.check_caps(project, "seed")
+                identifier=self.cap_name("seed")
             ),
               project.adapter.Relation.create(
                 database=ALT_DATABASE,
                 schema=project.test_schema,
-                identifier=self.check_caps(project, "view_1")
+                identifier=self.cap_name("view_1")
             ),
               project.adapter.Relation.create(
                 database=ALT_DATABASE,
                 schema=project.test_schema,
-                identifier=self.check_caps(project, "view_2")
+                identifier=self.cap_name("view_2")
             ),
               project.adapter.Relation.create(
                 schema=project.test_schema,
-                identifier=self.check_caps(project, "view_3")
+                identifier=self.cap_name("view_3")
             ),
               project.adapter.Relation.create(
                 database=ALT_DATABASE,
                 schema=project.test_schema,
-                identifier=self.check_caps(project, "view_4")
+                identifier=self.cap_name("view_4")
             )
           ])
 
@@ -230,23 +220,3 @@ class TestProjectModelOverrideSnowflake(BaseProjectModelOverrideSnowflake):
     def test_snowflake_database_override(self, project, clean_up):
       self.run_database_override(project)
 
-# After second thought pretty sure this is only for bigquery correct? dataset = project
-# class TestProjectModelAliasOverrideSnowflake(BaseProjectModelOverrideSnowflake):
-#     @pytest.fixture(scope="class")
-#     def project_config_update(self):
-#         return {
-#             "vars": {
-#                 "alternate_db": ALT_DATABASE,
-#             },
-#             "models": {
-#                 "project": ALT_DATABASE,
-#                 "test": {
-#                     "subfolder": {
-#                         "project": "{{ target.database }}"
-#                     }
-#                 }
-#             },
-#             "vars": {
-#                 "alternate_db": ALT_DATABASE,
-#             },
-#         }
