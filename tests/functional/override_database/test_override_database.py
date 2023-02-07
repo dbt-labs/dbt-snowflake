@@ -57,8 +57,10 @@ class BaseOverrideDatabaseSnowflake:
         return {
           "view_1.sql": _MODELS__VIEW_1_SQL,
           "view_2.sql": _MODELS__VIEW_2_SQL,
-          "view_3.sql": _MODELS__SUBFOLDER__VIEW_3_SQL,
-          "view_4.sql": _MODELS__SUBFOLDER__VIEW_4_SQL,
+          "subfolder": {
+            "view_3.sql": _MODELS__SUBFOLDER__VIEW_3_SQL,
+            "view_4.sql": _MODELS__SUBFOLDER__VIEW_4_SQL,
+          }
         }
 
   @pytest.fixture(scope="class")
@@ -176,6 +178,7 @@ class BaseProjectModelOverrideSnowflake(BaseOverrideDatabaseSnowflake):
         run_dbt(["seed"])
         result = run_dbt(["run"])
         assert len(result) == 4
+        # breakpoint()
         check_relations_equal_with_relations(project.adapter, [
               project.adapter.Relation.create(
                 schema=project.test_schema,
@@ -212,7 +215,7 @@ class TestProjectModelOverrideSnowflake(BaseProjectModelOverrideSnowflake):
                 "alternate_db": ALT_DATABASE,
             },
             "models": {
-                "database": ALT_DATABASE,
+              "database": ALT_DATABASE,
                 "test": {
                     "subfolder": {
                         "database": "{{ target.database }}"
@@ -227,26 +230,23 @@ class TestProjectModelOverrideSnowflake(BaseProjectModelOverrideSnowflake):
     def test_snowflake_database_override(self, project, clean_up):
       self.run_database_override(project)
 
-
-class TestProjectModelAliasOverrideSnowflake(BaseProjectModelOverrideSnowflake):
-    @pytest.fixture(scope="class")
-    def project_config_update(self):
-        return {
-            "vars": {
-                "alternate_db": ALT_DATABASE,
-            },
-            "models": {
-                "project": ALT_DATABASE,
-                "test": {
-                    "subfolder": {
-                        "project": "{{ target.database }}"
-                    }
-                }
-            },
-            "vars": {
-                "alternate_db": ALT_DATABASE,
-            },
-        }
-
-    def test_snowflake_project_override(self, project, clean_up):
-        self.run_database_override(project)
+# After second thought pretty sure this is only for bigquery correct? dataset = project
+# class TestProjectModelAliasOverrideSnowflake(BaseProjectModelOverrideSnowflake):
+#     @pytest.fixture(scope="class")
+#     def project_config_update(self):
+#         return {
+#             "vars": {
+#                 "alternate_db": ALT_DATABASE,
+#             },
+#             "models": {
+#                 "project": ALT_DATABASE,
+#                 "test": {
+#                     "subfolder": {
+#                         "project": "{{ target.database }}"
+#                     }
+#                 }
+#             },
+#             "vars": {
+#                 "alternate_db": ALT_DATABASE,
+#             },
+#         }
