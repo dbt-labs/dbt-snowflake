@@ -5,11 +5,13 @@ from dbt.tests.util import (
     check_table_does_exist,
     run_dbt
 )
-from tests.functional.adapter.custom_schema_tests.seeds import seed_queries
-
+from tests.functional.adapter.custom_schema_tests.seeds import (
+    seed_csv,
+    seed_agg_csv
+)
 
 _VIEW_1_SQL = """
-select * from {{ target.schema }}.seed
+select * from {{ ref('seed') }}
 """.lstrip()
 
 _VIEW_2_SQL = """
@@ -64,16 +66,17 @@ _CUSTOM_DB_SQL = """
 ALT_DATABASE = os.getenv("SNOWFLAKE_TEST_ALT_DATABASE")
 
 class TestOverrideDatabase:
-    @pytest.fixture(scope="function", autouse=True)
-    def setUp(self, project):
-        """Running the setup queries"""
-        for query in seed_queries:
-            project.run_sql(query)
-
     @pytest.fixture(scope="class")
     def macros(self):
         return {
             "custom_db.sql": _CUSTOM_DB_SQL,
+        }
+
+    @pytest.fixture(scope="class")
+    def seeds(self):
+        return {
+            "seed.csv" : seed_csv,
+            "agg.csv": seed_agg_csv
         }
 
     @pytest.fixture(scope="class")
@@ -85,6 +88,9 @@ class TestOverrideDatabase:
         }
 
     def test_snowflake_override_generate_db_name(self, project):
+        seed_results = run_dbt(["seed", "--full-refresh"])
+        assert len(seed_results) == 2
+
         db_with_schema = f"{project.database}.{project.test_schema}"
         alt_db_with_schema = f"{ALT_DATABASE}.{project.test_schema}"
         seed_table = "SEED"
