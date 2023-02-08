@@ -69,10 +69,6 @@ class TestCustomProjectSchemaWithPrefix:
             }
         }
 
-    @staticmethod
-    def cap_name(name):
-        return name.upper()
-
     def test__snowflake__custom_schema_with_prefix(self, project):
         for query in seed_queries:
             project.run_sql(query)
