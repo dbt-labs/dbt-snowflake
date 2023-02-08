@@ -30,10 +30,10 @@ from snowflake.connector.errors import (
 )
 
 from dbt.exceptions import (
-    InternalException,
-    RuntimeException,
-    FailedToConnectException,
-    DatabaseException,
+    DbtInternalError,
+    DbtRuntimeError,
+    FailedToConnectError,
+    DbtDatabaseError,
 )
 from dbt.adapters.base import Credentials  # type: ignore
 from dbt.contracts.connection import AdapterResponse
@@ -45,6 +45,7 @@ from dbt.events.types import AdapterEventWarning
 
 logger = AdapterLogger("Snowflake")
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
+ROW_VALUE_REGEX = re.compile(r"Row Values: \[.*\]")
 
 
 @dataclass
@@ -77,6 +78,7 @@ class SnowflakeCredentials(Credentials):
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
+    reuse_connections: Optional[bool] = None
 
     def __post_init__(self):
         if self.authenticator != "oauth" and (
@@ -150,17 +152,18 @@ class SnowflakeCredentials(Credentials):
             result["client_store_temporary_credential"] = True
             # enable mfa token cache for linux
             result["client_request_mfa_token"] = True
+        result["reuse_connections"] = self.reuse_connections
         result["private_key"] = self._get_private_key()
         return result
 
     def _get_access_token(self) -> str:
         if self.authenticator != "oauth":
-            raise InternalException("Can only get access tokens for oauth")
+            raise DbtInternalError("Can only get access tokens for oauth")
         missing = any(
             x is None for x in (self.oauth_client_id, self.oauth_client_secret, self.token)
         )
         if missing:
-            raise InternalException(
+            raise DbtInternalError(
                 "need a client ID a client secret, and a refresh token to get " "an access token"
             )
 
@@ -200,7 +203,7 @@ class SnowflakeCredentials(Credentials):
                 sleep(0.05)
 
         if result_json is None:
-            raise DatabaseException(
+            raise DbtDatabaseError(
                 f"""Did not receive valid json with access_token.
                                         Showing json response: {result_json}"""
             )
@@ -237,7 +240,13 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         try:
             yield
         except snowflake.connector.errors.ProgrammingError as e:
-            msg = str(e)
+            unscrubbed_msg = str(e)
+
+            # A class of Snowflake errors -- such as a failure from attempting to merge
+            # duplicate rows -- includes row values in the error message, i.e.
+            # [12345, "col_a_value", "col_b_value", etc...]. We don't want to log potentially
+            # sensitive user data.
+            msg = re.sub(ROW_VALUE_REGEX, "Row Values: [redacted]", unscrubbed_msg)
 
             logger.debug("Snowflake query id: {}".format(e.sfqid))
             logger.debug("Snowflake error: {}".format(msg))
@@ -245,7 +254,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             if "Empty SQL statement" in msg:
                 logger.debug("got empty sql statement, moving on")
             elif "This session does not have a current database" in msg:
-                raise FailedToConnectException(
+                raise FailedToConnectError(
                     (
                         "{}\n\nThis error sometimes occurs when invalid "
                         "credentials are provided, or when your default role "
@@ -254,7 +263,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                     ).format(msg)
                 )
             else:
-                raise DatabaseException(msg)
+                raise DbtDatabaseError(msg)
         except Exception as e:
             if isinstance(e, snowflake.connector.errors.Error):
                 logger.debug("Snowflake query id: {}".format(e.sfqid))
@@ -262,12 +271,12 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             logger.debug("Error running SQL: {}", sql)
             logger.debug("Rolling back transaction.")
             self.rollback_if_open()
-            if isinstance(e, RuntimeException):
+            if isinstance(e, DbtRuntimeError):
                 # during a sql query, an internal to dbt exception was raised.
                 # this sounds a lot like a signal handler and probably has
                 # useful information, so raise it without modification.
                 raise
-            raise RuntimeException(str(e)) from e
+            raise DbtRuntimeError(str(e)) from e
 
     @classmethod
     def open(cls, connection):
@@ -471,7 +480,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             else:
                 conn_name = conn.name
 
-            raise RuntimeException(
+            raise DbtRuntimeError(
                 "Tried to run an empty query on model '{}'. If you are "
                 "conditionally running\nsql, eg. in a model hook, make "
                 "sure your `else` clause contains valid sql!\n\n"
@@ -479,3 +488,12 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             )
 
         return connection, cursor
+
+    def release(self) -> None:
+        """Reuse connections by deferring release until adapter context manager in core
+        resets adapters. This cleanup_all happens before Python teardown. Idle connections
+        incur no costs while waiting in the connection pool."""
+        if self.profile.credentials.reuse_connections:  # type: ignore
+            return
+        else:
+            super().release()
