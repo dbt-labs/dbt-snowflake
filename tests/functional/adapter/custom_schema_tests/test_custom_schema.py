@@ -1,7 +1,7 @@
 import pytest
 from dbt.tests.util import (
-    run_dbt,
-    check_relations_equal
+    check_relations_equal,
+    run_dbt
 )
 from tests.functional.adapter.custom_schema_tests.seeds import seed_queries
 
