@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: enable snowpark product team to attribute usage to dbt
-time: 2023-01-20T11:03:25.84562-08:00
-custom:
-  Author: dataders
-  Issue: "374"
-  PR: "383"
