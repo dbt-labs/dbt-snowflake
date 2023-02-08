@@ -64,9 +64,11 @@ _CUSTOM_DB_SQL = """
 ALT_DATABASE = os.getenv("SNOWFLAKE_TEST_ALT_DATABASE")
 
 class TestOverrideDatabase:
-    @pytest.fixture(scope="class")
-    def schema(self):
-        return "custom_schema"
+    @pytest.fixture(scope="class", autouse=True)
+    def setUp(self, project):
+        """Running the setup queries"""
+        for query in seed_queries:
+            project.run_sql(query)
 
     @pytest.fixture(scope="class")
     def macros(self):
@@ -83,9 +85,6 @@ class TestOverrideDatabase:
         }
 
     def test_snowflake_override_generate_db_name(self, project):
-        for query in seed_queries:
-            project.run_sql(query)
-
         db_with_schema = f"{project.database}.{project.test_schema}"
         alt_db_with_schema = f"{ALT_DATABASE}.{project.test_schema}"
         seed_table = "SEED"

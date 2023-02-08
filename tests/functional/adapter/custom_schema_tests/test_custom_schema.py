@@ -49,9 +49,11 @@ group by 1
 
 
 class TestCustomProjectSchemaWithPrefix:
-    @pytest.fixture(scope="class")
-    def schema(self):
-        return "sf_custom_prefix"
+    @pytest.fixture(scope="class", autouse=True)
+    def setUp(self, project):
+        """Running the setup queries"""
+        for query in seed_queries:
+            project.run_sql(query)
 
     @pytest.fixture(scope="class")
     def models(self):
@@ -70,9 +72,6 @@ class TestCustomProjectSchemaWithPrefix:
         }
 
     def test__snowflake__custom_schema_with_prefix(self, project):
-        for query in seed_queries:
-            project.run_sql(query)
-
         results = run_dbt()
         assert len(results) == 3
 
