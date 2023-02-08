@@ -49,7 +49,7 @@ group by 1
 
 
 class TestCustomProjectSchemaWithPrefix:
-    @pytest.fixture(scope="class", autouse=True)
+    @pytest.fixture(scope="function", autouse=True)
     def setUp(self, project):
         """Running the setup queries"""
         for query in seed_queries:

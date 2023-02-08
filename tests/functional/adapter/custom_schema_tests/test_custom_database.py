@@ -64,7 +64,7 @@ _CUSTOM_DB_SQL = """
 ALT_DATABASE = os.getenv("SNOWFLAKE_TEST_ALT_DATABASE")
 
 class TestOverrideDatabase:
-    @pytest.fixture(scope="class", autouse=True)
+    @pytest.fixture(scope="function", autouse=True)
     def setUp(self, project):
         """Running the setup queries"""
         for query in seed_queries:
