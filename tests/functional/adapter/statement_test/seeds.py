@@ -1,3 +1,4 @@
+seeds_csv = """
 ID,FIRST_NAME,LAST_NAME,EMAIL,GENDER,IP_ADDRESS
 1,Jack,Hunter,jhunter0@pbs.org,Male,59.80.20.168
 2,Kathryn,Walker,kwalker1@ezinearticles.com,Female,194.121.179.35
@@ -99,3 +100,10 @@ ID,FIRST_NAME,LAST_NAME,EMAIL,GENDER,IP_ADDRESS
 98,Angela,Brooks,abrooks2p@mtv.com,Female,10.63.249.126
 99,Harold,Foster,hfoster2q@privacy.gov.au,Male,139.214.40.244
 100,Carl,Meyer,cmeyer2r@disqus.com,Male,204.117.7.88
+""".lstrip()
+
+statement_expected_csv = """
+SOURCE,VALUE
+matrix,100
+table,100
+""".lstrip()
