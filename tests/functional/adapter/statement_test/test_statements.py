@@ -3,7 +3,6 @@ from dbt.tests.util import (
     check_relations_equal,
     run_dbt
 )
-from dbt.tests.adapter.simple_seed.test_seed import SeedTestBase
 from tests.functional.adapter.statement_test.seeds import (
     seeds_csv,
     statement_expected_csv
@@ -36,10 +35,6 @@ select 'table' as source, {{ table_value }} as value
 
 
 class TestStatements:
-    @pytest.fixture(scope="class")
-    def schema(self):
-        return "statements"
-
     @pytest.fixture(scope="class")
     def models(self):
         return {
