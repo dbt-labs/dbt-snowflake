@@ -6,8 +6,8 @@ from dbt.tests.util import (
     run_dbt
 )
 from tests.functional.adapter.custom_schema_tests.seeds import (
-    seed_csv,
-    seed_agg_csv
+    seed_agg_csv,
+    seed_csv
 )
 
 _VIEW_1_SQL = """
