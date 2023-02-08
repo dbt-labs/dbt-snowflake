@@ -1,5 +1,5 @@
 kind: Fixes
-body: add adapter zone test for merge_exlcude_columns
+body: add adapter zone test for merge_exclude_columns
 time: 2023-01-23T13:30:59.282377-06:00
 custom:
   Author: dave-connors-3
