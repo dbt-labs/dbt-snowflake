@@ -70,8 +70,7 @@ jobs:
       - name: "Bump Patch Number"
         id: bump_patch
         run: |
-          next_patch=$((${{ steps.semver.outputs.patch }}+1))
-          echo "patch=next_patch" >> $GITHUB_OUTPUT
+          echo "patch=$((${{ steps.semver.outputs.patch }}+1))" >> $GITHUB_OUTPUT
 
       - name: "Generate Nightly Release Version Number"
         id: nightly-release-version
