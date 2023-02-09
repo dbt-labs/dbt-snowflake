@@ -61,11 +61,11 @@ When `dbt-snowflake` is installed this way, any changes you make to the `dbt-sno
 
 ### Initial setup
 
-`dbt-snowflake` contains [unit](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/unit) and [integration](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/integration) tests. Integration tests require an actual Snowflake warehouse to test against. There are two primary ways to do this:
+`dbt-snowflake` contains [unit](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/unit) and [functional](https://github.com/dbt-labs/dbt-snowflake/tree/main/tests/functional) tests. Functional tests require an actual Snowflake warehouse to test against. There are two primary ways to do this:
 
-- This repo has CI/CD GitHub Actions set up. Both unit and integration tests will run against an already configured Snowflake warehouse during PR checks.
+- This repo has CI/CD GitHub Actions set up. Both unit and functional tests will run against an already configured Snowflake warehouse during PR checks.
 
-- You can also run integration tests "locally" by configuring a `test.env` file with appropriate `ENV` variables.
+- You can also run functional tests "locally" by configuring a `test.env` file with appropriate `ENV` variables.
 
 ```
 cp test.env.example test.env
@@ -87,13 +87,13 @@ You may run a specific test or group of tests using `pytest` directly. Activate 
 ```sh
 # Note: replace $strings with valid names
 
-# run all snowflake integration tests in a directory
-python -m pytest -m profile_snowflake tests/functional/$test_directory
-# run all snowflake integration tests in a module
+# run all snowflake functional tests in a directory
+python -m pytest tests/functional/$test_directory
+# run all snowflake functional tests in a module
 python -m pytest -m profile_snowflake tests/functional/$test_dir_and_filename.py
-# run all snowflake integration tests in a class
+# run all snowflake functional tests in a class
 python -m pytest -m profile_snowflake tests/functional/$test_dir_and_filename.py::$test_class_name
-# run a specific snowflake integration test
+# run a specific snowflake functional test
 python -m pytest -m profile_snowflake tests/functional/$test_dir_and_filename.py::$test_class_name::$test__method_name
 
 # run all unit tests in a module
@@ -123,6 +123,6 @@ You don't need to worry about which `dbt-snowflake` version your change will go 
 
 ## Submitting a Pull Request
 
-A `dbt-snowflake` maintainer will review your PR and will determine if it has passed regression tests. They may suggest code revisions for style and clarity, or they may request that you add unit or integration tests. These are good things! We believe that, with a little bit of help, anyone can contribute high-quality code.
+A `dbt-snowflake` maintainer will review your PR and will determine if it has passed regression tests. They may suggest code revisions for style and clarity, or they may request that you add unit or functional tests. These are good things! We believe that, with a little bit of help, anyone can contribute high-quality code.
 
 Once all tests are passing and your PR has been approved, a `dbt-snowflake` maintainer will merge your changes into the active development branch. And that's it! Happy developing :tada:
