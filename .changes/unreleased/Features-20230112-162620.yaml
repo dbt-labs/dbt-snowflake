@@ -1,8 +1,0 @@
-kind: Features
-body: add back optional old uses of temp tables for incremental models in snowflake
-  for perf increase in some cases
-time: 2023-01-12T16:26:20.813848-06:00
-custom:
-  Author: McKnight-42 dbeatty10
-  Issue: "323"
-  PR: "389"
