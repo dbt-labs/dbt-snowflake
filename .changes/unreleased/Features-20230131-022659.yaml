@@ -1,6 +1,0 @@
-kind: Features
-body: Add configurable setting for keeping connections open on Snowflake
-time: 2023-01-31T02:26:59.701589-08:00
-custom:
-  Author: versusfacit joshuataylor
-  Issue: "854"
