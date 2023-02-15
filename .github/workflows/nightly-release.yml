@@ -68,7 +68,12 @@ jobs:
       - name: "Generate Nightly Release Version Number"
         id: nightly-release-version
         run: |
-          number="${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}n1.dev${{ steps.current-date.outputs.date }}"
+          # Always set the nightly release to be an alpha release.  There's a bug in bumpversion where it won't
+          # recognize a dev version and bump it everywhere when the pre-release isn't filled.  Using a high
+          # alpha number to not duplicate the pre-release as something already released and cause failures due
+          # to changelog generation and duplicate files
+          pre_release="a99"
+          number="${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}$pre_release.dev${{ steps.current-date.outputs.date }}"
           echo "number=$number" >> $GITHUB_OUTPUT
 
       - name: "Audit Nightly Release Version And Parse Into Parts"
