@@ -16,22 +16,36 @@ from cryptography.hazmat.primitives import serialization
 import requests
 import snowflake.connector
 import snowflake.connector.errors
+from snowflake.connector.errors import (
+    Error,
+    DatabaseError,
+    InternalError,
+    InternalServerError,
+    ServiceUnavailableError,
+    GatewayTimeoutError,
+    RequestTimeoutError,
+    BadGatewayError,
+    OtherHTTPRetryableError,
+    BindUploadError,
+)
 
 from dbt.exceptions import (
-    InternalException,
-    RuntimeException,
-    FailedToConnectException,
-    DatabaseException,
-    warn_or_error,
+    DbtInternalError,
+    DbtRuntimeError,
+    FailedToConnectError,
+    DbtDatabaseError,
 )
 from dbt.adapters.base import Credentials  # type: ignore
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLConnectionManager  # type: ignore
 from dbt.events import AdapterLogger  # type: ignore
+from dbt.events.functions import warn_or_error
+from dbt.events.types import AdapterEventWarning
 
 
 logger = AdapterLogger("Snowflake")
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
+ROW_VALUE_REGEX = re.compile(r"Row Values: \[.*\]")
 
 
 @dataclass
@@ -59,11 +73,12 @@ class SnowflakeCredentials(Credentials):
     proxy_host: Optional[str] = None
     proxy_port: Optional[int] = None
     protocol: Optional[str] = None
-    connect_retries: int = 0
-    connect_timeout: int = 10
+    connect_retries: int = 1
+    connect_timeout: Optional[int] = None
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
+    reuse_connections: Optional[bool] = None
 
     def __post_init__(self):
         if self.authenticator != "oauth" and (
@@ -71,8 +86,9 @@ class SnowflakeCredentials(Credentials):
         ):
             # the user probably forgot to set 'authenticator' like I keep doing
             warn_or_error(
-                "Authenticator is not set to oauth, but an oauth-only "
-                "parameter is set! Did you mean to set authenticator: oauth?"
+                AdapterEventWarning(
+                    base_msg="Authenticator is not set to oauth, but an oauth-only parameter is set! Did you mean to set authenticator: oauth?"
+                )
             )
 
     @property
@@ -120,13 +136,15 @@ class SnowflakeCredentials(Credentials):
                     token = self._get_access_token()
                 elif self.oauth_client_id:
                     warn_or_error(
-                        "Invalid profile: got an oauth_client_id, but not an "
-                        "oauth_client_secret!"
+                        AdapterEventWarning(
+                            base_msg="Invalid profile: got an oauth_client_id, but not an oauth_client_secret!"
+                        )
                     )
                 elif self.oauth_client_secret:
                     warn_or_error(
-                        "Invalid profile: got an oauth_client_secret, but not "
-                        "an oauth_client_id!"
+                        AdapterEventWarning(
+                            base_msg="Invalid profile: got an oauth_client_secret, but not an oauth_client_id!"
+                        )
                     )
 
                 result["token"] = token
@@ -134,17 +152,18 @@ class SnowflakeCredentials(Credentials):
             result["client_store_temporary_credential"] = True
             # enable mfa token cache for linux
             result["client_request_mfa_token"] = True
+        result["reuse_connections"] = self.reuse_connections
         result["private_key"] = self._get_private_key()
         return result
 
     def _get_access_token(self) -> str:
         if self.authenticator != "oauth":
-            raise InternalException("Can only get access tokens for oauth")
+            raise DbtInternalError("Can only get access tokens for oauth")
         missing = any(
             x is None for x in (self.oauth_client_id, self.oauth_client_secret, self.token)
         )
         if missing:
-            raise InternalException(
+            raise DbtInternalError(
                 "need a client ID a client secret, and a refresh token to get " "an access token"
             )
 
@@ -184,7 +203,7 @@ class SnowflakeCredentials(Credentials):
                 sleep(0.05)
 
         if result_json is None:
-            raise DatabaseException(
+            raise DbtDatabaseError(
                 f"""Did not receive valid json with access_token.
                                         Showing json response: {result_json}"""
             )
@@ -221,7 +240,13 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         try:
             yield
         except snowflake.connector.errors.ProgrammingError as e:
-            msg = str(e)
+            unscrubbed_msg = str(e)
+
+            # A class of Snowflake errors -- such as a failure from attempting to merge
+            # duplicate rows -- includes row values in the error message, i.e.
+            # [12345, "col_a_value", "col_b_value", etc...]. We don't want to log potentially
+            # sensitive user data.
+            msg = re.sub(ROW_VALUE_REGEX, "Row Values: [redacted]", unscrubbed_msg)
 
             logger.debug("Snowflake query id: {}".format(e.sfqid))
             logger.debug("Snowflake error: {}".format(msg))
@@ -229,7 +254,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             if "Empty SQL statement" in msg:
                 logger.debug("got empty sql statement, moving on")
             elif "This session does not have a current database" in msg:
-                raise FailedToConnectException(
+                raise FailedToConnectError(
                     (
                         "{}\n\nThis error sometimes occurs when invalid "
                         "credentials are provided, or when your default role "
@@ -238,7 +263,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                     ).format(msg)
                 )
             else:
-                raise DatabaseException(msg)
+                raise DbtDatabaseError(msg)
         except Exception as e:
             if isinstance(e, snowflake.connector.errors.Error):
                 logger.debug("Snowflake query id: {}".format(e.sfqid))
@@ -246,12 +271,12 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             logger.debug("Error running SQL: {}", sql)
             logger.debug("Rolling back transaction.")
             self.rollback_if_open()
-            if isinstance(e, RuntimeException):
+            if isinstance(e, DbtRuntimeError):
                 # during a sql query, an internal to dbt exception was raised.
                 # this sounds a lot like a signal handler and probably has
                 # useful information, so raise it without modification.
                 raise
-            raise RuntimeException(str(e)) from e
+            raise DbtRuntimeError(str(e)) from e
 
     @classmethod
     def open(cls, connection):
@@ -260,103 +285,58 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             return connection
 
         creds = connection.credentials
-        error = None
-        for attempt in range(1 + creds.connect_retries):
-            try:
-                handle = snowflake.connector.connect(
-                    account=creds.account,
-                    user=creds.user,
-                    database=creds.database,
-                    schema=creds.schema,
-                    warehouse=creds.warehouse,
-                    role=creds.role,
-                    autocommit=True,
-                    client_session_keep_alive=creds.client_session_keep_alive,
-                    application="dbt",
-                    insecure_mode=creds.insecure_mode,
-                    **creds.auth_args(),
-                )
+        timeout = creds.connect_timeout
 
-                if creds.query_tag:
-                    handle.cursor().execute(
-                        ("alter session set query_tag = '{}'").format(creds.query_tag)
-                    )
+        def connect():
+            session_parameters = {}
 
-                connection.handle = handle
-                connection.state = "open"
-                break
+            if creds.query_tag:
+                session_parameters.update({"QUERY_TAG": creds.query_tag})
 
-            except snowflake.connector.errors.DatabaseError as e:
-                if (
-                    creds.retry_on_database_errors or creds.retry_all
-                ) and creds.connect_retries > 0:
-                    error = e
-                    logger.warning(
-                        "Got an error when attempting to open a "
-                        "snowflake connection. Retrying due to "
-                        "either retry configuration set to true."
-                        "This was attempt number: {attempt} of "
-                        "{retry_limit}. "
-                        "Retrying in {timeout} "
-                        "seconds. Error: '{error}'".format(
-                            attempt=attempt,
-                            retry_limit=creds.connect_retries,
-                            timeout=creds.connect_timeout,
-                            error=e,
-                        )
-                    )
-                    sleep(creds.connect_timeout)
-                else:
-                    logger.debug(
-                        "Got an error when attempting to open a "
-                        "snowflake connection. No retries "
-                        "attempted: '{}'".format(e)
-                    )
-
-                    connection.handle = None
-                    connection.state = "fail"
-
-                    raise FailedToConnectException(str(e))
-
-            except snowflake.connector.errors.Error as e:
-                if creds.retry_all and creds.connect_retries > 0:
-                    error = e
-                    logger.warning(
-                        "Got an error when attempting to open a "
-                        "snowflake connection. Retrying due to "
-                        "'retry_all' configuration set to true."
-                        "This was attempt number: {attempt} of "
-                        "{retry_limit}. "
-                        "Retrying in {timeout} "
-                        "seconds. Error: '{error}'".format(
-                            attempt=attempt,
-                            retry_limit=creds.connect_retries,
-                            timeout=creds.connect_timeout,
-                            error=e,
-                        )
-                    )
-                    sleep(creds.connect_timeout)
-                else:
-                    logger.debug(
-                        "Got an error when attempting to open a "
-                        "snowflake connection. No retries "
-                        "attempted: '{}'".format(e)
-                    )
-
-                    connection.handle = None
-                    connection.state = "fail"
-
-                    raise FailedToConnectException(str(e))
-
-        else:
-            logger.debug(
-                "Got an error when attempting to open a snowflake "
-                "connection: '{}'".format(error)
+            handle = snowflake.connector.connect(
+                account=creds.account,
+                user=creds.user,
+                database=creds.database,
+                schema=creds.schema,
+                warehouse=creds.warehouse,
+                role=creds.role,
+                autocommit=True,
+                client_session_keep_alive=creds.client_session_keep_alive,
+                application="dbt",
+                insecure_mode=creds.insecure_mode,
+                session_parameters=session_parameters,
+                **creds.auth_args(),
             )
 
-            connection.handle = None
-            connection.state = "fail"
-            raise FailedToConnectException(str(error))
+            return handle
+
+        def exponential_backoff(attempt: int):
+            return attempt * attempt
+
+        retryable_exceptions = [
+            InternalError,
+            InternalServerError,
+            ServiceUnavailableError,
+            GatewayTimeoutError,
+            RequestTimeoutError,
+            BadGatewayError,
+            OtherHTTPRetryableError,
+            BindUploadError,
+        ]
+        # these two options are for backwards compatibility
+        if creds.retry_all:
+            retryable_exceptions = [Error]
+        elif creds.retry_on_database_errors:
+            retryable_exceptions.insert(0, DatabaseError)
+
+        return cls.retry_connection(
+            connection,
+            connect=connect,
+            logger=logger,
+            retry_limit=creds.connect_retries,
+            retry_timeout=timeout if timeout is not None else exponential_backoff,
+            retryable_exceptions=retryable_exceptions,
+        )
 
     def cancel(self, connection):
         handle = connection.handle
@@ -500,7 +480,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             else:
                 conn_name = conn.name
 
-            raise RuntimeException(
+            raise DbtRuntimeError(
                 "Tried to run an empty query on model '{}'. If you are "
                 "conditionally running\nsql, eg. in a model hook, make "
                 "sure your `else` clause contains valid sql!\n\n"
@@ -508,3 +488,12 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             )
 
         return connection, cursor
+
+    def release(self) -> None:
+        """Reuse connections by deferring release until adapter context manager in core
+        resets adapters. This cleanup_all happens before Python teardown. Idle connections
+        incur no costs while waiting in the connection pool."""
+        if self.profile.credentials.reuse_connections:  # type: ignore
+            return
+        else:
+            super().release()

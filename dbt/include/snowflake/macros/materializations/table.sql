@@ -1,4 +1,4 @@
-{% materialization table, adapter='snowflake' %}
+{% materialization table, adapter='snowflake', supported_languages=['sql', 'python']%}
 
   {% set original_query_tag = set_query_tag() %}
 
@@ -41,12 +41,16 @@
 {% macro py_write_table(compiled_code, target_relation, temporary=False) %}
 {{ compiled_code }}
 def materialize(session, df, target_relation):
-    # we have to make sure pandas is imported
-    import pandas
-    if isinstance(df, pandas.core.frame.DataFrame):
-        # session.write_pandas does not have overwrite function
-        df = session.createDataFrame(df)
-    df.write.mode("overwrite").save_as_table("{{ target_relation }}", create_temp_table={{temporary}})
+    # make sure pandas exists
+    import importlib.util
+    package_name = 'pandas'
+    if importlib.util.find_spec(package_name):
+        import pandas
+        if isinstance(df, pandas.core.frame.DataFrame):
+          # session.write_pandas does not have overwrite function
+          df = session.createDataFrame(df)
+    {% set target_relation_name = target_relation | string | replace('"', '\\"') %}
+    df.write.mode("overwrite").save_as_table("{{ target_relation_name }}", create_temp_table={{temporary}})
 
 def main(session):
     dbt = dbtObj(session.table)
@@ -55,7 +59,7 @@ def main(session):
     return "OK"
 {% endmacro %}
 
-{%macro py_script_comment()%}
+{% macro py_script_comment()%}
 # To run this in snowsight, you need to select entry point to be main
 # And you may have to modify the return type to text to get the result back
 # def main(session):
