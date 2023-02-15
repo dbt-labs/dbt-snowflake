@@ -153,7 +153,7 @@
   {% set maximum = 10000 %}
   {% if (result | length) >= maximum %}
     {% set msg %}
-      Too many schemas in schema  {{ schema_relation }}! dbt can only get
+      Too many objects in schema  {{ schema_relation }}! dbt can only get
       information about schemas with fewer than {{ maximum }} objects.
     {% endset %}
     {% do exceptions.raise_compiler_error(msg) %}
