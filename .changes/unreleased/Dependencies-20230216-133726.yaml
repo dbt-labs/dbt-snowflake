@@ -1,0 +1,6 @@
+kind: Dependencies
+body: Increasing mypy cap to 1.0.0
+time: 2023-02-16T13:37:26.074514-05:00
+custom:
+  Author: mikealfare
+  PR: "452"
