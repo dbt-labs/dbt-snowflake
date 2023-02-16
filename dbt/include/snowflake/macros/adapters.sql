@@ -21,7 +21,12 @@
           temporary
         {%- elif transient -%}
           transient
-        {%- endif %} table {{ relation }} {% if copy_grants and not temporary -%} copy grants {%- endif %} as
+        {%- endif %} table {{ relation }}
+        {% if config.get('constraints_enabled', False) %}
+          {{ get_assert_columns_equivalent(sql) }}
+          {{ get_columns_spec_ddl() }}
+        {% endif %}
+        {% if copy_grants and not temporary -%} copy grants {%- endif %} as
         (
           {%- if cluster_by_string is not none -%}
             select * from(
@@ -148,7 +153,7 @@
   {% set maximum = 10000 %}
   {% if (result | length) >= maximum %}
     {% set msg %}
-      Too many schemas in schema  {{ schema_relation }}! dbt can only get
+      Too many objects in schema  {{ schema_relation }}! dbt can only get
       information about schemas with fewer than {{ maximum }} objects.
     {% endset %}
     {% do exceptions.raise_compiler_error(msg) %}
