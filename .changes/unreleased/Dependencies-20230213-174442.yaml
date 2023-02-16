@@ -1,0 +1,6 @@
+kind: Dependencies
+body: Updates cryptography dependency to be <40.0.0
+time: 2023-02-13T17:44:42.716454Z
+custom:
+  Author: surbias
+  Issue: "465"
