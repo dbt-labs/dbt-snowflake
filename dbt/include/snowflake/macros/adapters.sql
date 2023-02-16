@@ -21,7 +21,12 @@
           temporary
         {%- elif transient -%}
           transient
-        {%- endif %} table {{ relation }} {% if copy_grants and not temporary -%} copy grants {%- endif %} as
+        {%- endif %} table {{ relation }}
+        {% if config.get('constraints_enabled', False) %}
+          {{ get_assert_columns_equivalent(sql) }}
+          {{ get_columns_spec_ddl() }}
+        {% endif %}
+        {% if copy_grants and not temporary -%} copy grants {%- endif %} as
         (
           {%- if cluster_by_string is not none -%}
             select * from(
