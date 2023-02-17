@@ -66,10 +66,10 @@ setup(
     packages=find_namespace_packages(include=["dbt", "dbt.*"]),
     include_package_data=True,
     install_requires=[
-        "dbt-core~={}".format(dbt_core_version),
-        "snowflake-connector-python[secure-local-storage]>=2.4.1,<2.8.2",
-        "requests<3.0.0",
-        "cryptography>=3.2,<40.0.0",
+        f"dbt-core~={dbt_core_version}",
+        "snowflake-connector-python[secure-local-storage]~=2.9.0",
+        "requests~=2.0",
+        "cryptography>=3.2",
     ],
     zip_safe=False,
     classifiers=[
