@@ -110,7 +110,7 @@ jobs:
       build_script_path: "scripts/build-dist.sh"
       env_setup_script_path: "scripts/env-setup.sh"
       s3_bucket_name: "core-team-artifacts"
-      package_test_command: "dbt --version"
+      package_test_command: "dbt -h"
       test_run: true
       nightly_release: true
     secrets: inherit
