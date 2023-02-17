@@ -1,5 +1,5 @@
 kind: Dependencies
-body: Updates snowflake-connector-python dependency to be <4.0.0
+body: Update dependency range for snowflake-connector-python
 time: 2023-02-16T09:31:28.844127-07:00
 custom:
   Author: dbeatty10
