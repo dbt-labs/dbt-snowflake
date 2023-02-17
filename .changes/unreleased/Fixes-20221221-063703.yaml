@@ -1,0 +1,7 @@
+kind: Fixes
+body: Remove dead code related to dbt.contracts.graph.parsed
+time: 2022-12-21T06:37:03.458281-08:00
+custom:
+  Author: kadekillary
+  Issue: "344"
+  PR: "370"
