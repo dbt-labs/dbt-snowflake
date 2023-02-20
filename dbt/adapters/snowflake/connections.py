@@ -80,6 +80,7 @@ class SnowflakeCredentials(Credentials):
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
+    reuse_connections: Optional[bool] = None
 
     def __post_init__(self):
         if self.authenticator != "oauth" and (
@@ -153,6 +154,7 @@ class SnowflakeCredentials(Credentials):
             result["client_store_temporary_credential"] = True
             # enable mfa token cache for linux
             result["client_request_mfa_token"] = True
+        result["reuse_connections"] = self.reuse_connections
         result["private_key"] = self._get_private_key()
         return result
 
@@ -495,3 +497,12 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             )
 
         return connection, cursor
+
+    def release(self) -> None:
+        """Reuse connections by deferring release until adapter context manager in core
+        resets adapters. This cleanup_all happens before Python teardown. Idle connections
+        incur no costs while waiting in the connection pool."""
+        if self.profile.credentials.reuse_connections:  # type: ignore
+            return
+        else:
+            super().release()

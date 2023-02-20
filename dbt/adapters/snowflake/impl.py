@@ -27,7 +27,7 @@ class SnowflakeConfig(AdapterConfig):
     copy_grants: Optional[bool] = None
     snowflake_warehouse: Optional[str] = None
     query_tag: Optional[str] = None
-    merge_tmp_relation_type: Optional[str] = None
+    tmp_relation_type: Optional[str] = None
     merge_update_columns: Optional[str] = None
 
 
@@ -124,7 +124,7 @@ class SnowflakeAdapter(SQLAdapter):
         quote_policy = {"database": True, "schema": True, "identifier": True}
 
         columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):
+        for _database, _schema, _identifier, _type in results.select(columns):  # type: ignore
             try:
                 _type = self.Relation.get_relation_type(_type.lower())
             except ValueError:
@@ -197,7 +197,11 @@ class SnowflakeAdapter(SQLAdapter):
         if imports:
             imports = f"IMPORTS = ('{imports}')"
 
-        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", True)
+        snowpark_telemetry_string = "dbtLabs_dbtPython"
+        snowpark_telemetry_snippet = f"""
+import sys
+sys._xoptions['snowflake_partner_attribution'].append("{snowpark_telemetry_string}")"""
+
         common_procedure_code = f"""
 RETURNS STRING
 LANGUAGE PYTHON
@@ -208,8 +212,12 @@ HANDLER = 'main'
 EXECUTE AS CALLER
 AS
 $$
+{snowpark_telemetry_snippet}
+
 {compiled_code}
 $$"""
+
+        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", True)
         if use_anonymous_sproc:
             proc_name = f"{identifier}__dbt_sp"
             python_stored_procedure = f"""
