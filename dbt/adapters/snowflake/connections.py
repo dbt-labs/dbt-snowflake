@@ -216,7 +216,7 @@ class SnowflakeCredentials(Credentials):
         """Get Snowflake private key by path, from a Base64 encoded DER bytestring or None."""
         if self.private_key and self.private_key_path:
             raise DbtProfileError("Cannot specify both `private_key`  and `private_key_path`")
-        
+
         if self.private_key_passphrase:
             encoded_passphrase = self.private_key_passphrase.encode()
         else:
@@ -224,7 +224,9 @@ class SnowflakeCredentials(Credentials):
 
         if self.private_key:
             p_key = serialization.load_der_private_key(
-                base64.b64decode(self.private_key), password=encoded_passphrase, backend=default_backend()
+                base64.b64decode(self.private_key),
+                password=encoded_passphrase,
+                backend=default_backend(),
             )
         elif self.private_key_path:
             with open(self.private_key_path, "rb") as key:
