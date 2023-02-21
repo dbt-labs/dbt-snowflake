@@ -26,7 +26,7 @@ defaults:
     shell: bash
 
 env:
-  RELEASE_BRANCH: "main"
+  RELEASE_BRANCH: "1.4.latest"
 
 jobs:
   aggregate-release-data:
@@ -65,10 +65,17 @@ jobs:
         id: current-date
         run: echo "date=$(date +'%m%d%Y')" >> $GITHUB_OUTPUT
 
+      # Bump to the next patch because when this is a previously released patch, the changelog
+      # markdown will already exist and cause a failure in another step
+      - name: "Bump Patch Number"
+        id: bump_patch
+        run: |
+          echo "patch=$((${{ steps.semver.outputs.patch }}+1))" >> $GITHUB_OUTPUT
+
       - name: "Generate Nightly Release Version Number"
         id: nightly-release-version
         run: |
-          number="${{ steps.semver.outputs.version }}.dev${{ steps.current-date.outputs.date }}+nightly"
+          number="${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.bump_patch.outputs.patch }}.dev${{ steps.current-date.outputs.date }}"
           echo "number=$number" >> $GITHUB_OUTPUT
 
       - name: "Audit Nightly Release Version And Parse Into Parts"
@@ -98,12 +105,12 @@ jobs:
     uses: ./.github/workflows/release.yml
     with:
       sha: ${{ needs.aggregate-release-data.outputs.commit_sha }}
-      target_branch: ${{ needs.aggregate-release-data.outputs.release-branch }}
+      target_branch: ${{ needs.aggregate-release-data.outputs.release_branch }}
       version_number: ${{ needs.aggregate-release-data.outputs.version_number }}
       build_script_path: "scripts/build-dist.sh"
       env_setup_script_path: "scripts/env-setup.sh"
       s3_bucket_name: "core-team-artifacts"
-      package_test_command: "dbt --version"
+      package_test_command: "dbt -h"
       test_run: true
       nightly_release: true
     secrets: inherit
