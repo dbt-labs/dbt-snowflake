@@ -62,5 +62,10 @@ help: ## Show this help message.
 
 .PHONY: ubuntu-py38
 ubuntu-py38:
-	docker build -f docker_images/ubuntu-py38.Dockerfile -t dbt-snowflake-ubuntu-py38 .
+	docker build -f docker/ubuntu-py38.Dockerfile -t dbt-snowflake-ubuntu-py38 .
 	docker run --rm -it --name dbt-snowflake-ubuntu-py38 -v $(shell pwd):/opt/code dbt-snowflake-ubuntu-py38
+
+.PHONY: debian-py38
+debian-py38:
+	docker build -f docker/debian-py38.Dockerfile -t dbt-snowflake-debian-py38 .
+	docker run --rm -it --name dbt-snowflake-debian-py38 -v $(shell pwd):/opt/code dbt-snowflake-debian-py38
