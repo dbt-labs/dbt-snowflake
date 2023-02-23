@@ -15,6 +15,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import requests
 import snowflake.connector
+import snowflake.connector.constants
 import snowflake.connector.errors
 from snowflake.connector.errors import (
     Error,
@@ -497,3 +498,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             return
         else:
             super().release()
+
+    @classmethod
+    def data_type_code_to_name(cls, type_code: int) -> str:
+        return snowflake.connector.constants.FIELD_ID_TO_NAME[type_code]
