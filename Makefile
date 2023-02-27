@@ -69,3 +69,8 @@ ubuntu-py38:
 debian-py38:
 	docker build -f docker/debian-py38.Dockerfile -t dbt-snowflake-debian-py38 .
 	docker run --rm -it --name dbt-snowflake-debian-py38 -v $(shell pwd):/opt/code dbt-snowflake-debian-py38
+
+.PHONY: dev-env-default
+dev-env-default:
+	docker build -f docker/dev-env-default.Dockerfile -t dbt-snowflake-dev-env-default .
+	docker run --rm -it --name dbt-snowflake-dev-env-default -v $(shell pwd):/opt/code dbt-snowflake-dev-env-default
