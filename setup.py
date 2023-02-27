@@ -33,7 +33,8 @@ def _get_plugin_version_dict():
     _version_path = os.path.join(this_directory, "dbt", "adapters", "snowflake", "__version__.py")
     _semver = r"""(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"""
     _pre = r"""((?P<prekind>a|b|rc)(?P<pre>\d+))?"""
-    _version_pattern = fr"""version\s*=\s*["']{_semver}{_pre}["']"""
+    _nightly = r"""(\.(?P<nightly>[a-z0-9]+)?)?"""
+    _version_pattern = fr"""version\s*=\s*["']{_semver}{_pre}{_nightly}["']"""
     with open(_version_path) as f:
         match = re.search(_version_pattern, f.read().strip())
         if match is None:
@@ -50,7 +51,7 @@ def _get_dbt_core_version():
 
 
 package_name = "dbt-snowflake"
-package_version = "1.5.0a1"
+package_version = "1.5.0b1"
 dbt_core_version = _get_dbt_core_version()
 description = """The Snowflake adapter plugin for dbt"""
 
@@ -67,7 +68,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "dbt-core~={}".format(dbt_core_version),
-        "snowflake-connector-python[secure-local-storage]>=2.4.1,<4.0.0",
+        "snowflake-connector-python[secure-local-storage]>=2.4.1,<2.8.2",
         "requests<3.0.0",
         "cryptography>=3.2,<40.0.0",
     ],
