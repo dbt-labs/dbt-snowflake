@@ -16,7 +16,8 @@ flaky~=3.7
 freezegun~=1.2
 ipdb~=0.13.11
 mypy==1.0.1  # patch updates have historically introduced breaking changes
-pre-commit~=3.1
+pre-commit~=2.21;python_version=="3.7"
+pre-commit~=3.1;python_version>="3.8"
 pytest~=7.2
 pytest-csv~=3.0
 pytest-dotenv~=0.5.2
