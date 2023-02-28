@@ -12,8 +12,7 @@ RUN apt-get clean && \
     rm -rf \
         /var/lib/apt/lists/* \
         /tmp/* \
-        /var/tmp/* \
-        /Python-3.8.15.tgz
+        /var/tmp/*
 
 # update python build tools
 RUN python3 -m pip install --upgrade pip setuptools wheel --no-cache-dir
