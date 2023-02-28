@@ -67,9 +67,9 @@ setup(
     include_package_data=True,
     install_requires=[
         "dbt-core~={}".format(dbt_core_version),
-        "snowflake-connector-python[secure-local-storage]==2.8.1",
-        "requests<3.0.0",
-        "cryptography>=3.2,<40.0.0",
+        "snowflake-connector-python[secure-local-storage]~=3.0",
+        "requests~=2.0",
+        "cryptography~=39.0",
     ],
     zip_safe=False,
     classifiers=[
@@ -82,6 +82,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     python_requires=">=3.7",
 )
