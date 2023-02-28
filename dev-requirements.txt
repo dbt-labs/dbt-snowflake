@@ -3,25 +3,29 @@
 git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core
 git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=tests/adapter
 
+# if version 1.x or greater -> pin to major version
+# if version 0.x -> pin to minor
 
-black
-click
-bumpversion
-flake8
-flaky
-freezegun
-ipdb
-mypy
-pip-tools
-pre-commit
-pytest
-pytest-dotenv
-pytest-logbook
-pytest-csv
-pytest-xdist
-pytz
-tox
-types-pytz
-types-requests
-twine
-wheel
+# Standard dev dependencies
+black~=23.1
+bumpversion~=0.6.0
+click~=8.1
+flake8~=6.0
+flaky~=3.7
+freezegun~=1.2
+ipdb~=0.13.11
+mypy~=1.0
+pre-commit~=3.1
+pytest~=7.2
+pytest-csv~=3.0
+pytest-dotenv~=0.5.2
+pytest-logbook~=1.2
+pytest-xdist~=3.2
+pytz~=2022.7
+tox~=4.4
+
+# Adapter specific dependencies
+pip-tools~=6.12
+types-pytz~=2022.7
+types-requests~=2.28
+twine~=4.0
