@@ -1,0 +1,8 @@
+kind: Features
+body: Added ability to configure key-pair authentication with a private key stored
+  in an environment variable
+time: 2022-10-11T13:31:05.065658-06:00
+custom:
+  Author: jayhale
+  Issue: "291"
+  PR: "292"
