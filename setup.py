@@ -34,7 +34,7 @@ def _get_plugin_version_dict():
     _semver = r"""(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"""
     _pre = r"""((?P<prekind>a|b|rc)(?P<pre>\d+))?"""
     _nightly = r"""(\.(?P<nightly>[a-z0-9]+)?)?"""
-    _version_pattern = fr"""version\s*=\s*["']{_semver}{_pre}{_nightly}["']"""
+    _version_pattern = rf"""version\s*=\s*["']{_semver}{_pre}{_nightly}["']"""
     with open(_version_path) as f:
         match = re.search(_version_pattern, f.read().strip())
         if match is None:
