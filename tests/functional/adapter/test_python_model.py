@@ -2,15 +2,21 @@ import pytest
 from dbt.tests.util import run_dbt, write_file, run_sql_with_adapter
 from dbt.tests.adapter.python_model.test_python_model import BasePythonModelTests, BasePythonIncrementalTests
 
+
 class TestPythonModelSnowflake(BasePythonModelTests):
-    @pytest.fixture(scope="class")
-    def project_config_update(self):
-        return {
-            "models":{ "use_anonymous_sproc": True}
-        }
+    pass
+
 
 class TestIncrementalSnowflake(BasePythonIncrementalTests):
     pass
+
+
+class TestIncrementalSnowflakeQuoting(BasePythonModelTests):
+    # ensure that 'dbt.ref()', 'dbt.this()', and py_write_table() all respect quoting
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"quoting": {"identifier": True}}
+
 
 models__simple_python_model = """
 import pandas
@@ -51,11 +57,11 @@ import sys
 from snowflake.snowpark.types import StructType, FloatType, StringType, StructField
 
 def model( dbt, session):
-    
+
     dbt.config(
         materialized='table',
         imports = ['@dbt_integration_test/iris.csv'],
-        use_anonymous_sproc = True
+        use_anonymous_sproc = False
     )
     schema_for_data_file = StructType([
         StructField("length1", FloatType()),
@@ -83,4 +89,3 @@ class TestImportSnowflake:
         project.run_sql("create or replace STAGE dbt_integration_test")
         project.run_sql(f"PUT file://{project.project_root}/seeds/iris.csv @dbt_integration_test/;")
         run_dbt(["run"])
-    
