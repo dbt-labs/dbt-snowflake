@@ -9,6 +9,7 @@ import dbt.flags as flags
 from dbt.adapters.snowflake import SnowflakeAdapter
 from dbt.adapters.snowflake import Plugin as SnowflakePlugin
 from dbt.adapters.snowflake.column import SnowflakeColumn
+from dbt.adapters.snowflake.connections import SnowflakeCredentials
 from dbt.adapters.base.query_headers import MacroQueryStringSetter
 from dbt.contracts.files import FileHash
 from dbt.contracts.graph.manifest import ManifestStateCheck
@@ -464,6 +465,50 @@ class TestSnowflakeAdapter(unittest.TestCase):
                 session_parameters={}, reuse_connections=True)
         ])
 
+    @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')
+    def test_authenticator_private_key_string_authentication(self, mock_get_private_key):
+        self.config.credentials = self.config.credentials.replace(
+            private_key='dGVzdF9rZXk=',
+            private_key_passphrase='p@ssphr@se',
+        )
+
+        self.adapter = SnowflakeAdapter(self.config)
+        conn = self.adapter.connections.set_connection_name(name='new_connection_with_new_config')
+
+        self.snowflake.assert_not_called()
+        conn.handle
+        self.snowflake.assert_has_calls([
+            mock.call(
+                account='test_account', autocommit=True,
+                client_session_keep_alive=False, database='test_database',
+                role=None, schema='public', user='test_user',
+                warehouse='test_warehouse', private_key='test_key',
+                application='dbt', insecure_mode=False,
+                session_parameters={}, reuse_connections=None,)
+        ])
+
+    @mock.patch('dbt.adapters.snowflake.SnowflakeCredentials._get_private_key', return_value='test_key')
+    def test_authenticator_private_key_string_authentication_no_passphrase(self, mock_get_private_key):
+        self.config.credentials = self.config.credentials.replace(
+            private_key='dGVzdF9rZXk=',
+            private_key_passphrase=None,
+        )
+
+        self.adapter = SnowflakeAdapter(self.config)
+        conn = self.adapter.connections.set_connection_name(name='new_connection_with_new_config')
+
+        self.snowflake.assert_not_called()
+        conn.handle
+        self.snowflake.assert_has_calls([
+            mock.call(
+                account='test_account', autocommit=True,
+                client_session_keep_alive=False, database='test_database',
+                role=None, schema='public', user='test_user',
+                warehouse='test_warehouse', private_key='test_key',
+                application='dbt', insecure_mode=False,
+                session_parameters={}, reuse_connections=None,)
+        ])
+
 
 class TestSnowflakeAdapterConversions(TestAdapterConversions):
     def test_convert_text_type(self):
@@ -647,3 +692,103 @@ class SnowflakeConnectionsTest(unittest.TestCase):
         self.assertEqual(expected_query_3, stripped_query3)
         self.assertEqual(expected_query_4, stripped_query4)
         self.assertEqual(expected_query_5, stripped_query5)
+
+
+class TestSnowflakeAdapterCredentials(unittest.TestCase):
+    unencrypted_private_key = (
+        b'0\x82\x01T\x02\x01\x000\r\x06\t*\x86H\x86\xf7\r\x01\x01\x01'
+        b'\x05\x00\x04\x82\x01>0\x82\x01:\x02\x01\x00\x02A\x00\xd9.'
+        b'\x15\xc8\xce\xfa\x1c\x9a\xe8/|5lf\xb8\xd9\x13\xc5I\x16i \x9f'
+        b'\'rO\xb1RkD(\n\xff\x84v\xbaS\x8d\xb46\xf8\x85w\x81\xe2\xc5cy'
+        b'\xf1\xb6\xa9i]F\xfc\x04e`\xfbw;\x91\xf5\xcf\x02\x03\x01\x00'
+        b'\x01\x02A\x00\x81\x84\xc6a\x17ny\x98\xb8WyO\xb2\xf2\x1f\xd2'
+        b'\xf5\xc3v.\xf3K\r\x1fM@\xd1\x93A}H\x13\r\xa7\xd4\n,7L\x14?'
+        b'\xff\xe2\xf3\xac\x93\xbb\xdf\xc3\xe5\xea\xf1AG\xc0~\xa2\x9a6'
+        b'6\xeb\x11S\xe1\x02!\x00\xf3\x1d\xf1\xcc\xecj\xaf}\x01\xd4'
+        b'\xee\x84\x03(Qx9\x9f\xedH\xf1\x016r\xbaE{Uk\x9d,\x13\x02!'
+        b'\x00\xe4\xb0I\x8b\x8bU\xe5\x9a\x93V\x9f\xa8Ui\x9cQ\xd7\x12'
+        b'\x866g<MK\xa4J5\xb0\xc6\xf7\xce\xd5\x02 wp=\xab\xe4v!R\xf3'
+        b'\xc4m\x8d\x93\x93\x8a:\xdbl\x93\x81\xa3Mj7\x81\x05\xc3\xaa'
+        b'\xda\x9c\xb3\xdb\x02 w\xafW^C\xd6\xf9\xaasp\x03p\xfa\xfa\xa1'
+        b'\xc8\'2W\xb1\x83H\t\x00\x0c\x84\x96"\xe5\x8e\xed\xdd\x02 '
+        b'\x1d\\\x02\xbc\xf3\xff\x17":>\xdf[{y\xe8\xc1j\xda\xc2\xa9'
+        b'\x9d\x94)_\xe6\x9c\xf1FF\x03Y\x81'
+    )
+    unencrypted_private_key_encoded = (
+        'MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEA2S4VyM76HJroL3w1bGa42'
+        'RPFSRZpIJ8nck+xUmtEKAr/hHa6U420NviFd4HixWN58bapaV1G/ARlYPt3O5H1zwIDAQ'
+        'ABAkEAgYTGYRdueZi4V3lPsvIf0vXDdi7zSw0fTUDRk0F9SBMNp9QKLDdMFD//4vOsk7v'
+        'fw+Xq8UFHwH6imjY26xFT4QIhAPMd8czsaq99AdTuhAMoUXg5n+1I8QE2crpFe1VrnSwT'
+        'AiEA5LBJi4tV5ZqTVp+oVWmcUdcShjZnPE1LpEo1sMb3ztUCIHdwPavkdiFS88RtjZOTi'
+        'jrbbJOBo01qN4EFw6ranLPbAiB3r1deQ9b5qnNwA3D6+qHIJzJXsYNICQAMhJYi5Y7t3Q'
+        'IgHVwCvPP/FyI6Pt9be3nowWrawqmdlClf5pzxRkYDWYE='
+    )
+    encrypted_private_key_encoded = (
+        'MIIBvTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIIxdFbtlFbgkCAggAMAwGC'
+        'CqGSIb3DQIJBQAwHQYJYIZIAWUDBAEqBBBswzZouyovzUADDQcLUEwgBIIBYAiB+rnGhm'
+        'PwKZYOFdyEvkXFFu2aRfqotYHy/qlfVdU4BfNHwBlAlgUOPMN2HJ9KwyiNdBKoQ1Z4KXI'
+        'G4AU74QZsVSL+miFf65qqWKLwckL45Y3WMUH1K0YpdO0W+aznjH9msWYuM/zCpQS2rvVX'
+        'a5rXpA5praB5nn6kRlTwrQ8DN0ZKOKBX6ojhSE/6TmQtx3d+tmly8ZpTkG5HVTuBMCtDg'
+        'Po6mAEvvb4T/dnx9MtUz0d5AgNuVOS5+OI32kX9XVupEGkvdY8iHbx7+skbKFVdHMayBL'
+        '0dy5knySv+YGi/T6oM0uApPPk4aT493MNzT8544Wmi/NbNkDx+6XQiTuPZ4OsL0iF3KsX'
+        'xfTC4tDGGYn4yW8bnSz3K+lkXA9vyie37nW6ncu+aizT9TgD1q6jFm9u/1G61/Z96oHgz'
+        'pVghkP6s3l23U/7qM2PC8CEu18nUDYEhrv6lOwr8EABHV0s='
+    )
+    encrypted_private_key_passphrase = 'insecure'
+
+    def test_private_key_string(self):
+        creds = SnowflakeCredentials(
+            account="test_account",
+            user="test_user",
+            database="test_database",
+            schema="public",
+            private_key=self.unencrypted_private_key_encoded,
+        )
+        self.assertEqual(
+            creds.auth_args()['private_key'],
+            self.unencrypted_private_key
+        )
+
+    def test_private_key_string_encrypted(self):
+        creds = SnowflakeCredentials(
+            account="test_account",
+            user="test_user",
+            database="test_database",
+            schema="public",
+            private_key=self.encrypted_private_key_encoded,
+            private_key_passphrase=self.encrypted_private_key_passphrase,
+        )
+        self.assertEqual(
+            creds.auth_args()['private_key'],
+            self.unencrypted_private_key
+        )
+
+    def test_malformed_private_key_string(self):
+        creds = SnowflakeCredentials(
+            account="test_account",
+            user="test_user",
+            database="test_database",
+            schema="public",
+            private_key="dGVzdF9rZXk=",
+        )
+        self.assertRaises(ValueError, creds.auth_args)
+
+    def test_invalid_private_key_string(self):
+        creds = SnowflakeCredentials(
+            account="test_account",
+            user="test_user",
+            database="test_database",
+            schema="public",
+            private_key="invalid[base64]=",
+        )
+        self.assertRaises(ValueError, creds.auth_args)
+
+    def test_invalid_private_key_path(self):
+        creds = SnowflakeCredentials(
+            account="test_account",
+            user="test_user",
+            database="test_database",
+            schema="public",
+            private_key_path="/tmp/does/not/exist.p8",
+        )
+        self.assertRaises(FileNotFoundError, creds.auth_args)
