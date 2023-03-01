@@ -29,3 +29,4 @@ tox~=4.4;python_version>="3.8"
 types-pytz~=2022.7
 types-requests~=2.28
 twine~=4.0
+wheel~=0.38
