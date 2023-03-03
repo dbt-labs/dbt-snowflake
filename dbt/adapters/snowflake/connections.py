@@ -438,6 +438,16 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             table = dbt.clients.agate_helper.empty_table()
         return response, table
 
+    def add_standard_query(self, sql, auto_begin, bindings, abridge_sql_log):
+        # This is the happy path for a single query. Snowflake has a few odd behaviors that
+        # require preprocessing within the 'add_query' method below.
+        return super().add_query(
+            self._add_query_comment(sql),
+            auto_begin=auto_begin,
+            bindings=bindings,
+            abridge_sql_log=abridge_sql_log,
+        )
+
     def add_query(self, sql, auto_begin=True, bindings=None, abridge_sql_log=False):
         connection = None
         cursor = None
@@ -462,38 +472,36 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             if without_comments != "":
                 stripped_queries.append(query)
 
+        if set(query.lower() for query in stripped_queries).issubset({"begin;", "commit;"}):
+            # if all we get is `begin;` and/or `commit;`
+            # raise a warning, then run as standard queries to avoid an error downstream
+            message = (
+                "Explicit transactional logic should be used only to wrap "
+                "DML logic (MERGE, DELETE, UPDATE, etc). The keywords BEGIN; and COMMIT; should "
+                "be placed directly before and after your DML statement, rather than in separate "
+                "statement calls or run_query() macros."
+            )
+            logger.warning(line_wrap_message(warning_tag(message)))
+            for query in stripped_queries:
+                connection, cursor = self.add_standard_query(
+                    query, auto_begin, bindings, abridge_sql_log
+                )
+
         for individual_query in stripped_queries:
             # Even though we turn off transactions by default for Snowflake,
             # the user/macro has passed them *explicitly*, probably to wrap a DML statement
-            # Assuming this BEGIN/COMMIT is not all alone - let their wish be granted!
             # This also has the effect of ignoring "commit" in the RunResult for this model
             # https://github.com/dbt-labs/dbt-snowflake/issues/147
-            # (Otherwise, if this 'BEGIN' or 'COMMIT' query *is* all by itself, let it be run as a standalone query)
-            if len(stripped_queries) == 1 and individual_query.lower() in ("begin;", "commit;"):
-                message = (
-                    "Explicit transactional logic should be used only to wrap "
-                    "DML logic (MERGE, DELETE, UPDATE, etc). The keywords BEGIN; and COMMIT; should "
-                    "be placed directly before and after your DML statement, rather than in separate "
-                    "statement calls or run_query() macros."
-                )
-                logger.warning(line_wrap_message(warning_tag(message)))
+            if individual_query.lower() == "begin;":
+                super().add_begin_query()
+            elif individual_query.lower() == "commit;":
+                super().add_commit_query()
             else:
-                if individual_query.lower() == "begin;":
-                    super().add_begin_query()
-                    continue
-
-                elif individual_query.lower() == "commit;":
-                    super().add_commit_query()
-                    continue
-
-            # add a query comment to *every* statement
-            # needed for models with multi-step materializations
-            # https://github.com/dbt-labs/dbt-snowflake/issues/140
-            individual_query = self._add_query_comment(individual_query)
-
-            connection, cursor = super().add_query(
-                individual_query, auto_begin, bindings=bindings, abridge_sql_log=abridge_sql_log
-            )
+                # This adds a query comment to *every* statement
+                # https://github.com/dbt-labs/dbt-snowflake/issues/140
+                connection, cursor = self.add_standard_query(
+                    individual_query, auto_begin, bindings, abridge_sql_log
+                )
 
         if cursor is None:
             conn = self.get_thread_connection()
