@@ -1,0 +1,6 @@
+kind: Features
+body: implement data_type_code_to_name on SnowflakeConnectionManager
+time: 2023-02-23T18:24:50.272955-05:00
+custom:
+  Author: michelleark
+  Issue: "464"
