@@ -21,6 +21,7 @@ create or replace transient table {0} (
 );
 """
 
+<<<<<<< HEAD
 
 class TestSnowflakeTableConstraintsColumnsEqual(BaseTableConstraintsColumnsEqual):
     @pytest.fixture
@@ -71,6 +72,14 @@ class TestSnowflakeViewConstraintsColumnsEqual(BaseViewConstraintsColumnsEqual):
             ["ARRAY_CONSTRUCT(1,2,3)", 'array', 'ARRAY'],
             ["""TO_VARIANT(PARSE_JSON('{"key3": "value3", "key4": "value4"}'))""", 'variant', 'VARIANT'],
         ]
+=======
+class TestSnowflakeTableConstraintsColumnsEqual(BaseTableConstraintsColumnsEqual):
+    pass
+
+
+class TestSnowflakeViewConstraintsColumnsEqual(BaseViewConstraintsColumnsEqual):
+    pass
+>>>>>>> ace43a6 (rename test class)
 
 
 class TestSnowflakeConstraintsRuntimeEnforcement(BaseConstraintsRuntimeEnforcement):
