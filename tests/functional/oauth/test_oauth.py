@@ -85,5 +85,6 @@ class TestSnowflakeOauth:
         }
 
     def test_snowflake_basic(self, project):
+        # TODO: Database Error; dbt.exceptions.FailedToConnectError
         run_dbt()
         check_relations_equal(project.adapter, ["MODEL_3", "MODEL_4"])

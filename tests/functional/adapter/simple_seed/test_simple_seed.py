@@ -31,6 +31,7 @@ class TestSimpleBigSeedBatched(SeedConfigBase):
         }
         rm_dir(test_data_dir)
 
+    # TODO: FileExistsError ./data already exists
     def test_big_batched_seed(self, project):
         seed_results = run_dbt(["seed"])
         assert len(seed_results) == 1
