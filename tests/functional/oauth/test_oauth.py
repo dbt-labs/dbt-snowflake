@@ -26,7 +26,7 @@ python scripts/werkzeug-refresh-token.py ${acount_name} '${json_blob}'
 
 Open http://localhost:8080
 
-Log in as the test user, get a resonse page with some environment variables.
+Log in as the test user, get a response page with some environment variables.
 Update CI providers and test.env with the new values (If you kept the security
 integration the same, just the refresh token changed)
 """
@@ -38,19 +38,23 @@ from dbt.tests.util import (
     check_relations_equal
 )
 
+
 _MODELS__MODEL_1_SQL = """
 select 1 as id
 """
 
+
 _MODELS__MODEL_2_SQL = """
 select 2 as id
 """
+
 
 _MODELS__MODEL_3_SQL = """
 select * from {{ ref('model_1') }}
 union all
 select * from {{ ref('model_2') }}
 """
+
 
 _MODELS__MODEL_4_SQL = """
 select 1 as id
@@ -60,6 +64,7 @@ select 2 as id
 
 
 class TestSnowflakeOauth:
+
     @pytest.fixture(scope="class", autouse=True)
     def dbt_profile_target(self):
         return {
@@ -85,6 +90,5 @@ class TestSnowflakeOauth:
         }
 
     def test_snowflake_basic(self, project):
-        # TODO: Database Error; dbt.exceptions.FailedToConnectError
         run_dbt()
         check_relations_equal(project.adapter, ["MODEL_3", "MODEL_4"])
