@@ -1,15 +1,7 @@
-import csv
-from pathlib import Path
-
 import pytest
 
 from dbt.tests.adapter.simple_seed.test_seed import SeedConfigBase
-from dbt.tests.util import (
-    mkdir,
-    rm_dir,
-    run_dbt,
-    read_file
-)
+from dbt.tests.util import run_dbt
 
 
 class TestSimpleBigSeedBatched(SeedConfigBase):
