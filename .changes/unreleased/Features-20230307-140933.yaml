@@ -1,0 +1,6 @@
+kind: Features
+body: take over pr:103 to allow Macro for custom warehouse selection
+time: 2023-03-07T14:09:33.713772-06:00
+custom:
+  Author: javiCalvo
+  Issue: "438"
