@@ -22,7 +22,7 @@ create or replace transient table {0} (
 """
 
 
-class SnowflakeSetup:
+class SnowflakeColumnEqualSetup:
     @pytest.fixture
     def int_type(self):
         return "FIXED"
@@ -46,11 +46,11 @@ class SnowflakeSetup:
             ["""TO_VARIANT(PARSE_JSON('{"key3": "value3", "key4": "value4"}'))""", 'variant', 'VARIANT'],
         ]
 
-class TestSnowflakeTableConstraintsColumnsEqual(SnowflakeSetup, BaseTableConstraintsColumnsEqual):
+class TestSnowflakeTableConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseTableConstraintsColumnsEqual):
     pass
 
 
-class TestSnowflakeViewConstraintsColumnsEqual(SnowflakeSetup, BaseViewConstraintsColumnsEqual):
+class TestSnowflakeViewConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseViewConstraintsColumnsEqual):
     pass
 
 
