@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
 from time import sleep
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import agate
 import dbt.clients.agate_helper
@@ -15,6 +15,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import requests
 import snowflake.connector
+import snowflake.connector.constants
 import snowflake.connector.errors
 from snowflake.connector.errors import (
     Error,
@@ -34,6 +35,7 @@ from dbt.exceptions import (
     DbtRuntimeError,
     FailedToConnectError,
     DbtDatabaseError,
+    DbtProfileError,
 )
 from dbt.adapters.base import Credentials  # type: ignore
 from dbt.contracts.connection import AdapterResponse
@@ -61,6 +63,7 @@ class SnowflakeCredentials(Credentials):
     role: Optional[str] = None
     password: Optional[str] = None
     authenticator: Optional[str] = None
+    private_key: Optional[str] = None
     private_key_path: Optional[str] = None
     private_key_passphrase: Optional[str] = None
     token: Optional[str] = None
@@ -211,19 +214,28 @@ class SnowflakeCredentials(Credentials):
         return result_json["access_token"]
 
     def _get_private_key(self):
-        """Get Snowflake private key by path or None."""
-        if not self.private_key_path:
-            return None
+        """Get Snowflake private key by path, from a Base64 encoded DER bytestring or None."""
+        if self.private_key and self.private_key_path:
+            raise DbtProfileError("Cannot specify both `private_key`  and `private_key_path`")
 
         if self.private_key_passphrase:
             encoded_passphrase = self.private_key_passphrase.encode()
         else:
             encoded_passphrase = None
 
-        with open(self.private_key_path, "rb") as key:
-            p_key = serialization.load_pem_private_key(
-                key.read(), password=encoded_passphrase, backend=default_backend()
+        if self.private_key:
+            p_key = serialization.load_der_private_key(
+                base64.b64decode(self.private_key),
+                password=encoded_passphrase,
+                backend=default_backend(),
             )
+        elif self.private_key_path:
+            with open(self.private_key_path, "rb") as key:
+                p_key = serialization.load_pem_private_key(
+                    key.read(), password=encoded_passphrase, backend=default_backend()
+                )
+        else:
+            return None
 
         return p_key.private_bytes(
             encoding=serialization.Encoding.DER,
@@ -427,7 +439,6 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         return response, table
 
     def add_query(self, sql, auto_begin=True, bindings=None, abridge_sql_log=False):
-
         connection = None
         cursor = None
 
@@ -497,3 +508,8 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             return
         else:
             super().release()
+
+    @classmethod
+    def data_type_code_to_name(cls, type_code: Union[int, str]) -> str:
+        assert isinstance(type_code, int)
+        return snowflake.connector.constants.FIELD_ID_TO_NAME[type_code]
