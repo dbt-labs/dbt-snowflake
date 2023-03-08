@@ -1,9 +1,11 @@
 import pytest
+
 from dbt.tests.util import relation_from_name
 from dbt.tests.adapter.constraints.test_constraints import (
     BaseConstraintsColumnsEqual,
     BaseConstraintsRuntimeEnforcement
 )
+
 
 _expected_sql_snowflake = """
 create or replace transient table {0} (
@@ -20,6 +22,7 @@ create or replace transient table {0} (
 
 
 class TestSnowflakeConstraintsColumnsEqual(BaseConstraintsColumnsEqual):
+
     @pytest.fixture
     def int_type(self):
         return "FIXED"
@@ -45,6 +48,7 @@ class TestSnowflakeConstraintsColumnsEqual(BaseConstraintsColumnsEqual):
 
 
 class TestSnowflakeConstraintsRuntimeEnforcement(BaseConstraintsRuntimeEnforcement):
+
     @pytest.fixture(scope="class")
     def expected_sql(self, project):
         relation = relation_from_name(project.adapter, "my_model")

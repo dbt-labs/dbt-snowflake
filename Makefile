@@ -64,3 +64,33 @@ help: ## Show this help message.
 	@echo
 	@echo 'targets:'
 	@grep -E '^[7+a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: ubuntu-py38
+ubuntu-py38:
+	docker build -f docker_dev/ubuntu.Dockerfile -t dbt-snowflake-ubuntu-py38 . --build-arg version=3.8
+	docker run --rm -it --name dbt-snowflake-ubuntu-py38 -v $(shell pwd):/opt/code dbt-snowflake-ubuntu-py38
+
+.PHONY: ubuntu-py39
+ubuntu-py39:
+	docker build -f docker_dev/ubuntu.Dockerfile -t dbt-snowflake-ubuntu-py39 . --build-arg version=3.9
+	docker run --rm -it --name dbt-snowflake-ubuntu-py39 -v $(shell pwd):/opt/code dbt-snowflake-ubuntu-py39
+
+.PHONY: ubuntu-py310
+ubuntu-py310:
+	docker build -f docker_dev/ubuntu.Dockerfile -t dbt-snowflake-ubuntu-py310 . --build-arg version=3.10
+	docker run --rm -it --name dbt-snowflake-ubuntu-py310 -v $(shell pwd):/opt/code dbt-snowflake-ubuntu-py310
+
+.PHONY: ubuntu-py311
+ubuntu-py311:
+	docker build -f docker_dev/ubuntu.Dockerfile -t dbt-snowflake-ubuntu-py311 . --build-arg version=3.11
+	docker run --rm -it --name dbt-snowflake-ubuntu-py311 -v $(shell pwd):/opt/code dbt-snowflake-ubuntu-py311
+
+.PHONY: debian-py38
+debian-py38:
+	docker build -f docker/debian-py38.Dockerfile -t dbt-snowflake-debian-py38 . --build-arg version=3.8.15
+	docker run --rm -it --name dbt-snowflake-debian-py38 -v $(shell pwd):/opt/code dbt-snowflake-debian-py38
+
+.PHONY: dev-env-default
+dev-env-default:
+	docker build -f docker/dev-env-default.Dockerfile -t dbt-snowflake-dev-env-default .
+	docker run --rm -it --name dbt-snowflake-dev-env-default -v $(shell pwd):/opt/code dbt-snowflake-dev-env-default
