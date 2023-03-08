@@ -1,0 +1,6 @@
+kind: Under the Hood
+body: Added integration tests for `SnowflakeAdapter.get_relation` and `dbt_utils._is_relation`
+time: 2023-03-07T20:00:00.913647-05:00
+custom:
+  Author: mikealfare
+  Issue: dbt-core/7024
