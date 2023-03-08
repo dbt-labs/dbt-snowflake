@@ -94,6 +94,9 @@
     {{ get_persist_docs_column_list(model_columns, query_columns) }}
 
   {%- endif %}
+  {% if config.get('contract', False) -%}
+    {{ get_assert_columns_equivalent(sql) }}
+  {%- endif %}
   {% if copy_grants -%} copy grants {%- endif %} as (
     {{ sql }}
   );
