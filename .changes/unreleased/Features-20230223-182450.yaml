@@ -1,6 +1,6 @@
 kind: Features
-body: implement data_type_code_to_name on SnowflakeConnectionManager
+body: Enforce contracts on models materialized as tables and views
 time: 2023-02-23T18:24:50.272955-05:00
 custom:
-  Author: michelleark
-  Issue: "464"
+  Author: michelleark emmyoop
+  Issue: 464 490
