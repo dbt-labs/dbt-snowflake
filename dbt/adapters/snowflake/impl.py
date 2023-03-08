@@ -74,7 +74,7 @@ class SnowflakeAdapter(SQLAdapter):
             raise DbtRuntimeError("Could not get current warehouse: no results")
         return str(table[0][0])
 
-    def _use_warehouse(self, warehouse: str):
+    def _use_warehouse(self, warehouse):
         """Use the given warehouse. Quotes are never applied."""
         kwargs = {"warehouse": warehouse}
         warehouse = self.execute_macro(SNOWFLAKE_WAREHOUSE_MACRO_NAME, kwargs=kwargs)  # type: ignore
