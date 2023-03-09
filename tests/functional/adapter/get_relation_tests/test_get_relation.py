@@ -9,15 +9,23 @@ from dbt.adapters.snowflake.relation import SnowflakeRelation
 from tests.functional.adapter.get_relation_tests import macros
 
 
+_MODEL_FACT = "select 1 as my_column"
+
+
+_MODEL_INVOKE_MACRO = """
+select '{{ check_get_relation_is_relation() }}' as this_should_return
+"""
+
+
 class GetRelationBase:
 
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {
             "quoting": {
-                "database": True,
-                "schema": True,
-                "identifier": True,
+                "database": False,
+                "schema": False,
+                "identifier": False,
             }
         }
 
@@ -35,7 +43,7 @@ class GetRelationBase:
         """
         dummy model to be checked for existence by `is_relation` and to be returned by `get_relation`
         """
-        return {"FACT.sql": "select 1 as my_column"}
+        return {"FACT.sql": _MODEL_FACT}
 
     @pytest.fixture(scope="class", autouse=True)
     def setup_class(self, project):
@@ -147,3 +155,30 @@ class TestGetRelationDBT(GetRelationBase):
 
     def test_get_relation_dbt(self, project, ad_hoc_table):
         run_dbt(["test"])
+
+
+class TestGetRelationIsRelation(GetRelationBase):
+
+    @pytest.fixture(scope="class")
+    def models(self):
+        """
+        dummy model to be checked for existence by `is_relation` and to be returned by `get_relation`
+        model used to call the combination of `get_relation` and `is_relation`
+        """
+        return {
+            "FACT.sql": _MODEL_FACT,
+            "INVOKE_MACRO.sql": _MODEL_INVOKE_MACRO,
+        }
+
+    @pytest.fixture(scope="class")
+    def macros(self):
+        """
+        a macro that combines `get_relation` and `is_relation`
+        """
+        return {"check_get_relation_is_relation.sql": macros.MACRO_CHECK_GET_RELATION_IS_RELATION}
+
+    def test_it_runs(self, project):
+        """
+        The setup is the test
+        """
+        assert True
