@@ -58,8 +58,6 @@ jobs:
           python -m pip install -r dev-requirements.txt
           python -m pip --version
           pre-commit --version
-          black --version
-          flake8 --version
           mypy --version
           dbt --version
 
@@ -78,7 +76,7 @@ jobs:
 
     env:
       TOXENV: "unit"
-      PYTEST_ADDOPTS: "--csv unit_results.csv"
+      PYTEST_ADDOPTS: "-v --color=yes --csv unit_results.csv"
 
     steps:
       - name: Check out the repository
