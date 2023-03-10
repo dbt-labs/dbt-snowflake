@@ -21,7 +21,7 @@ except ImportError:
 
 from pathlib import Path
 from setuptools import setup
-from packaging.version import Version
+from pkg_resources import parse_version
 from typing import Dict
 
 
@@ -33,7 +33,7 @@ def _adapter_version() -> str:
     """
     Pull the package version from the main package `__version__` file
     """
-    version_file = Path(__file__).parent / "dbt/adapters/redshift/__version__.py"
+    version_file = Path(__file__).parent / "dbt/adapters/snowflake/__version__.py"
     attributes: Dict[str, str] = {}
     exec(version_file.read_text(), attributes)
     return attributes["version"]
@@ -58,13 +58,13 @@ def _core_version(adapter_version: str = _adapter_version()) -> str:
     Returns:
         the appropriate version of `dbt-core`
     """
-    adapter_version_parsed = Version(adapter_version)
+    adapter_version_parsed = parse_version(adapter_version)
     major, minor, _ = adapter_version_parsed.release
     core_release = f"{major}.{minor}.0"
     if adapter_version_parsed.is_prerelease:
         stage, _ = adapter_version_parsed.pre  # type: ignore
         core_release += f"{stage}1"
-    assert Version(core_release)
+    assert parse_version(core_release)
     return core_release
 
 
@@ -85,8 +85,6 @@ setup(
         # don't pin these; they're included in the above packages, but we use them directly
         "pytz",
         "requests",
-        "types-pytz",
-        "types-requests",
     ],
     zip_safe=False,
     classifiers=[
