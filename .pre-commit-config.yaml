@@ -45,6 +45,8 @@ repos:
   rev: v1.1.1
   hooks:
   - id: mypy
+    language: system
   - id: mypy
     alias: mypy-check
+    language: system
     stages: [manual]

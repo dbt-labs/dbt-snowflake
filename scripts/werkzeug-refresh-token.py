@@ -82,7 +82,7 @@ class TokenManager:
             raise
         return refresh_token
 
-    @Request.application
+    @Request.application  # type: ignore
     def auth(self, request):
         code = request.args.get("code")
         if code:
@@ -99,7 +99,7 @@ class TokenManager:
         else:
             return redirect("/login")
 
-    @Request.application
+    @Request.application  # type: ignore
     def login(self, request):
         # take the auth URL and add the query string to it
         query = {

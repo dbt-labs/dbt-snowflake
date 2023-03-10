@@ -9,6 +9,4 @@ class TestUniqueKeySnowflake(BaseIncrementalUniqueKey):
 class TestUniqueKeyDeleteInsertSnowflake(BaseIncrementalUniqueKey):
     @pytest.fixture(scope="class")
     def project_config_update(self):
-        return {
-            "models": { "+incremental_strategy": "delete+insert" }
-        }
+        return {"models": {"+incremental_strategy": "delete+insert"}}
