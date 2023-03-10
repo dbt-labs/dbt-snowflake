@@ -9,7 +9,7 @@
 # (could also impact Cloud).
 
 # **when?**
-# Mainly on a schedule of 9:00, 13:00, 18:00 UTC everyday.
+# Mainly on a schedule of 9:00, 13:00, 18:00 UTC, everyday.
 # Manual trigger can also test on demand
 
 name: Main branch scheduled testing
@@ -30,8 +30,8 @@ jobs:
 
     strategy:
       # must run CI 1 branch at a time b/c the workflow-dispatch Action polls for
-      # latest run for results and it gets confused when we kick off multiple runs
-      # at once. There is a race condition so we will just run in sequential order.
+      # latest run for results, and it gets confused when we kick off multiple runs
+      # at once. There is a race condition, so we will just run in sequential order.
       max-parallel: 1
       fail-fast: false
       matrix:

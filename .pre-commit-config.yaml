@@ -1,7 +1,7 @@
 # For more on configuring pre-commit hooks (see https://pre-commit.com/)
 
-# TODO: remove global exclusion of tests when testing overhaul is complete
-exclude: '^tests/.*'
+# TODO: remove global exclusion of `integration` tests when testing overhaul is complete
+exclude: '^tests/integration/.*'
 
 # Force all unspecified python hooks to run python 3.8
 default_language_version:
@@ -45,22 +45,6 @@ repos:
   rev: v1.1.1
   hooks:
   - id: mypy
-    # N.B.: Mypy is... a bit fragile.
-    #
-    # By using `language: system` we run this hook in the local
-    # environment instead of a pre-commit isolated one.  This is needed
-    # to ensure mypy correctly parses the project.
-
-    # It may cause trouble in that it adds environmental variables out
-    # of our control to the mix.  Unfortunately, there's nothing we can
-    # do about per pre-commit's author.
-    # See https://github.com/pre-commit/pre-commit/issues/730 for details.
-    args: [--show-error-codes, --ignore-missing-imports, --explicit-package-bases]
-    files: ^dbt/adapters/.*
-    language: system
   - id: mypy
     alias: mypy-check
     stages: [manual]
-    args: [--show-error-codes, --pretty, --ignore-missing-imports, --explicit-package-bases]
-    files: ^dbt/adapters
-    language: system

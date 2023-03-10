@@ -18,9 +18,7 @@
 name: Backport
 on:
   pull_request:
-    types:
-      - labeled
-      - closed
+    types: [labeled, closed]
 
 permissions:
   contents: write
