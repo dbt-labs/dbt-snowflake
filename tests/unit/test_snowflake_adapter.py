@@ -295,11 +295,11 @@ class TestSnowflakeAdapter(unittest.TestCase):
             mock.call(
                 account='test_account', autocommit=True,
                 client_session_keep_alive=False, database='test_database',
-                role=None, schema='public', user='test_user',
+                role=None, schema='public', user='test_user', reuse_connections=None,
                 warehouse='test_warehouse', private_key=None, application='dbt', insecure_mode=False,
                 session_parameters={"QUERY_TAG": "test_query_tag"})
         ])
-        
+
         expected_connection_info = [(k,v) for (k, v) in self.config.credentials.connection_info() if k == "query_tag"]
         self.assertEqual([("query_tag", "test_query_tag")], expected_connection_info)
 
