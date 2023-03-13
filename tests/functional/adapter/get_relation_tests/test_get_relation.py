@@ -136,3 +136,11 @@ class TestGetRelationModelCall(GetRelationBase):
         results = project.run_sql(f"""select * from {invoke_table}""", fetch="all")
         assert len(results) == 1
         assert results[0] == (fact_table, False)
+
+        run_dbt(["run", "-s", "INVOKE_NO_REF"])
+        # note the extra quotes, different from above
+        fact_table = f'"{project.database}"."{project.test_schema}"."FACT"'
+
+        results = project.run_sql(f"""select * from {invoke_table}""", fetch="all")
+        assert len(results) == 1
+        assert results[0] == (fact_table, True)
