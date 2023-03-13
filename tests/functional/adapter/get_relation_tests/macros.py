@@ -2,9 +2,9 @@
 MACRO_GET_RELATION = """
 {% macro get_relation(database, schema, identifier) %}
     {% set relation = adapter.get_relation(
-        database=target.database,
-        schema=target.schema,
-        identifier="FACT"
+        database=database,
+        schema=schema,
+        identifier=identifier
     ) %}
 
     {{ return(relation) }}
@@ -24,19 +24,15 @@ MACRO_IS_RELATION = """
 
 # combines the above two macros, but keeps the exception
 MACRO_CHECK_GET_RELATION_IS_RELATION = """
-{% macro check_get_relation_is_relation() %}
+{% macro check_get_relation_is_relation(database, schema, identifier) %}
 
-    {% set relation = adapter.get_relation(
-          database=target.database,
-          schema=target.schema,
-          identifier="FACT"
+    {% set relation = get_relation(
+          database=database,
+          schema=schema,
+          identifier=identifier
     ) %}
 
-    {% if not (relation is mapping and relation.get('metadata', {}).get('type', '').endswith('Relation')) %}
-        {% do exceptions.raise_compiler_error("Log: " ~ relation) %}
-    {% endif %}
-
-    {{ return(relation) }}
+    {{ return(is_relation(relation)) }}
 
 {% endmacro %}
 """
