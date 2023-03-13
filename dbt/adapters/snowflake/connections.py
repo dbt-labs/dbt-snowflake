@@ -111,6 +111,7 @@ class SnowflakeCredentials(Credentials):
             "warehouse",
             "role",
             "client_session_keep_alive",
+            "query_tag",
         )
 
     def auth_args(self):
