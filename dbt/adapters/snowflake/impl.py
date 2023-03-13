@@ -14,8 +14,11 @@ from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.contracts.graph.manifest import Manifest
-from dbt.exceptions import raise_compiler_error, RuntimeException, DatabaseException
+from dbt.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt.utils import filter_null_values
+
+
+SNOWFLAKE_WAREHOUSE_MACRO_NAME = "snowflake_warehouse"
 
 
 @dataclass
@@ -27,6 +30,7 @@ class SnowflakeConfig(AdapterConfig):
     copy_grants: Optional[bool] = None
     snowflake_warehouse: Optional[str] = None
     query_tag: Optional[str] = None
+    tmp_relation_type: Optional[str] = None
     merge_update_columns: Optional[str] = None
 
 
@@ -67,11 +71,13 @@ class SnowflakeAdapter(SQLAdapter):
         _, table = self.execute("select current_warehouse() as warehouse", fetch=True)
         if len(table) == 0 or len(table[0]) == 0:
             # can this happen?
-            raise RuntimeException("Could not get current warehouse: no results")
+            raise DbtRuntimeError("Could not get current warehouse: no results")
         return str(table[0][0])
 
-    def _use_warehouse(self, warehouse: str):
+    def _use_warehouse(self, warehouse):
         """Use the given warehouse. Quotes are never applied."""
+        kwargs = {"warehouse": warehouse}
+        warehouse = self.execute_macro(SNOWFLAKE_WAREHOUSE_MACRO_NAME, kwargs=kwargs)  # type: ignore
         self.execute("use warehouse {}".format(warehouse))
 
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:
@@ -90,9 +96,9 @@ class SnowflakeAdapter(SQLAdapter):
     def list_schemas(self, database: str) -> List[str]:
         try:
             results = self.execute_macro(LIST_SCHEMAS_MACRO_NAME, kwargs={"database": database})
-        except DatabaseException as exc:
+        except DbtDatabaseError as exc:
             msg = f"Database error while listing schemas in database " f'"{database}"\n{exc}'
-            raise RuntimeException(msg)
+            raise DbtRuntimeError(msg)
         # this uses 'show terse schemas in database', and the column name we
         # want is 'name'
 
@@ -101,7 +107,7 @@ class SnowflakeAdapter(SQLAdapter):
     def get_columns_in_relation(self, relation):
         try:
             return super().get_columns_in_relation(relation)
-        except DatabaseException as exc:
+        except DbtDatabaseError as exc:
             if "does not exist or not authorized" in str(exc):
                 return []
             else:
@@ -111,7 +117,7 @@ class SnowflakeAdapter(SQLAdapter):
         kwargs = {"schema_relation": schema_relation}
         try:
             results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
-        except DatabaseException as exc:
+        except DbtDatabaseError as exc:
             # if the schema doesn't exist, we just want to return.
             # Alternatively, we could query the list of schemas before we start
             # and skip listing the missing ones, which sounds expensive.
@@ -123,7 +129,7 @@ class SnowflakeAdapter(SQLAdapter):
         quote_policy = {"database": True, "schema": True, "identifier": True}
 
         columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):
+        for _database, _schema, _identifier, _type in results.select(columns):  # type: ignore
             try:
                 _type = self.Relation.get_relation_type(_type.lower())
             except ValueError:
@@ -147,10 +153,11 @@ class SnowflakeAdapter(SQLAdapter):
         elif quote_config is None:
             pass
         else:
-            raise_compiler_error(
+            msg = (
                 f'The seed configuration value of "quote_columns" has an '
                 f"invalid type {type(quote_config)}"
             )
+            raise CompilationError(msg)
 
         if quote_columns:
             return self.quote(column)
@@ -195,7 +202,11 @@ class SnowflakeAdapter(SQLAdapter):
         if imports:
             imports = f"IMPORTS = ('{imports}')"
 
-        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", False)
+        snowpark_telemetry_string = "dbtLabs_dbtPython"
+        snowpark_telemetry_snippet = f"""
+import sys
+sys._xoptions['snowflake_partner_attribution'].append("{snowpark_telemetry_string}")"""
+
         common_procedure_code = f"""
 RETURNS STRING
 LANGUAGE PYTHON
@@ -206,8 +217,12 @@ HANDLER = 'main'
 EXECUTE AS CALLER
 AS
 $$
+{snowpark_telemetry_snippet}
+
 {compiled_code}
 $$"""
+
+        use_anonymous_sproc = parsed_model["config"].get("use_anonymous_sproc", True)
         if use_anonymous_sproc:
             proc_name = f"{identifier}__dbt_sp"
             python_stored_procedure = f"""
