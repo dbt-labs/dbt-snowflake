@@ -10,8 +10,8 @@ from dbt.tests.adapter.constraints.test_constraints import (
 
 _expected_sql_snowflake = """
 create or replace transient table {0} (
-    id integer not null primary key ,
-    color text ,
+    id integer not null primary key,
+    color text,
     date_day date
 ) as (
     select
