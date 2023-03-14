@@ -491,9 +491,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             )
             return re.sub(without_comments_re, "", query).strip()
 
-        return [
-            strip_query(query) for query in self._split_queries(sql) if strip_query(query) != ""
-        ]
+        return [query for query in self._split_queries(sql) if strip_query(query) != ""]
 
     def _add_begin_commit_only_queries(
         self, queries: List[str], **kwargs
