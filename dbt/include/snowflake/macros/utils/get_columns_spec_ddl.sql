@@ -19,6 +19,6 @@
   {% endfor -%}
   )
   {%- if ns.at_least_one_check -%}
-    {{exceptions.warn("We noticed you have `constraints_check` configs, these are NOT compatible with Snowflake and will be ignored")}}
+    {{exceptions.warn("We noticed you have check constraints in your configs, these are NOT compatible with Snowflake and will be ignored")}}
   {%- endif %}
 {% endmacro %}
