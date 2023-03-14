@@ -13,11 +13,16 @@ create or replace transient table {0} (
     id integer not null primary key ,
     color text ,
     date_day date
-) as (
+) as ( select
+        id,
+        color,
+        date_day from
+    (
     select
         1 as id,
         'blue' as color,
         cast('2019-01-01' as date) as date_day
+    ) as model_subq
 );
 """
 

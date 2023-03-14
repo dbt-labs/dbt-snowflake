@@ -25,11 +25,12 @@
         {% if config.get('contract', False) %}
           {{ get_assert_columns_equivalent(sql) }}
           {{ get_columns_spec_ddl() }}
+          {% set compiled_code = get_select_subquery(compiled_code) %}
         {% endif %}
         {% if copy_grants and not temporary -%} copy grants {%- endif %} as
         (
           {%- if cluster_by_string is not none -%}
-            select * from(
+            select * from (
               {{ compiled_code }}
               ) order by ({{ cluster_by_string }})
           {%- else -%}
