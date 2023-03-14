@@ -115,9 +115,11 @@ class GetRelationBaseWithModels(GetRelationBase):
         return f'"{project.database}"."DBT_CORE_ISSUE_7024"."FACT"'
 
 
-class TestGetRelationIsRelationModelCall(GetRelationBaseWithModels):
+class TestGetRelationIsRelationModelCallRunOnce(GetRelationBaseWithModels):
     """
     Loads a version of `is_relation()` that doesn't throw an error when the check fails
+
+    Only runs dbt once
     """
 
     @pytest.fixture(scope="class")
@@ -145,18 +147,41 @@ class TestGetRelationIsRelationModelCall(GetRelationBaseWithModels):
         """
         When we don't include the ref statement in the model, the macro executes *before* the model is created,
         hence INVOKE_NO_REF *doesn't* pick up the existence of FACT via the `get_relation` macro.
-
-        Note: If this happens to run after `test_get_relation_without_ref_called_twice`, it will fail because
-        `FACT` will exist at that point. It's the same scenario as `test_get_relation_without_ref_called_twice`
-        because the `project` fixture is class-scoped.
-
-        It's worth calling out the above as it essentially means inserting macros in models that depend on other
-        models is effectively violating idempotency.
         """
         results = self.results_from_invoke_table(project, False)
         assert results == [("None", False)]
 
-    def test_get_relation_without_ref_called_twice(self, project, quoted_fact_table):
+
+class TestGetRelationIsRelationModelCallRunTwice(GetRelationBaseWithModels):
+    """
+    Loads a version of `is_relation()` that doesn't throw an error when the check fails
+
+    Runs dbt twice (generates different behavior despite the same starting scenario
+    """
+
+    @pytest.fixture(scope="class")
+    def macros(self):
+        return {
+            "get_relation.sql": macros.GET_RELATION,
+            "is_relation.sql": macros.IS_RELATION,  # is_relation doesn't throw error
+            "check_get_relation_is_relation.sql": macros.CHECK_GET_RELATION_IS_RELATION,
+        }
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, project):
+        run_dbt()
+        run_dbt()
+
+    def test_get_relation_with_ref(self, project, quoted_fact_table):
+        """
+        When we include the ref statement in the model (even though we don't use anything from that relation),
+        the macro executes *after* the model is created, hence INVOKE_REF picks up the existence of FACT via
+        the `get_relation` macro.
+        """
+        results = self.results_from_invoke_table(project, True)
+        assert results == [(quoted_fact_table, True)]
+
+    def test_get_relation_without_ref(self, project, quoted_fact_table):
         """
         When we don't include the ref statement in the model, the macro executes *before* the model is created,
         hence INVOKE_NO_REF *doesn't* pick up the existence of FACT via the `get_relation` macro.
@@ -164,7 +189,6 @@ class TestGetRelationIsRelationModelCall(GetRelationBaseWithModels):
         However, running dbt a second time will then pick it up because now it exists. Though surprisingly,
         it now returns a quoted relation name, unlike `test_get_relation_with_ref`.
         """
-        run_dbt()
         results = self.results_from_invoke_table(project, False)
         assert results == [(quoted_fact_table, True)]
 
