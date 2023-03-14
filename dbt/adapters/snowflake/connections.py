@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
 from time import sleep
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import agate
 import dbt.clients.agate_helper
@@ -15,6 +15,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import requests
 import snowflake.connector
+import snowflake.connector.constants
 import snowflake.connector.errors
 from snowflake.connector.errors import (
     Error,
@@ -111,6 +112,7 @@ class SnowflakeCredentials(Credentials):
             "warehouse",
             "role",
             "client_session_keep_alive",
+            "query_tag",
         )
 
     def auth_args(self):
@@ -527,3 +529,8 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             return
         else:
             super().release()
+
+    @classmethod
+    def data_type_code_to_name(cls, type_code: Union[int, str]) -> str:
+        assert isinstance(type_code, int)
+        return snowflake.connector.constants.FIELD_ID_TO_NAME[type_code]
