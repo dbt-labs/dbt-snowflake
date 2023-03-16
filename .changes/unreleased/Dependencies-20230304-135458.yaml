@@ -1,6 +1,0 @@
-kind: Dependencies
-body: Removed explicit dependencies for cryptography and requests
-time: 2023-03-04T13:54:58.498449-05:00
-custom:
-  Author: mikealfare
-  PR: "476"
