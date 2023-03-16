@@ -6,7 +6,7 @@ from dbt.tests.adapter.constraints.test_constraints import (
     BaseIncrementalConstraintsColumnsEqual,
     BaseConstraintsRuntimeDdlEnforcement,
     BaseConstraintsRollback,
-    BaseIncrementalConstraintsRuntimeEnforcement,
+    BaseIncrementalConstraintsRuntimeDdlEnforcement,
     BaseIncrementalConstraintsRollback,
 )
 
@@ -77,7 +77,7 @@ class TestSnowflakeTableConstraintsRollback(BaseConstraintsRollback):
         return ["NULL result in a non-nullable column"]
 
 
-class TestSnowflakeIncrementalConstraintsDdlEnforcement(BaseIncrementalConstraintsRuntimeEnforcement):
+class TestSnowflakeIncrementalConstraintsDdlEnforcement(BaseIncrementalConstraintsRuntimeDdlEnforcement):
     @pytest.fixture(scope="class")
     def expected_sql(self):
         return _expected_sql_snowflake
