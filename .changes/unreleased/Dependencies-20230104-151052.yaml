@@ -1,8 +1,0 @@
-kind: Dependencies
-body: Updating the cryptography version upperbound to make sense for current scheme
-  and avoid DDOS vulnerability..
-time: 2023-01-04T15:10:52.016447-08:00
-custom:
-  Author: versusfacit
-  Issue: "359"
-  PR: "375"
