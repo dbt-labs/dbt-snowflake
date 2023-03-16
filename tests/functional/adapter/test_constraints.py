@@ -1,15 +1,18 @@
 import pytest
 
-from dbt.tests.util import relation_from_name
 from dbt.tests.adapter.constraints.test_constraints import (
     BaseTableConstraintsColumnsEqual,
     BaseViewConstraintsColumnsEqual,
-    BaseConstraintsRuntimeEnforcement
+    BaseIncrementalConstraintsColumnsEqual,
+    BaseConstraintsRuntimeDdlEnforcement,
+    BaseConstraintsRollback,
+    BaseIncrementalConstraintsRuntimeEnforcement,
+    BaseIncrementalConstraintsRollback,
 )
 
 
 _expected_sql_snowflake = """
-create or replace transient table {0} (
+create or replace transient table <model_identifier> (
     id integer not null primary key,
     color text,
     date_day text
@@ -59,13 +62,27 @@ class TestSnowflakeViewConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseVi
     pass
 
 
-class TestSnowflakeConstraintsRuntimeEnforcement(BaseConstraintsRuntimeEnforcement):
+class TestSnowflakeIncrementalConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseIncrementalConstraintsColumnsEqual):
+    pass
 
+class TestSnowflakeTableConstraintsDdlEnforcement(BaseConstraintsRuntimeDdlEnforcement):
     @pytest.fixture(scope="class")
-    def expected_sql(self, project):
-        relation = relation_from_name(project.adapter, "my_model")
-        return _expected_sql_snowflake.format(relation)
+    def expected_sql(self):
+        return _expected_sql_snowflake
 
+
+class TestSnowflakeTableConstraintsRollback(BaseConstraintsRollback):
+    @pytest.fixture(scope="class")
+    def expected_error_messages(self):
+        return ["NULL result in a non-nullable column"]
+
+
+class TestSnowflakeIncrementalConstraintsDdlEnforcement(BaseIncrementalConstraintsRuntimeEnforcement):
+    @pytest.fixture(scope="class")
+    def expected_sql(self):
+        return _expected_sql_snowflake
+
+class TestSnowflakeIncrementalConstraintsRollback(BaseIncrementalConstraintsRollback):
     @pytest.fixture(scope="class")
     def expected_error_messages(self):
         return ["NULL result in a non-nullable column"]
