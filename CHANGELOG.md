@@ -31,11 +31,11 @@
 - Update `snowflake-connector-python` to 3.0 to address CVE-2022-42965 ([#476](https://github.com/dbt-labs/dbt-snowflake/pull/476))
 
 ### Contributors
-- [@dataders](https://github.com/dataders) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331))
-- [@javiCalvo](https://github.com/javiCalvo) ([#438](https://github.com/dbt-labs/dbt-spark/issues/438))
-- [@joshuataylor](https://github.com/joshuataylor) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331))
-- [@kevinneville](https://github.com/kevinneville) ([#302](https://github.com/dbt-labs/dbt-spark/issues/302))
-- [@surbias](https://github.com/surbias) ([#251](https://github.com/dbt-labs/dbt-spark/issues/251))
+- [@dataders](https://github.com/dataders) ([#331](https://github.com/dbt-labs/dbt-snowflake/issues/331))
+- [@javiCalvo](https://github.com/javiCalvo) ([#438](https://github.com/dbt-labs/dbt-snowflake/issues/438))
+- [@joshuataylor](https://github.com/joshuataylor) ([#331](https://github.com/dbt-labs/dbt-snowflake/issues/331))
+- [@kevinneville](https://github.com/kevinneville) ([#302](https://github.com/dbt-labs/dbt-snowflake/issues/302))
+- [@surbias](https://github.com/surbias) ([#251](https://github.com/dbt-labs/dbt-snowflake/issues/251))
 
 
 ## dbt-snowflake 1.5.0-b2 - March 02, 2023
@@ -53,8 +53,8 @@
 - Rename constraints_enabled to contract ([#479](https://github.com/dbt-labs/dbt-snowflake/issues/479))
 
 ### Contributors
-- [@NiallRees](https://github.com/NiallRees) ([#456](https://github.com/dbt-labs/dbt-spark/issues/456))
-- [@jayhale](https://github.com/jayhale) ([#291](https://github.com/dbt-labs/dbt-spark/issues/291))
+- [@NiallRees](https://github.com/NiallRees) ([#456](https://github.com/dbt-labs/dbt-snowflake/issues/456))
+- [@jayhale](https://github.com/jayhale) ([#291](https://github.com/dbt-labs/dbt-snowflake/issues/291))
 
 ## dbt-snowflake 1.5.0-b1 - February 22, 2023
 
