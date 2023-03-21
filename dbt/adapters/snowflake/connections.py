@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
 from time import sleep
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Any, List
 
 import agate
 import dbt.clients.agate_helper
@@ -38,11 +38,12 @@ from dbt.exceptions import (
     DbtProfileError,
 )
 from dbt.adapters.base import Credentials  # type: ignore
-from dbt.contracts.connection import AdapterResponse
+from dbt.contracts.connection import AdapterResponse, Connection
 from dbt.adapters.sql import SQLConnectionManager  # type: ignore
 from dbt.events import AdapterLogger  # type: ignore
 from dbt.events.functions import warn_or_error
 from dbt.events.types import AdapterEventWarning
+from dbt.ui import line_wrap_message, warning_tag
 
 
 logger = AdapterLogger("Snowflake")
@@ -111,6 +112,7 @@ class SnowflakeCredentials(Credentials):
             "warehouse",
             "role",
             "client_session_keep_alive",
+            "query_tag",
         )
 
     def auth_args(self):
@@ -438,76 +440,113 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             table = dbt.clients.agate_helper.empty_table()
         return response, table
 
-    def add_query(self, sql, auto_begin=True, bindings=None, abridge_sql_log=False):
-        connection = None
-        cursor = None
+    def add_standard_query(self, sql: str, **kwargs) -> Tuple[Connection, Any]:
+        # This is the happy path for a single query. Snowflake has a few odd behaviors that
+        # require preprocessing within the 'add_query' method below.
+        return super().add_query(self._add_query_comment(sql), **kwargs)
 
+    def add_query(
+        self,
+        sql: str,
+        auto_begin: bool = True,
+        bindings: Optional[Any] = None,
+        abridge_sql_log: bool = False,
+    ) -> Tuple[Connection, Any]:  # type: ignore
         if bindings:
-            # The snowflake connector is more strict than, eg., psycopg2 -
+            # The snowflake connector is stricter than, e.g., psycopg2 -
             # which allows any iterable thing to be passed as a binding.
             bindings = tuple(bindings)
 
-        queries = self._split_queries(sql)
+        stripped_queries = self._stripped_queries(sql)
 
-        for individual_query in queries:
-            # hack -- after the last ';', remove comments and don't run
-            # empty queries. this avoids using exceptions as flow control,
-            # and also allows us to return the status of the last cursor
-            without_comments = re.sub(
-                re.compile(r"(\".*?\"|\'.*?\')|(/\*.*?\*/|--[^\r\n]*$)", re.MULTILINE),
-                "",
-                individual_query,
-            ).strip()
-
-            if without_comments == "":
-                continue
-
-            # Even though we turn off transactions by default for Snowflake,
-            # the user/macro has passed them *explicitly*, probably to wrap a DML statement
-            # Let their wish be granted!
-            # This also has the effect of ignoring "commit" in the RunResult for this model
-            # https://github.com/dbt-labs/dbt-snowflake/issues/147
-            if individual_query.lower() == "begin;":
-                super().add_begin_query()
-                continue
-
-            elif individual_query.lower() == "commit;":
-                super().add_commit_query()
-                continue
-
-            # add a query comment to *every* statement
-            # needed for models with multi-step materializations
-            # https://github.com/dbt-labs/dbt-snowflake/issues/140
-            individual_query = self._add_query_comment(individual_query)
-
-            connection, cursor = super().add_query(
-                individual_query, auto_begin, bindings=bindings, abridge_sql_log=abridge_sql_log
+        if set(query.lower() for query in stripped_queries).issubset({"begin;", "commit;"}):
+            connection, cursor = self._add_begin_commit_only_queries(
+                stripped_queries,
+                auto_begin=auto_begin,
+                bindings=bindings,
+                abridge_sql_log=abridge_sql_log,
+            )
+        else:
+            connection, cursor = self._add_standard_queries(
+                stripped_queries,
+                auto_begin=auto_begin,
+                bindings=bindings,
+                abridge_sql_log=abridge_sql_log,
             )
 
         if cursor is None:
-            conn = self.get_thread_connection()
-            if conn is None or conn.name is None:
-                conn_name = "<None>"
-            else:
-                conn_name = conn.name
+            self._raise_cursor_not_found_error(sql)
 
-            raise DbtRuntimeError(
-                "Tried to run an empty query on model '{}'. If you are "
-                "conditionally running\nsql, eg. in a model hook, make "
-                "sure your `else` clause contains valid sql!\n\n"
-                "Provided SQL:\n{}".format(conn_name, sql)
+        return connection, cursor  # type: ignore
+
+    def _stripped_queries(self, sql: str) -> List[str]:
+        def strip_query(query):
+            """
+            hack -- after the last ';', remove comments and don't run
+            empty queries. this avoids using exceptions as flow control,
+            and also allows us to return the status of the last cursor
+            """
+            without_comments_re = re.compile(
+                r"(\".*?\"|\'.*?\')|(/\*.*?\*/|--[^\r\n]*$)", re.MULTILINE
             )
+            return re.sub(without_comments_re, "", query).strip()
 
+        return [query for query in self._split_queries(sql) if strip_query(query) != ""]
+
+    def _add_begin_commit_only_queries(
+        self, queries: List[str], **kwargs
+    ) -> Tuple[Connection, Any]:
+        # if all we get is `begin;` and/or `commit;`
+        # raise a warning, then run as standard queries to avoid an error downstream
+        message = (
+            "Explicit transactional logic should be used only to wrap "
+            "DML logic (MERGE, DELETE, UPDATE, etc). The keywords BEGIN; and COMMIT; should "
+            "be placed directly before and after your DML statement, rather than in separate "
+            "statement calls or run_query() macros."
+        )
+        logger.warning(line_wrap_message(warning_tag(message)))
+
+        for query in queries:
+            connection, cursor = self.add_standard_query(query, **kwargs)
         return connection, cursor
 
-    def release(self) -> None:
+    def _add_standard_queries(self, queries: List[str], **kwargs) -> Tuple[Connection, Any]:
+        for query in queries:
+            # Even though we turn off transactions by default for Snowflake,
+            # the user/macro has passed them *explicitly*, probably to wrap a DML statement
+            # This also has the effect of ignoring "commit" in the RunResult for this model
+            # https://github.com/dbt-labs/dbt-snowflake/issues/147
+            if query.lower() == "begin;":
+                super().add_begin_query()
+            elif query.lower() == "commit;":
+                super().add_commit_query()
+            else:
+                # This adds a query comment to *every* statement
+                # https://github.com/dbt-labs/dbt-snowflake/issues/140
+                connection, cursor = self.add_standard_query(query, **kwargs)
+        return connection, cursor
+
+    def _raise_cursor_not_found_error(self, sql: str):
+        conn = self.get_thread_connection()
+        try:
+            conn_name = conn.name
+        except AttributeError:
+            conn_name = None
+
+        raise DbtRuntimeError(
+            f"""Tried to run an empty query on model '{conn_name or "<None>"}'. If you are """
+            f"""conditionally running\nsql, e.g. in a model hook, make """
+            f"""sure your `else` clause contains valid sql!\n\n"""
+            f"""Provided SQL:\n{sql}"""
+        )
+
+    def release(self):
         """Reuse connections by deferring release until adapter context manager in core
         resets adapters. This cleanup_all happens before Python teardown. Idle connections
         incur no costs while waiting in the connection pool."""
         if self.profile.credentials.reuse_connections:  # type: ignore
             return
-        else:
-            super().release()
+        super().release()
 
     @classmethod
     def data_type_code_to_name(cls, type_code: Union[int, str]) -> str:
