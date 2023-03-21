@@ -84,12 +84,12 @@
 - Bump black to 23.1.0 ([#432](https://github.com/dbt-labs/dbt-snowflake/pull/432))
 
 ### Contributors
-- [@b-per](https://github.com/b-per) ([#365](https://github.com/dbt-labs/dbt-spark/issues/365))
-- [@dataders](https://github.com/dataders) ([#374](https://github.com/dbt-labs/dbt-spark/issues/374))
-- [@dave-connors-3](https://github.com/dave-connors-3) ([#410](https://github.com/dbt-labs/dbt-spark/issues/410))
-- [@goFrendiAsgard](https://github.com/goFrendiAsgard) ([#443](https://github.com/dbt-labs/dbt-spark/issues/443))
-- [@joshuataylor](https://github.com/joshuataylor) ([#201](https://github.com/dbt-labs/dbt-spark/issues/201))
-- [@kadekillary](https://github.com/kadekillary) ([#344](https://github.com/dbt-labs/dbt-spark/issues/344))
+- [@b-per](https://github.com/b-per) ([#365](https://github.com/dbt-labs/dbt-snowflake/issues/365))
+- [@dataders](https://github.com/dataders) ([#374](https://github.com/dbt-labs/dbt-snowflake/issues/374))
+- [@dave-connors-3](https://github.com/dave-connors-3) ([#410](https://github.com/dbt-labs/dbt-snowflake/issues/410))
+- [@goFrendiAsgard](https://github.com/goFrendiAsgard) ([#443](https://github.com/dbt-labs/dbt-snowflake/issues/443))
+- [@joshuataylor](https://github.com/joshuataylor) ([#201](https://github.com/dbt-labs/dbt-snowflake/issues/201))
+- [@kadekillary](https://github.com/kadekillary) ([#344](https://github.com/dbt-labs/dbt-snowflake/issues/344))
 - [@surbias](https://github.com/surbias) ([#466](https://github.com/dbt-labs/dbt-snowflake/pull/466))
 
 ## Previous Releases
