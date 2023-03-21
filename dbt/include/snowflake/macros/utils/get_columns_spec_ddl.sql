@@ -7,12 +7,10 @@
     {%- set col = user_provided_columns[i] -%}
     {%- set constraints = col['constraints'] -%}
     {{ col['name'] }} {{ col['data_type'] }}
-      {%- for x in constraints -%}
-        {%- if x.type == "check" -%}
+      {%- for c in constraints -%}
+        {%- if c.type == "check" -%}
           {%- set ns.at_least_one_check = True -%}
-        {%- else -%}
-          {{ " not null" if x.type == "not_null" else " unique" if x.type == "unique" else " primary key" if x.type == "primary_key" else " foreign key" if x.type == "foreign key" else ""
- }}{{ x.expression or "" }}
+        {%- else %} {{ adapter.render_raw_column_constraint(c) }}
         {%- endif -%}
       {%- endfor -%}
       {{ "," if not loop.last }}
