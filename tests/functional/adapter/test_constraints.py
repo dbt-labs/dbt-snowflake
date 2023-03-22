@@ -54,6 +54,7 @@ class SnowflakeColumnEqualSetup:
             ["""TO_VARIANT(PARSE_JSON('{"key3": "value3", "key4": "value4"}'))""", 'variant', 'VARIANT'],
         ]
 
+
 class TestSnowflakeTableConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseTableConstraintsColumnsEqual):
     pass
 
@@ -64,6 +65,7 @@ class TestSnowflakeViewConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseVi
 
 class TestSnowflakeIncrementalConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseIncrementalConstraintsColumnsEqual):
     pass
+
 
 class TestSnowflakeTableConstraintsDdlEnforcement(BaseConstraintsRuntimeDdlEnforcement):
     @pytest.fixture(scope="class")
