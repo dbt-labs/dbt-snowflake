@@ -71,16 +71,17 @@ class TestSnowflakeTableConstraintsDdlEnforcement(BaseConstraintsRuntimeDdlEnfor
         return _expected_sql_snowflake
 
 
+class TestSnowflakeIncrementalConstraintsDdlEnforcement(BaseIncrementalConstraintsRuntimeDdlEnforcement):
+    @pytest.fixture(scope="class")
+    def expected_sql(self):
+        return _expected_sql_snowflake
+
+
 class TestSnowflakeTableConstraintsRollback(BaseConstraintsRollback):
     @pytest.fixture(scope="class")
     def expected_error_messages(self):
         return ["NULL result in a non-nullable column"]
 
-
-class TestSnowflakeIncrementalConstraintsDdlEnforcement(BaseIncrementalConstraintsRuntimeDdlEnforcement):
-    @pytest.fixture(scope="class")
-    def expected_sql(self):
-        return _expected_sql_snowflake
 
 class TestSnowflakeIncrementalConstraintsRollback(BaseIncrementalConstraintsRollback):
     @pytest.fixture(scope="class")
