@@ -132,7 +132,7 @@ jobs:
   bump-version-generate-changelog:
     name: Bump package version, Generate changelog
 
-    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@er/fail-spark-version-bump
 
     with:
       sha: ${{ inputs.sha }}
