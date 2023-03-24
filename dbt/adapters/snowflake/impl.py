@@ -18,9 +18,6 @@ from dbt.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt.utils import filter_null_values
 
 
-SNOWFLAKE_WAREHOUSE_MACRO_NAME = "snowflake_warehouse"
-
-
 @dataclass
 class SnowflakeConfig(AdapterConfig):
     transient: Optional[bool] = None
@@ -74,10 +71,8 @@ class SnowflakeAdapter(SQLAdapter):
             raise DbtRuntimeError("Could not get current warehouse: no results")
         return str(table[0][0])
 
-    def _use_warehouse(self, warehouse):
+    def _use_warehouse(self, warehouse: str):
         """Use the given warehouse. Quotes are never applied."""
-        kwargs = {"warehouse": warehouse}
-        warehouse = self.execute_macro(SNOWFLAKE_WAREHOUSE_MACRO_NAME, kwargs=kwargs)  # type: ignore
         self.execute("use warehouse {}".format(warehouse))
 
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:
