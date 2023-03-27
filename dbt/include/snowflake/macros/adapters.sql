@@ -22,8 +22,8 @@
         {%- elif transient -%}
           transient
         {%- endif %} table {{ relation }}
-        {%- set contract_config = config.get('contract', {}) -%}
-        {%- if contract_config.get('enforced', False) -%}
+        {%- set contract_config = config.get('contract') -%}
+        {%- if contract_config.enforced -%}
           {{ get_assert_columns_equivalent(sql) }}
           {{ get_columns_spec_ddl() }}
           {% set compiled_code = get_select_subquery(compiled_code) %}
@@ -96,8 +96,8 @@
     {{ get_persist_docs_column_list(model_columns, query_columns) }}
 
   {%- endif %}
-  {%- set contract_config = config.get('contract', {}) -%}
-  {%- if contract_config.get('enforced', False) -%}
+  {%- set contract_config = config.get('contract') -%}
+  {%- if contract_config.enforced -%}
     {{ get_assert_columns_equivalent(sql) }}
   {%- endif %}
   {% if copy_grants -%} copy grants {%- endif %} as (
