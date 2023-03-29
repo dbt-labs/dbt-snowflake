@@ -45,7 +45,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
     - name: Create and commit changelog on bot PR
       if: "contains(github.event.pull_request.labels.*.name, ${{ matrix.label }})"
       id: bot_changelog

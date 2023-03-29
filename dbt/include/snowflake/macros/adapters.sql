@@ -22,14 +22,16 @@
         {%- elif transient -%}
           transient
         {%- endif %} table {{ relation }}
-        {% if config.get('contract', False) %}
+        {%- set contract_config = config.get('contract') -%}
+        {%- if contract_config.enforced -%}
           {{ get_assert_columns_equivalent(sql) }}
           {{ get_columns_spec_ddl() }}
+          {% set compiled_code = get_select_subquery(compiled_code) %}
         {% endif %}
         {% if copy_grants and not temporary -%} copy grants {%- endif %} as
         (
           {%- if cluster_by_string is not none -%}
-            select * from(
+            select * from (
               {{ compiled_code }}
               ) order by ({{ cluster_by_string }})
           {%- else -%}
@@ -94,7 +96,8 @@
     {{ get_persist_docs_column_list(model_columns, query_columns) }}
 
   {%- endif %}
-  {% if config.get('contract', False) -%}
+  {%- set contract_config = config.get('contract') -%}
+  {%- if contract_config.enforced -%}
     {{ get_assert_columns_equivalent(sql) }}
   {%- endif %}
   {% if copy_grants -%} copy grants {%- endif %} as (

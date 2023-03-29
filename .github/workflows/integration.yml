@@ -56,7 +56,6 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository ||
       contains(github.event.pull_request.labels.*.name, 'ok to test')
     runs-on: ubuntu-latest
-
     outputs:
       matrix: ${{ steps.generate-matrix.outputs.result }}
 
@@ -115,7 +114,6 @@ jobs:
         contains(github.event.pull_request.labels.*.name, 'ok to test')
       )
     runs-on: ${{ matrix.os }}
-
     needs: test-metadata
 
     strategy:
@@ -184,7 +182,7 @@ jobs:
       - name: Get current date
         if: always()
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H_%M_%S')" #no colons allowed for artifacts
+        run: echo "date=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT #no colons allowed for artifacts
 
       - uses: actions/upload-artifact@v2
         if: always()
