@@ -1,8 +1,6 @@
 kind: Features
-body: 'Support for data types constraints in Snowflake following the dbt Core feature
-  #6271'
+body: 'Support for data types constraints in Snowflake'
 time: 2022-12-19T16:48:08.771806+01:00
 custom:
-  Author: b-per
-  Issue: "365"
-  PR: "341"
+  Author: b-per emmyoop
+  Issue: 365 492
