@@ -7,7 +7,7 @@ from dbt.tests.adapter.constraints.test_constraints import (
     BaseConstraintsRuntimeDdlEnforcement,
     BaseConstraintsRollback,
     BaseIncrementalConstraintsRuntimeDdlEnforcement,
-    BaseIncrementalConstraintsRollback,
+    BaseIncrementalConstraintsRollback, BaseModelConstraintsRuntimeEnforcement,
 )
 
 
@@ -89,3 +89,27 @@ class TestSnowflakeIncrementalConstraintsRollback(BaseIncrementalConstraintsRoll
     @pytest.fixture(scope="class")
     def expected_error_messages(self):
         return ["NULL result in a non-nullable column"]
+
+
+class TestSnowflakeModelConstraintsRuntimeEnforcement(BaseModelConstraintsRuntimeEnforcement):
+    @pytest.fixture(scope="class")
+    def expected_sql(self):
+        return """
+create or replace transient table <model_identifier> (
+    id integer not null,
+    color text,
+    date_day text,
+    primary key (id),
+    constraint strange_uniqueness_requirement unique (color, date_day)
+) as ( select
+        id,
+        color,
+        date_day from
+    (
+    select
+        1 as id,
+        'blue' as color,
+        '2019-01-01' as date_day
+    ) as model_subq
+);
+"""
