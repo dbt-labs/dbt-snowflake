@@ -3,19 +3,19 @@ from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
-from dbt.adapters.base.impl import AdapterConfig
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
-from dbt.contracts.graph.nodes import ConstraintType, ColumnLevelConstraint, ModelLevelConstraint
 
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.contracts.graph.manifest import Manifest
+from dbt.contracts.graph.nodes import ConstraintType
 from dbt.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt.utils import filter_null_values
 
@@ -39,6 +39,14 @@ class SnowflakeAdapter(SQLAdapter):
     ConnectionManager = SnowflakeConnectionManager
 
     AdapterSpecificConfigs = SnowflakeConfig
+
+    CONSTRAINT_SUPPORT = {
+        ConstraintType.check: ConstraintSupport.NOT_SUPPORTED,
+        ConstraintType.not_null: ConstraintSupport.ENFORCED,
+        ConstraintType.unique: ConstraintSupport.NOT_ENFORCED,
+        ConstraintType.primary_key: ConstraintSupport.NOT_ENFORCED,
+        ConstraintType.foreign_key: ConstraintSupport.NOT_ENFORCED,
+    }
 
     @classmethod
     def date_function(cls):
@@ -246,17 +254,3 @@ CALL {proc_name}();
 
     def valid_incremental_strategies(self):
         return ["append", "merge", "delete+insert"]
-
-    @classmethod
-    def render_column_constraint(cls, constraint: ColumnLevelConstraint) -> str:
-        if constraint.type == ConstraintType.check:
-            return ""  # check not supported by snowflake
-        else:
-            return super().render_column_constraint(constraint)
-
-    @classmethod
-    def render_model_constraint(cls, constraint: ModelLevelConstraint) -> Optional[str]:
-        if constraint.type == ConstraintType.check:
-            return None  # check not supported by snowflake
-        else:
-            return super().render_model_constraint(constraint)
