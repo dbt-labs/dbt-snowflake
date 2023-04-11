@@ -10,6 +10,8 @@ from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
+from dbt.contracts.graph.nodes import ConstraintType, ColumnLevelConstraint, ModelLevelConstraint
+
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
@@ -244,3 +246,17 @@ CALL {proc_name}();
 
     def valid_incremental_strategies(self):
         return ["append", "merge", "delete+insert"]
+
+    @classmethod
+    def render_column_constraint(cls, constraint: ColumnLevelConstraint) -> str:
+        if constraint.type == ConstraintType.check:
+            return ""  # check not supported by snowflake
+        else:
+            return super().render_column_constraint(constraint)
+
+    @classmethod
+    def render_model_constraint(cls, constraint: ModelLevelConstraint) -> Optional[str]:
+        if constraint.type == ConstraintType.check:
+            return None  # check not supported by snowflake
+        else:
+            return super().render_model_constraint(constraint)
