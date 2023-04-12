@@ -7,7 +7,8 @@ from dbt.tests.adapter.constraints.test_constraints import (
     BaseConstraintsRuntimeDdlEnforcement,
     BaseConstraintsRollback,
     BaseIncrementalConstraintsRuntimeDdlEnforcement,
-    BaseIncrementalConstraintsRollback, BaseModelConstraintsRuntimeEnforcement,
+    BaseIncrementalConstraintsRollback,
+    BaseModelConstraintsRuntimeEnforcement,
 )
 
 
@@ -43,27 +44,37 @@ class SnowflakeColumnEqualSetup:
     def data_types(self, int_type, schema_int_type, string_type):
         # sql_column_value, schema_data_type, error_data_type
         return [
-            ['1', schema_int_type, int_type],
+            ["1", schema_int_type, int_type],
             ["'1'", string_type, string_type],
-            ["cast('2019-01-01' as date)", 'date', 'DATE'],
-            ["true", 'boolean', 'BOOLEAN'],
-            ["'2013-11-03 00:00:00-07'::timestamptz", 'timestamp_tz', 'TIMESTAMP_TZ'],
-            ["'2013-11-03 00:00:00-07'::timestamp", 'timestamp', 'TIMESTAMP_NTZ'],
-            ["ARRAY_CONSTRUCT('a','b','c')", 'array', 'ARRAY'],
-            ["ARRAY_CONSTRUCT(1,2,3)", 'array', 'ARRAY'],
-            ["""TO_VARIANT(PARSE_JSON('{"key3": "value3", "key4": "value4"}'))""", 'variant', 'VARIANT'],
+            ["cast('2019-01-01' as date)", "date", "DATE"],
+            ["true", "boolean", "BOOLEAN"],
+            ["'2013-11-03 00:00:00-07'::timestamptz", "timestamp_tz", "TIMESTAMP_TZ"],
+            ["'2013-11-03 00:00:00-07'::timestamp", "timestamp", "TIMESTAMP_NTZ"],
+            ["ARRAY_CONSTRUCT('a','b','c')", "array", "ARRAY"],
+            ["ARRAY_CONSTRUCT(1,2,3)", "array", "ARRAY"],
+            [
+                """TO_VARIANT(PARSE_JSON('{"key3": "value3", "key4": "value4"}'))""",
+                "variant",
+                "VARIANT",
+            ],
         ]
 
 
-class TestSnowflakeTableConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseTableConstraintsColumnsEqual):
+class TestSnowflakeTableConstraintsColumnsEqual(
+    SnowflakeColumnEqualSetup, BaseTableConstraintsColumnsEqual
+):
     pass
 
 
-class TestSnowflakeViewConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseViewConstraintsColumnsEqual):
+class TestSnowflakeViewConstraintsColumnsEqual(
+    SnowflakeColumnEqualSetup, BaseViewConstraintsColumnsEqual
+):
     pass
 
 
-class TestSnowflakeIncrementalConstraintsColumnsEqual(SnowflakeColumnEqualSetup, BaseIncrementalConstraintsColumnsEqual):
+class TestSnowflakeIncrementalConstraintsColumnsEqual(
+    SnowflakeColumnEqualSetup, BaseIncrementalConstraintsColumnsEqual
+):
     pass
 
 
@@ -73,7 +84,9 @@ class TestSnowflakeTableConstraintsDdlEnforcement(BaseConstraintsRuntimeDdlEnfor
         return _expected_sql_snowflake
 
 
-class TestSnowflakeIncrementalConstraintsDdlEnforcement(BaseIncrementalConstraintsRuntimeDdlEnforcement):
+class TestSnowflakeIncrementalConstraintsDdlEnforcement(
+    BaseIncrementalConstraintsRuntimeDdlEnforcement
+):
     @pytest.fixture(scope="class")
     def expected_sql(self):
         return _expected_sql_snowflake
