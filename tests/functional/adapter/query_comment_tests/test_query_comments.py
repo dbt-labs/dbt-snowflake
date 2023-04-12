@@ -1,4 +1,3 @@
-import pytest
 from dbt.tests.adapter.query_comment.test_query_comment import (
     BaseQueryComments,
     BaseMacroQueryComments,

@@ -1,4 +1,3 @@
-import pytest
 from dbt.tests.adapter.utils.data_types.test_type_bigint import BaseTypeBigInt
 from dbt.tests.adapter.utils.data_types.test_type_float import BaseTypeFloat
 from dbt.tests.adapter.utils.data_types.test_type_int import BaseTypeInt

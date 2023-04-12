@@ -1,5 +1,3 @@
-import pytest
-
 from dbt.tests.util import run_dbt
 from dbt.tests.adapter.basic.test_incremental import (
     BaseIncremental,

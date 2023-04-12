@@ -1,4 +1,3 @@
-import pytest
 from dbt.tests.util import run_dbt, check_relations_equal, rm_file, write_file
 from dbt.tests.adapter.concurrency.test_concurrency import BaseConcurrency, seeds__update_csv
 

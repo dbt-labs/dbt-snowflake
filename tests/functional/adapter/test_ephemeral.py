@@ -1,4 +1,3 @@
-import pytest
 from dbt.tests.adapter.ephemeral.test_ephemeral import BaseEphemeralMulti
 from dbt.tests.util import run_dbt, check_relations_equal
 
