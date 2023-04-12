@@ -160,7 +160,7 @@ class TestProjectSeedOverrideSnowflake(BaseOverrideDatabaseSnowflake):
         )
       ])
 
-  def test_snwoflake_database_override(self, project, clean_up):
+  def test_snowflake_database_override(self, project, clean_up):
     self.run_database_override(project)
 
 
