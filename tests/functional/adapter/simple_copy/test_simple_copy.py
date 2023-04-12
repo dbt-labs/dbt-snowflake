@@ -24,13 +24,11 @@ from tests.functional.adapter.simple_copy.fixtures import (
 class TestSimpleCopyBase(SimpleCopyBase):
     @pytest.fixture(scope="class")
     def tests(self):
-        return {
-            "get_relation_test.sql": _TESTS__GET_RELATION_QUOTING
-        }
+        return {"get_relation_test.sql": _TESTS__GET_RELATION_QUOTING}
 
     def test_simple_copy(self, project):
         super().test_simple_copy(project)
-        run_dbt(['test'])
+        run_dbt(["test"])
 
 
 class TestSimpleCopyBaseQuotingOff(SimpleCopyBase):
@@ -40,13 +38,11 @@ class TestSimpleCopyBaseQuotingOff(SimpleCopyBase):
 
     @pytest.fixture(scope="class")
     def tests(self):
-        return {
-            "get_relation_test.sql": _TESTS__GET_RELATION_QUOTING
-        }
+        return {"get_relation_test.sql": _TESTS__GET_RELATION_QUOTING}
 
     def test_simple_copy_quoting_off(self, project):
         super().test_simple_copy(project)
-        run_dbt(['test'])
+        run_dbt(["test"])
 
     @pytest.mark.skip(reason="Already run and test case above; no need to run again")
     def test_simple_copy(self):
@@ -70,9 +66,7 @@ quoting:
 class TestSimpleCopyBaseQuotingSwitch(SimpleCopySetup):
     @pytest.fixture(scope="class")
     def tests(self):
-        return {
-            "get_relation_test.sql": _TESTS__GET_RELATION_QUOTING
-        }
+        return {"get_relation_test.sql": _TESTS__GET_RELATION_QUOTING}
 
     def test_seed_quoting_switch(self, project):
         results = run_dbt(["seed"])
@@ -92,7 +86,7 @@ class TestSimpleCopyBaseQuotingSwitch(SimpleCopySetup):
 
         with open(dbt_project_yml, "w") as f:
             f.write(dbt_project_yml_contents)
-        run_dbt(['test'])
+        run_dbt(["test"])
 
 
 inc_strat_yml = """
@@ -104,9 +98,7 @@ models:
 class TestSnowflakeIncrementalOverwrite(SimpleCopySetup):
     @pytest.fixture(scope="class")
     def models(self):
-        return {
-            "incremental_overwrite.sql": _MODELS__INCREMENTAL_OVERWRITE
-        }
+        return {"incremental_overwrite.sql": _MODELS__INCREMENTAL_OVERWRITE}
 
     def test__snowflake__incremental_overwrite(self, project):
         results = run_dbt(["seed"])
@@ -130,15 +122,13 @@ class TestSnowflakeIncrementalOverwrite(SimpleCopySetup):
 class TestIncrementalMergeColumns(SimpleCopySetup):
     @pytest.fixture(scope="class")
     def models(self):
-        return {
-            "incremental_update_cols.sql": _MODELS__INCREMENTAL_UPDATE_COLS
-        }
+        return {"incremental_update_cols.sql": _MODELS__INCREMENTAL_UPDATE_COLS}
 
     @pytest.fixture(scope="class")
     def seeds(self):
         return {
             "seed.csv": _SEEDS__SEED_MERGE_INITIAL,
-            "expected_result.csv": _SEEDS__SEED_MERGE_EXPECTED
+            "expected_result.csv": _SEEDS__SEED_MERGE_EXPECTED,
         }
 
     def seed_and_run(self):
@@ -152,6 +142,4 @@ class TestIncrementalMergeColumns(SimpleCopySetup):
         rm_file(main_seed_file)
         write_file(_SEEDS__SEED_MERGE_UPDATE, main_seed_file)
         self.seed_and_run()
-        check_relations_equal(
-            project.adapter, ["incremental_update_cols", "expected_result"]
-        )
+        check_relations_equal(project.adapter, ["incremental_update_cols", "expected_result"])

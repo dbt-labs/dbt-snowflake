@@ -1,5 +1,9 @@
 import pytest
-from dbt.tests.adapter.caching.test_caching import BaseCachingLowercaseModel, BaseCachingUppercaseModel, BaseCachingSelectedSchemaOnly
+from dbt.tests.adapter.caching.test_caching import (
+    BaseCachingLowercaseModel,
+    BaseCachingUppercaseModel,
+    BaseCachingSelectedSchemaOnly,
+)
 
 
 class TestCachingLowerCaseModel(BaseCachingLowercaseModel):

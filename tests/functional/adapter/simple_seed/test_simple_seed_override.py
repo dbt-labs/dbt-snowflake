@@ -52,6 +52,7 @@ seeds:
         type: character varying(16777216)
 """.lstrip()
 
+
 class TestSimpleSeedColumnOverride(BaseSimpleSeedColumnOverride):
     @pytest.fixture(scope="class")
     def schema(self):
@@ -59,9 +60,7 @@ class TestSimpleSeedColumnOverride(BaseSimpleSeedColumnOverride):
 
     @pytest.fixture(scope="class")
     def models(self):
-        return {
-            "models-snowflake.yml": _SCHEMA_YML
-        }
+        return {"models-snowflake.yml": _SCHEMA_YML}
 
     @staticmethod
     def seed_enabled_types():
@@ -73,9 +72,9 @@ class TestSimpleSeedColumnOverride(BaseSimpleSeedColumnOverride):
     @staticmethod
     def seed_tricky_types():
         return {
-            'seed_id_str': 'TEXT',
-            'looks_like_a_bool': 'TEXT',
-            'looks_like_a_date': 'TEXT',
+            "seed_id_str": "TEXT",
+            "looks_like_a_bool": "TEXT",
+            "looks_like_a_date": "TEXT",
         }
 
     def test_snowflake_simple_seed_with_column_override_snowflake(self, project):

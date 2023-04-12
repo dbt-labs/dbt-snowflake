@@ -1,6 +1,9 @@
 import pytest
-from dbt.tests.util import run_dbt, write_file, run_sql_with_adapter
-from dbt.tests.adapter.python_model.test_python_model import BasePythonModelTests, BasePythonIncrementalTests
+from dbt.tests.util import run_dbt, write_file
+from dbt.tests.adapter.python_model.test_python_model import (
+    BasePythonModelTests,
+    BasePythonIncrementalTests,
+)
 
 
 class TestPythonModelSnowflake(BasePythonModelTests):
@@ -40,17 +43,20 @@ def model(dbt, session):
 """
 
 
-
 class TestChangingSchemaSnowflake:
     @pytest.fixture(scope="class")
     def models(self):
-        return {
-            "simple_python_model.py": models__simple_python_model
-            }
-    def test_changing_schema(self,project):
+        return {"simple_python_model.py": models__simple_python_model}
+
+    def test_changing_schema(self, project):
         run_dbt(["run"])
-        write_file(models__simple_python_model_v2, project.project_root + '/models', "simple_python_model.py")
+        write_file(
+            models__simple_python_model_v2,
+            project.project_root + "/models",
+            "simple_python_model.py",
+        )
         run_dbt(["run"])
+
 
 USE_IMPORT_MODEL = """
 import sys
@@ -74,18 +80,19 @@ def model( dbt, session):
     return df
 """
 
+
 class TestImportSnowflake:
     @pytest.fixture(scope="class")
     def models(self):
-        return {
-            "simple_python_model.py": USE_IMPORT_MODEL
-        }
+        return {"simple_python_model.py": USE_IMPORT_MODEL}
+
     @pytest.fixture(scope="class")
     def seeds(self):
-        return {
-            "iris.csv": "1,2,3,4,setosa"
-        }
-    def test_import(self,project):
+        return {"iris.csv": "1,2,3,4,setosa"}
+
+    def test_import(self, project):
         project.run_sql("create or replace STAGE dbt_integration_test")
-        project.run_sql(f"PUT file://{project.project_root}/seeds/iris.csv @dbt_integration_test/;")
+        project.run_sql(
+            f"PUT file://{project.project_root}/seeds/iris.csv @dbt_integration_test/;"
+        )
         run_dbt(["run"])

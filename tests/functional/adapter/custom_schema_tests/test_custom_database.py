@@ -1,14 +1,7 @@
 import pytest
 import os
-from dbt.tests.util import (
-    check_relations_equal,
-    check_table_does_exist,
-    run_dbt
-)
-from tests.functional.adapter.custom_schema_tests.seeds import (
-    seed_agg_csv,
-    seed_csv
-)
+from dbt.tests.util import check_relations_equal, check_table_does_exist, run_dbt
+from tests.functional.adapter.custom_schema_tests.seeds import seed_agg_csv, seed_csv
 
 _VIEW_1_SQL = """
 select * from {{ ref('seed') }}
@@ -65,6 +58,7 @@ _CUSTOM_DB_SQL = """
 
 ALT_DATABASE = os.getenv("SNOWFLAKE_TEST_ALT_DATABASE")
 
+
 class TestOverrideDatabase:
     @pytest.fixture(scope="class")
     def macros(self):
@@ -74,10 +68,7 @@ class TestOverrideDatabase:
 
     @pytest.fixture(scope="class")
     def seeds(self):
-        return {
-            "seed.csv" : seed_csv,
-            "agg.csv": seed_agg_csv
-        }
+        return {"seed.csv": seed_csv, "agg.csv": seed_agg_csv}
 
     @pytest.fixture(scope="class")
     def models(self):
@@ -110,8 +101,14 @@ class TestOverrideDatabase:
         check_table_does_exist(project.adapter, f"{alt_db_with_schema}.{view_3}")
 
         # not overridden
-        check_relations_equal(project.adapter, [f"{db_with_schema}.{seed_table}", f"{db_with_schema}.{view_1}"])
+        check_relations_equal(
+            project.adapter, [f"{db_with_schema}.{seed_table}", f"{db_with_schema}.{view_1}"]
+        )
 
         # overridden
-        check_relations_equal(project.adapter, [f"{db_with_schema}.{seed_table}", f"{alt_db_with_schema}.{view_2}"])
-        check_relations_equal(project.adapter, [f"{db_with_schema}.{agg_table}", f"{alt_db_with_schema}.{view_3}"])
+        check_relations_equal(
+            project.adapter, [f"{db_with_schema}.{seed_table}", f"{alt_db_with_schema}.{view_2}"]
+        )
+        check_relations_equal(
+            project.adapter, [f"{db_with_schema}.{agg_table}", f"{alt_db_with_schema}.{view_3}"]
+        )

@@ -20,7 +20,7 @@ class BaseCopyGrantsSnowflake:
             },
             "snapshots": {
                 "+copy_grants": True,
-            }
+            },
         }
 
 
@@ -35,23 +35,30 @@ class TestInvalidGrantsSnowflake(BaseInvalidGrants):
 class TestModelGrantsSnowflake(BaseModelGrants):
     pass
 
+
 class TestModelGrantsCopyGrantsSnowflake(BaseCopyGrantsSnowflake, BaseModelGrants):
     pass
+
 
 class TestIncrementalGrantsSnowflake(BaseIncrementalGrants):
     pass
 
+
 class TestIncrementalCopyGrantsSnowflake(BaseCopyGrantsSnowflake, BaseIncrementalGrants):
     pass
+
 
 class TestSeedGrantsSnowflake(BaseSeedGrants):
     pass
 
+
 class TestSeedCopyGrantsSnowflake(BaseCopyGrantsSnowflake, BaseSeedGrants):
     pass
 
+
 class TestSnapshotGrants(BaseSnapshotGrants):
     pass
+
 
 class TestSnapshotCopyGrantsSnowflake(BaseCopyGrantsSnowflake, BaseSnapshotGrants):
     pass

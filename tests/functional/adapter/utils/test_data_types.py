@@ -11,23 +11,23 @@ from dbt.tests.adapter.utils.data_types.test_type_boolean import BaseTypeBoolean
 class TestTypeBigInt(BaseTypeBigInt):
     pass
 
-    
+
 class TestTypeFloat(BaseTypeFloat):
     pass
 
-    
+
 class TestTypeInt(BaseTypeInt):
     pass
 
-    
+
 class TestTypeNumeric(BaseTypeNumeric):
     pass
 
-    
+
 class TestTypeString(BaseTypeString):
     pass
 
-    
+
 class TestTypeTimestamp(BaseTypeTimestamp):
     pass
 
