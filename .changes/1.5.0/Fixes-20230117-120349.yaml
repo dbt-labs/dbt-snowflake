@@ -1,7 +1,0 @@
-kind: Fixes
-body: Raise warning (not error) for custom code with isolated BEGIN; or COMMIT; statements
-time: 2023-01-17T12:03:49.652732+01:00
-custom:
-  Author: jtcohen6
-  Issue: "388"
-  PR: "401"

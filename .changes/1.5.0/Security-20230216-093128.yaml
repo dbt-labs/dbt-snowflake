@@ -1,6 +1,0 @@
-kind: Security
-body: Update `snowflake-connector-python` to 3.0 to address CVE-2022-42965
-time: 2023-02-16T09:31:28.844127-07:00
-custom:
-  Author: dbeatty10 mikealfare
-  PR: "476"
