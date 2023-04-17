@@ -173,7 +173,7 @@
   {%- endset -%}
 
   {%- set result = run_query(sql) -%}
-  {% set maximum = 1 %}
+  {% set maximum = 10000 %}
   {% if (result | length) >= maximum %}
     {% set msg %}
       Too many objects in schema  {{ schema_relation }}! dbt can only get
