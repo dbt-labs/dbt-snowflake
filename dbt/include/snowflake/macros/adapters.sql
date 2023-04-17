@@ -155,14 +155,41 @@
     show terse objects in {{ schema_relation }}
   {%- endset -%}
 
+  {%- set fallback_sql -%}
+     select
+      created as "created_on",
+      table_name as "name",
+      case when table_type = 'BASE TABLE' then 'table'
+           when table_type = 'VIEW' then 'view'
+           when table_type = 'MATERIALIZED VIEW' then 'materializedview'
+           when table_type = 'EXTERNAL TABLE' then 'external'
+           else table_type
+      end as "kind",
+      table_catalog as "database_name",
+      table_schema as "schema_name"
+    from  information_schema.tables
+    where table_schema ilike '{{ schema_relation.schema.lower() }}'
+      and table_catalog ilike '{{ schema_relation.database.lower() }}'
+  {%- endset -%}
+
   {%- set result = run_query(sql) -%}
-  {% set maximum = 10000 %}
+  {% set maximum = 1 %}
   {% if (result | length) >= maximum %}
     {% set msg %}
       Too many objects in schema  {{ schema_relation }}! dbt can only get
-      information about schemas with fewer than {{ maximum }} objects.
+      information about schemas with fewer than {{ maximum }} objects using
+      the "show terse objects" command.
+
+      Falling back to querying the Snowflake information schema directly.
+
+      To improve performance, we recommend confirming all tables and
+      views in {{ schema_relation}} are current.
+
     {% endset %}
-    {% do exceptions.raise_compiler_error(msg) %}
+
+    {{ log(msg, info=true) }}
+    {%- set result = run_query(fallback_sql) %}
+
   {% endif %}
   {%- do return(result) -%}
 {% endmacro %}
