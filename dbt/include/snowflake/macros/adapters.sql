@@ -152,8 +152,8 @@
 
 {% macro snowflake__list_relations_without_caching(schema_relation) %}
 
-  {%- set max_iter = 5 -%}
-  {%- set max_results_per_iter = 1 -%}
+  {%- set max_iter = 10 -%}
+  {%- set max_results_per_iter = 10000 -%}
   {%- set max_total_n = max_results_per_iter * max_iter -%}
 
   {%- set sql -%}
