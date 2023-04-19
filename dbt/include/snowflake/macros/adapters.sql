@@ -151,44 +151,88 @@
 
 
 {% macro snowflake__list_relations_without_caching(schema_relation) %}
-  {%- set sql -%}
-    show terse objects in {{ schema_relation }}
-  {%- endset -%}
 
-  {%- set fallback_sql -%}
-     select
-      created as "created_on",
-      table_name as "name",
-      case when table_type = 'BASE TABLE' then 'table'
-           when table_type = 'VIEW' then 'view'
-           when table_type = 'MATERIALIZED VIEW' then 'materializedview'
-           when table_type = 'EXTERNAL TABLE' then 'external'
-           else table_type
-      end as "kind",
-      table_catalog as "database_name",
-      table_schema as "schema_name"
-    from  information_schema.tables
-    where table_schema ilike '{{ schema_relation.schema.lower() }}'
-      and table_catalog ilike '{{ schema_relation.database.lower() }}'
+  {%- set max_iter = 5 -%}
+  {%- set max_results_per_iter = 1 -%}
+  {%- set max_total_n = max_results_per_iter * max_iter -%}
+
+  {%- set sql -%}
+    show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }}
   {%- endset -%}
 
   {%- set result = run_query(sql) -%}
-  {% set maximum = 10000 %}
-  {% if (result | length) >= maximum %}
-    {% set msg %}
-      Too many objects in schema  {{ schema_relation }}! dbt can only get
-      information about schemas with fewer than {{ maximum }} objects using
-      the "show terse objects" command.
+  {%- set n = (result | length) -%}
+  {%- set counts_array = [n] -%}
 
-      Falling back to querying the Snowflake information schema directly.
+  {% if n >= max_results_per_iter %}
 
-      To improve performance, we recommend confirming all tables and
-      views in {{ schema_relation}} are current.
+    {# cant update a variable in the context of a loop, so sticking in an array instead #}
+    {% set last_values_array = [] %}
+    {% set paginated_results_array = [] %}
 
-    {% endset %}
+    {# get the last value from the name column #}
+    {% do last_values_array.append(result.columns[1].values()[-1]) %}
 
-    {{ log(msg, info=true) }}
-    {%- set result = run_query(fallback_sql) %}
+    {% for _ in range(1, (max_iter + 1) ) %}
+
+      {#
+        terminating condition: At some point the user needs to be reasonable with how
+        many objects are contained in their schemas
+      #}
+
+      {%- if loop.index == max_iter -%}
+
+        {%- set msg -%}
+
+           dbt will list a maximum of {{ max_total_n }} objects in schema {{ schema_relation }}.
+           Your schema exceeds this limit. Please contact support@getdbt.com for troubleshooting tips,
+           or review and reduce the number of objects contained.
+
+        {%- endset -%}
+
+        {% do exceptions.raise_compiler_error(msg) %}
+
+      {%- endif -%}
+
+      {%- set last_value = last_values_array[-1] %}
+      {%- set paginated_sql -%}
+         show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }} from '{{ last_value }}'
+      {%- endset -%}
+
+      {%- set paginated_result = run_query(paginated_sql) %}
+      {%- set paginated_n = (paginated_result | length) -%}
+      {%- do paginated_results_array.append(paginated_result) -%}
+      {%- do counts_array.append( (counts_array[-1] + paginated_n) ) -%}
+
+      {#  add to the last_values_array before continuing the loop #}
+      {%- do last_values_array.append(paginated_result.columns[1].values()[-1]) -%}
+
+      {# terminating condition: paginated_n < max_results_per_iter means we reached the end #}
+      {%- if paginated_n < max_results_per_iter -%}
+
+         {#
+           concatenate all the query results into one before returning
+           this LOOKS like it will duplicate the values in result, but
+           it does not because of how the agate.Table.merge operation works.
+         #}
+         {%- set final_results_array = [result] + paginated_results_array -%}
+         {%- set result = result.merge(final_results_array) -%}
+
+         {%- break -%}
+
+      {#
+         terminating condition: we have EXACTLY max_results_per_iter * max_iter objects
+      #}
+      {%- elif counts_array[-1] == max_total_n -%}
+
+         {%- set final_results_array = [result] + paginated_results_array -%}
+         {%- set result = result.merge(final_results_array) -%}
+
+         {%- break -%}
+
+      {%- endif -%}
+
+    {%- endfor -%}
 
   {% endif %}
   {%- do return(result) -%}
