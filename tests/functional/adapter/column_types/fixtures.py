@@ -1,4 +1,4 @@
-_MODEL_SQL ="""
+_MODEL_SQL = """
 select
     1::smallint as smallint_col,
     2::int as int_col,

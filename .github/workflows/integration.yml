@@ -89,6 +89,7 @@ jobs:
             snowflake:
               - 'dbt/**'
               - 'tests/**'
+              - 'dev-requirements.txt'
       - name: Generate integration test matrix
         id: generate-matrix
         uses: actions/github-script@v4

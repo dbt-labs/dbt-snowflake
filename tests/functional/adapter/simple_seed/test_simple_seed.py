@@ -5,7 +5,6 @@ from dbt.tests.util import run_dbt
 
 
 class TestSimpleBigSeedBatched(SeedConfigBase):
-
     @pytest.fixture(scope="class")
     def seeds(self):
         seed_data = ["seed_id"]

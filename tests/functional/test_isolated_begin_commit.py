@@ -16,7 +16,7 @@ my_macro_sql = """
     {#-- This is a bad pattern! Made obsolete by changes in v0.21 + v1.2 --#}
     {% do run_query('begin;') %}
     {% set query %}
-       insert into {{ this }} values (2, 'red', current_timestamp); 
+       insert into {{ this }} values (2, 'red', current_timestamp);
     {% endset %}
     {% do run_query(query) %}
     {% do run_query('commit;') %}
@@ -39,6 +39,6 @@ class TestModelWarehouse:
 
     def test_isolated_begin_commit(self, project):
         # this should succeed / avoid raising an error
-        results, log_output = run_dbt_and_capture(['run'])
+        results, log_output = run_dbt_and_capture(["run"])
         # but we should see a warning in the logs
         assert "WARNING" in log_output and "Explicit transactional logic" in log_output

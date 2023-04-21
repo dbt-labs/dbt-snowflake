@@ -17,7 +17,6 @@ from dbt.tests.adapter.basic.expected_catalog import base_expected_catalog, no_s
 from tests.functional.adapter.expected_stats import snowflake_stats
 
 
-
 class TestSimpleMaterializationsSnowflake(BaseSimpleMaterializations):
     pass
 
@@ -59,10 +58,11 @@ class TestBaseAdapterMethodSnowflake(BaseAdapterMethod):
     def equal_tables(self):
         return ["MODEL", "EXPECTED"]
 
+
 class TestDocsGenerateSnowflake(BaseDocsGenerate):
     @pytest.fixture(scope="class")
     def get_role(self, project):
-        return project.run_sql('select current_role()', fetch='one')[0]
+        return project.run_sql("select current_role()", fetch="one")[0]
 
     @pytest.fixture(scope="class")
     def expected_catalog(self, project, get_role):
