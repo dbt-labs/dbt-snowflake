@@ -1,7 +1,0 @@
-kind: Fixes
-body: Respect quoting config in dbt-py models
-time: 2023-01-16T12:40:31.919631+01:00
-custom:
-  Author: jtcohen6
-  Issue: "330"
-  PR: "399"
