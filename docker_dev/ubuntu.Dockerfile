@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:kinetic
 
 # default to py3.11, this can be overridden at build, e.g. `docker build ... --build-arg version=3.10`
 ARG version=3.11
