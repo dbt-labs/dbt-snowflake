@@ -150,10 +150,8 @@
 {% endmacro %}
 
 
-{% macro snowflake__list_relations_without_caching(schema_relation) %}
+{% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
 
-  {%- set max_iter = 10 -%}
-  {%- set max_results_per_iter = 10000 -%}
   {%- set max_total_n = max_results_per_iter * max_iter -%}
 
   {%- set sql -%}
@@ -163,12 +161,12 @@
   {%- set result = run_query(sql) -%}
   {%- set n = (result | length) -%}
   {%- set counts_array = [n] -%}
+  {%- set paginated_results_array = [] -%}
 
   {% if n >= max_results_per_iter %}
 
     {# cant update a variable in the context of a loop, so sticking in an array instead #}
     {% set last_values_array = [] %}
-    {% set paginated_results_array = [] %}
 
     {# get the last value from the name column #}
     {% do last_values_array.append(result.columns[1].values()[-1]) %}
@@ -215,18 +213,12 @@
            this LOOKS like it will duplicate the values in result, but
            it does not because of how the agate.Table.merge operation works.
          #}
-         {%- set final_results_array = [result] + paginated_results_array -%}
-         {%- set result = result.merge(final_results_array) -%}
-
          {%- break -%}
 
       {#
          terminating condition: we have EXACTLY max_results_per_iter * max_iter objects
       #}
       {%- elif counts_array[-1] == max_total_n -%}
-
-         {%- set final_results_array = [result] + paginated_results_array -%}
-         {%- set result = result.merge(final_results_array) -%}
 
          {%- break -%}
 
@@ -235,7 +227,11 @@
     {%- endfor -%}
 
   {% endif %}
+
+  {%- set final_results_array = [result] + paginated_results_array -%}
+  {%- set result = result.merge(final_results_array) -%}
   {%- do return(result) -%}
+
 {% endmacro %}
 
 
