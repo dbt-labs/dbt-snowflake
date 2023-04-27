@@ -1,6 +1,0 @@
-kind: Fixes
-body: Repair accidental changes to dev-requirements
-time: 2023-04-11T14:42:44.892974-04:00
-custom:
-  Author: peterallenwebb
-  Issue: "558"

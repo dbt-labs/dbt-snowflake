@@ -1,6 +1,0 @@
-kind: Fixes
-body: Fix unset query tag in view materialization
-time: 2023-02-08T21:03:26.426789Z
-custom:
-  Author: NiallRees
-  Issue: "456"
