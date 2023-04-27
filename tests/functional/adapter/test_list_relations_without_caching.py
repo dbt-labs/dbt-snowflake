@@ -89,4 +89,4 @@ class TestListRelationsWithoutCaching:
             parsed_logs = parse_json_logs(log_output)
             n_relations = find_result_in_parsed_logs(parsed_logs, "n_relations")
 
-            assert n_relations == "n_relations: 101"
+            assert n_relations == f"n_relations: {NUM_EXPECTED_RELATIONS}"
