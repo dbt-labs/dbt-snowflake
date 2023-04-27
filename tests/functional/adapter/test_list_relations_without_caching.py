@@ -3,8 +3,21 @@ import pytest
 import json
 from dbt.tests.util import run_dbt, run_dbt_and_capture
 
+# Testing rationale:
+# - snowflake SHOW TERSE OBJECTS command returns at max 10K objects in a single call
+# - when dbt attempts to write into a scehma with more than 10K objects, compilation will fail
+#   unless we paginate the result
+# - however, testing this process is difficult at a full scale of 10K actual objects populated
+#   into a fresh testing schema
+# - accordingly, we create a smaller set of views and test the looping iteration logic in
+#   smaller chunks
+
 NUM_VIEWS = 100
 NUM_EXPECTED_RELATIONS = 1 + NUM_VIEWS
+
+# these are arguments to the macro which lists all relations in a target schema
+MAX_ITER = 11
+MAX_RESULTS_PER_ITER = 10
 
 TABLE_BASE_SQL = """
 {{ config(materialized='table') }}
