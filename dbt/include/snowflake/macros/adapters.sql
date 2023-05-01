@@ -208,11 +208,6 @@
       {# terminating condition: paginated_n < max_results_per_iter means we reached the end #}
       {%- if paginated_n < max_results_per_iter -%}
 
-         {#
-           concatenate all the query results into one before returning
-           this LOOKS like it will duplicate the values in result, but
-           it does not because of how the agate.Table.merge operation works.
-         #}
          {%- break -%}
 
       {#
