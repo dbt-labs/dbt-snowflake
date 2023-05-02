@@ -107,7 +107,7 @@ footerFormat: |
           {{- else }}
             {{- $changes := splitList " " $change.Custom.Issue }}
             {{- range $issueNbr := $changes }}
-              {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-spark/issues/nbr)" | replace "nbr" $issueNbr }}
+              {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-snowflake/issues/nbr)" | replace "nbr" $issueNbr }}
               {{- $IssueList = append $IssueList $changeLink  }}
             {{- end -}}
           {{- end }}
