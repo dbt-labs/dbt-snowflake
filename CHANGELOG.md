@@ -50,16 +50,16 @@
 - Update `snowflake-connector-python` to 3.0 to address CVE-2022-42965 ([#476](https://github.com/dbt-labs/dbt-snowflake/pull/476))
 
 ### Contributors
-- [@NiallRees](https://github.com/NiallRees) ([#456](https://github.com/dbt-labs/dbt-spark/issues/456))
-- [@b-per](https://github.com/b-per) ([#365](https://github.com/dbt-labs/dbt-spark/issues/365), [#492](https://github.com/dbt-labs/dbt-spark/issues/492))
-- [@dataders](https://github.com/dataders) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331), [#374](https://github.com/dbt-labs/dbt-spark/issues/374))
-- [@dave-connors-3](https://github.com/dave-connors-3) ([#410](https://github.com/dbt-labs/dbt-spark/issues/410))
-- [@goFrendiAsgard](https://github.com/goFrendiAsgard) ([#443](https://github.com/dbt-labs/dbt-spark/issues/443))
-- [@jayhale](https://github.com/jayhale) ([#291](https://github.com/dbt-labs/dbt-spark/issues/291))
-- [@joshuataylor](https://github.com/joshuataylor) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331), [#201](https://github.com/dbt-labs/dbt-spark/issues/201))
-- [@kadekillary](https://github.com/kadekillary) ([#344](https://github.com/dbt-labs/dbt-spark/issues/344))
-- [@kevinneville](https://github.com/kevinneville) ([#302](https://github.com/dbt-labs/dbt-spark/issues/302))
-- [@surbias](https://github.com/surbias) ([#251](https://github.com/dbt-labs/dbt-spark/issues/251), [#466](https://github.com/dbt-labs/dbt-snowflake/pull/466))
+- [@NiallRees](https://github.com/NiallRees) ([#456](https://github.com/dbt-labs/dbt-snowflake/issues/456))
+- [@b-per](https://github.com/b-per) ([#365](https://github.com/dbt-labs/dbt-snowflake/issues/365), [#492](https://github.com/dbt-labs/dbt-snowflake/issues/492))
+- [@dataders](https://github.com/dataders) ([#331](https://github.com/dbt-labs/dbt-snowflake/issues/331), [#374](https://github.com/dbt-labs/dbt-snowflake/issues/374))
+- [@dave-connors-3](https://github.com/dave-connors-3) ([#410](https://github.com/dbt-labs/dbt-snowflake/issues/410))
+- [@goFrendiAsgard](https://github.com/goFrendiAsgard) ([#443](https://github.com/dbt-labs/dbt-snowflake/issues/443))
+- [@jayhale](https://github.com/jayhale) ([#291](https://github.com/dbt-labs/dbt-snowflake/issues/291))
+- [@joshuataylor](https://github.com/joshuataylor) ([#331](https://github.com/dbt-labs/dbt-snowflake/issues/331), [#201](https://github.com/dbt-labs/dbt-snowflake/issues/201))
+- [@kadekillary](https://github.com/kadekillary) ([#344](https://github.com/dbt-labs/dbt-snowflake/issues/344))
+- [@kevinneville](https://github.com/kevinneville) ([#302](https://github.com/dbt-labs/dbt-snowflake/issues/302))
+- [@surbias](https://github.com/surbias) ([#251](https://github.com/dbt-labs/dbt-snowflake/issues/251), [#466](https://github.com/dbt-labs/dbt-snowflake/pull/466))
 
 
 ## Previous Releases
