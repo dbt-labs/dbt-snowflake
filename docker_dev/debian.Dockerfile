@@ -1,4 +1,4 @@
-FROM debian:latest
+FROM debian:11
 
 # default to py3.11.1, this can be overridden at build, e.g. `docker build ... --build-arg version=3.10.8`
 ARG version=3.11.1
