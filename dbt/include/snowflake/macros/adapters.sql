@@ -150,28 +150,16 @@
 {% endmacro %}
 
 
-{% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
+{% macro snowflake__get_paginated_relations_array(max_iter, max_results_per_iter, max_total_results, schema_relation, total_count, watermark) %}
 
-  {%- set max_total_n = max_results_per_iter * max_iter -%}
+  {% set paginated_relations = [] %}
 
-  {%- set sql -%}
-    show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }}
-  {%- endset -%}
-
-  {%- set result = run_query(sql) -%}
-  {%- set n = (result | length) -%}
-  {%- set counts_array = [n] -%}
-  {%- set paginated_results_array = [] -%}
-
-  {% if n >= max_results_per_iter %}
-
-    {# cant update a variable in the context of a loop, so sticking in an array instead #}
-    {% set last_values_array = [] %}
-
-    {# get the last value from the name column #}
-    {% do last_values_array.append(result.columns[1].values()[-1]) %}
-
-    {% for _ in range(1, (max_iter + 1) ) %}
+  {#
+    set the range to max_iter - 1 because this function is called ONLY
+    when there are more results than max_results_per_iter from the
+    first SHOW TERSE OBJECTS call.
+  #}
+  {% for _ in range(1, (max_iter + 1)) %}
 
       {#
         terminating condition: At some point the user needs to be reasonable with how
@@ -179,52 +167,77 @@
       #}
 
       {%- if loop.index == max_iter -%}
-
         {%- set msg -%}
-
-           dbt will list a maximum of {{ max_total_n }} objects in schema {{ schema_relation }}.
+           dbt will list a maximum of {{ max_total_results }} objects in schema {{ schema_relation }}.
            Your schema exceeds this limit. Please contact support@getdbt.com for troubleshooting tips,
            or review and reduce the number of objects contained.
-
         {%- endset -%}
 
         {% do exceptions.raise_compiler_error(msg) %}
-
       {%- endif -%}
 
-      {%- set last_value = last_values_array[-1] %}
       {%- set paginated_sql -%}
-         show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }} from '{{ last_value }}'
+         show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
       {%- endset -%}
 
       {%- set paginated_result = run_query(paginated_sql) %}
       {%- set paginated_n = (paginated_result | length) -%}
-      {%- do paginated_results_array.append(paginated_result) -%}
-      {%- do counts_array.append( (counts_array[-1] + paginated_n) ) -%}
-
-      {#  add to the last_values_array before continuing the loop #}
-      {%- do last_values_array.append(paginated_result.columns[1].values()[-1]) -%}
-
-      {# terminating condition: paginated_n < max_results_per_iter means we reached the end #}
-      {%- if paginated_n < max_results_per_iter -%}
-
-         {%- break -%}
 
       {#
-         terminating condition: we have EXACTLY max_results_per_iter * max_iter objects
+        terminating condition: if there are 0 records in the result we reached
+        the end exactly on the previous iteration
       #}
-      {%- elif counts_array[-1] == max_total_n -%}
-
-         {%- break -%}
-
+      {%- if paginated_n == 0 -%}
+        {%- break -%}
       {%- endif -%}
 
+      {%- do paginated_relations.append(paginated_result) -%}
+      {%- set total_count.sum = total_count.sum + paginated_n %}
+      {% set watermark.table_name = paginated_result.columns[1].values()[-1] %}
+
+      {#
+        terminating condition: paginated_n < max_results_per_iter means we reached the end
+      #}
+      {%- if paginated_n < max_results_per_iter -%}
+         {%- break -%}
+      {%- endif -%}
     {%- endfor -%}
+
+  {{ return(paginated_relations) }}
+
+{% endmacro %}
+
+{% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
+
+  {%- set max_total_results = max_results_per_iter * max_iter -%}
+
+  {%- set sql -%}
+    show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }}
+  {%- endset -%}
+
+  {%- set result = run_query(sql) -%}
+
+  {%- set n = (result | length) -%}
+  {%- set total_count = namespace(sum=n) -%}
+  {%- set watermark = namespace(table_name=result.columns[1].values()[-1]) -%}
+  {%- set paginated = namespace(result=[]) -%}
+
+  {% if n >= max_results_per_iter %}
+
+    {% set paginated.result = snowflake__get_paginated_relations_array(
+         max_iter,
+         max_results_per_iter,
+         max_total_results,
+         schema_relation,
+         total_count,
+         watermark
+       )
+    %}
 
   {% endif %}
 
-  {%- set final_results_array = [result] + paginated_results_array -%}
-  {%- set result = result.merge(final_results_array) -%}
+  {%- set all_results_array = [result] + paginated.result -%}
+  {%- set result = result.merge(all_results_array) -%}
   {%- do return(result) -%}
 
 {% endmacro %}
