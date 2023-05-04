@@ -15,10 +15,6 @@ from dbt.tests.util import run_dbt, run_dbt_and_capture
 NUM_VIEWS = 100
 NUM_EXPECTED_RELATIONS = 1 + NUM_VIEWS
 
-# these are arguments to the macro which lists all relations in a target schema
-MAX_ITER = 11
-MAX_RESULTS_PER_ITER = 10
-
 TABLE_BASE_SQL = """
 {{ config(materialized='table') }}
 
@@ -34,6 +30,12 @@ MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING = """
     {% set relation_list_result = snowflake__list_relations_without_caching(schema_relation, max_iter=11, max_results_per_iter=10) %}
     {% set n_relations = relation_list_result | length %}
     {{ log("n_relations: " ~ n_relations) }}
+{% endmacro %}
+"""
+
+MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING_RAISE_ERROR = """
+{% macro validate_list_relations_without_caching_raise_error(schema_relation) %}
+    {{ snowflake__list_relations_without_caching(schema_relation, max_iter=33, max_results_per_iter=3) }}
 {% endmacro %}
 """
 
@@ -62,6 +64,17 @@ def find_result_in_parsed_logs(parsed_logs, result_name):
     )
 
 
+def find_exc_info_in_parsed_logs(parsed_logs, exc_info_name):
+    return next(
+        (
+            item["data"]["exc_info"]
+            for item in parsed_logs
+            if exc_info_name in item["data"].get("exc_info", "exc_info")
+        ),
+        False,
+    )
+
+
 class TestListRelationsWithoutCaching:
     @pytest.fixture(scope="class")
     def models(self):
@@ -74,14 +87,49 @@ class TestListRelationsWithoutCaching:
     @pytest.fixture(scope="class")
     def macros(self):
         return {
-            "validate_list_relations_without_caching.sql": MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING
+            "validate_list_relations_without_caching.sql": MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING,
+            "validate_list_relations_without_caching_raise_error.sql": MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING_RAISE_ERROR,
         }
 
-    def test__snowflake__list_relations_without_caching(self, project):
-        # purpose of the first run is to create the replicated views in the target schema
-        _ = run_dbt(["run"])
+    def test__snowflake__list_relations_without_caching_termination(self, project):
+        """
+        validates that we do NOT trigger pagination logic snowflake__list_relations_without_caching
+        macro when there are fewer than max_results_per_iter relations in the target schema
+        """
 
-        # there is probably a better way to get the database and schema than this
+        _ = run_dbt(["run", "-s", "my_model_base"])
+
+        database = project.database
+        schemas = project.created_schemas
+
+        for schema in schemas:
+            schema_relation = f"{database}.{schema}"
+            kwargs = {"schema_relation": schema_relation}
+            _, log_output = run_dbt_and_capture(
+                [
+                    "--debug",
+                    "--log-format=json",
+                    "run-operation",
+                    "validate_list_relations_without_caching",
+                    "--args",
+                    str(kwargs),
+                ]
+            )
+
+            parsed_logs = parse_json_logs(log_output)
+            n_relations = find_result_in_parsed_logs(parsed_logs, "n_relations")
+
+            assert n_relations == "n_relations: 1"
+
+    def test__snowflake__list_relations_without_caching(self, project):
+        """
+        validates pagination logic in snowflake__list_relations_without_caching macro counts
+        the correct number of objects in the target schema when having to make multiple looped
+        calls of SHOW TERSE OBJECTS.
+        """
+        # purpose of the first run is to create the replicated views in the target schema
+        _ = run_dbt(["run", "--exclude", "my_model_base"])
+
         database = project.database
         schemas = project.created_schemas
 
@@ -103,3 +151,30 @@ class TestListRelationsWithoutCaching:
             n_relations = find_result_in_parsed_logs(parsed_logs, "n_relations")
 
             assert n_relations == f"n_relations: {NUM_EXPECTED_RELATIONS}"
+
+    def test__snowflake__list_relations_without_caching_raise_error(self, project):
+        """
+        validates pagination logic terminates and raises a compilation error
+        when exceeding the limit of how many results to return.
+        """
+        database = project.database
+        schemas = project.created_schemas
+
+        for schema in schemas:
+            schema_relation = f"{database}.{schema}"
+            kwargs = {"schema_relation": schema_relation}
+            _, log_output = run_dbt_and_capture(
+                [
+                    "--debug",
+                    "--log-format=json",
+                    "run-operation",
+                    "validate_list_relations_without_caching_raise_error",
+                    "--args",
+                    str(kwargs),
+                ],
+                expect_pass=False,
+            )
+
+            parsed_logs = parse_json_logs(log_output)
+            traceback = find_exc_info_in_parsed_logs(parsed_logs, "Traceback")
+            assert "dbt will list a maximum of 99 objects in schema " in traceback
