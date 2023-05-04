@@ -156,6 +156,21 @@
 
   {% for _ in range(0, max_iter) %}
 
+      {%- set paginated_sql -%}
+         show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
+      {%- endset -%}
+
+      {%- set paginated_result = run_query(paginated_sql) %}
+      {%- set paginated_n = (paginated_result | length) -%}
+
+      {#
+        terminating condition: if there are 0 records in the result we reached
+        the end exactly on the previous iteration
+      #}
+      {%- if paginated_n == 0 -%}
+        {%- break -%}
+      {%- endif -%}
+
       {#
         terminating condition: At some point the user needs to be reasonable with how
         many objects are contained in their schemas. Since there was already
@@ -171,21 +186,6 @@
         {%- endset -%}
 
         {% do exceptions.raise_compiler_error(msg) %}
-      {%- endif -%}
-
-      {%- set paginated_sql -%}
-         show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
-      {%- endset -%}
-
-      {%- set paginated_result = run_query(paginated_sql) %}
-      {%- set paginated_n = (paginated_result | length) -%}
-
-      {#
-        terminating condition: if there are 0 records in the result we reached
-        the end exactly on the previous iteration
-      #}
-      {%- if paginated_n == 0 -%}
-        {%- break -%}
       {%- endif -%}
 
       {%- do paginated_relations.append(paginated_result) -%}
