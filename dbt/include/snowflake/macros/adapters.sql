@@ -154,16 +154,13 @@
 
   {% set paginated_relations = [] %}
 
-  {#
-    set the range to max_iter - 1 because this function is called ONLY
-    when there are more results than max_results_per_iter from the
-    first SHOW TERSE OBJECTS call.
-  #}
-  {% for _ in range(1, (max_iter + 1)) %}
+  {% for _ in range(0, max_iter) %}
 
       {#
         terminating condition: At some point the user needs to be reasonable with how
-        many objects are contained in their schemas
+        many objects are contained in their schemas. Since there was already
+        one iteration before attempting pagination, loop.index == max_iter means
+        the limit has been surpassed.
       #}
 
       {%- if loop.index == max_iter -%}
