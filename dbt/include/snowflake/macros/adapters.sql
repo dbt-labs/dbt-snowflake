@@ -150,7 +150,7 @@
 {% endmacro %}
 
 
-{% macro snowflake__get_paginated_relations_array(max_iter, max_results_per_iter, max_total_results, schema_relation, total_count, watermark) %}
+{% macro snowflake__get_paginated_relations_array(max_iter, max_results_per_iter, max_total_results, schema_relation, watermark) %}
 
   {% set paginated_relations = [] %}
 
@@ -189,7 +189,6 @@
       {%- endif -%}
 
       {%- do paginated_relations.append(paginated_result) -%}
-      {%- set total_count.sum = total_count.sum + paginated_n %}
       {% set watermark.table_name = paginated_result.columns[1].values()[-1] %}
 
       {#
@@ -215,7 +214,6 @@
   {%- set result = run_query(sql) -%}
 
   {%- set n = (result | length) -%}
-  {%- set total_count = namespace(sum=n) -%}
   {%- set watermark = namespace(table_name=result.columns[1].values()[-1]) -%}
   {%- set paginated = namespace(result=[]) -%}
 
@@ -226,7 +224,6 @@
          max_results_per_iter,
          max_total_results,
          schema_relation,
-         total_count,
          watermark
        )
     %}
