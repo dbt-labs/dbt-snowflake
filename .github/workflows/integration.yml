@@ -63,13 +63,13 @@ jobs:
     steps:
       - name: Check out the repository (non-PR)
         if: github.event_name != 'pull_request_target'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
 
       - name: Check out the repository (PR)
         if: github.event_name == 'pull_request_target'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha }}
@@ -92,7 +92,7 @@ jobs:
               - 'tests/**'
       - name: Generate integration test matrix
         id: generate-matrix
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         env:
           CHANGES: ${{ steps.get-changes.outputs.changes }}
         with:
@@ -130,7 +130,7 @@ jobs:
     steps:
       - name: Check out the repository
         if: github.event_name != 'pull_request_target'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
 
@@ -138,7 +138,7 @@ jobs:
       # this is necessary for the `pull_request_target` event
       - name: Check out the repository (PR)
         if: github.event_name == 'pull_request_target'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha }}
@@ -175,7 +175,7 @@ jobs:
           DBT_TEST_USER_3: dbt_test_role_3
         run: tox
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: always()
         with:
           name: logs
@@ -186,7 +186,7 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H_%M_%S')" #no colons allowed for artifacts
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: always()
         with:
           name: integration_results_${{ matrix.python-version }}_${{ matrix.os }}_${{ matrix.adapter }}-${{ steps.date.outputs.date }}.csv
