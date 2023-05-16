@@ -1,8 +1,8 @@
 {% materialization dynamic_table, default %}
     {% set existing_relation = load_cached_relation(this) %}
-    {% set target_relation = this.incorporate(type=this.Table) %}
+    {% set target_relation = this.incorporate(type=this.DynamicTable) %}
     {% set intermediate_relation = make_intermediate_relation(target_relation) %}
-    {% set backup_relation_type = target_relation.Table if existing_relation is none else existing_relation.type %}
+    {% set backup_relation_type = target_relation.DynamicTable if existing_relation is none else existing_relation.type %}
     {% set backup_relation = make_backup_relation(target_relation, backup_relation_type) %}
 
     {{ _setup(backup_relation, intermediate_relation, pre_hooks) }}
@@ -56,7 +56,7 @@
     -- determine the scenario we're in: create, full_refresh, alter, refresh data
     {% if existing_relation is none %}
         {% set build_sql = snowflake__get_create_dynamic_table_as_sql(target_relation, sql) %}
-    {% elif full_refresh_mode or not existing_relation.is_table %}
+    {% elif full_refresh_mode or not existing_relation.is_dynamic_table %}
         {% set build_sql = snowflake__get_replace_dynamic_table_as_sql(target_relation, sql, existing_relation, backup_relation, intermediate_relation) %}
     {% else %}
 
