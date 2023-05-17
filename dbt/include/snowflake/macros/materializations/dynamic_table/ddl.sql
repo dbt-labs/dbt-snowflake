@@ -1,0 +1,36 @@
+{% macro snowflake__get_alter_dynamic_table_as_sql(
+    relation,
+    configuration_changes,
+    sql,
+    existing_relation,
+    backup_relation,
+    intermediate_relation
+) -%}
+    {{- log('Applying ALTER to: ' ~ relation) -}}
+    {{- snowflake__get_replace_dynamic_table_as_sql(relation, sql, existing_relation, backup_relation, intermediate_relation) -}}
+{%- endmacro %}
+
+
+{% macro snowflake__get_create_dynamic_table_as_sql(relation, sql) -%}
+    {{- log('Applying CREATE to: ' ~ relation) -}}
+    {{- get_create_view_as_sql(relation, sql) -}}
+{%- endmacro %}
+
+
+{% macro snowflake__get_replace_dynamic_table_as_sql(relation, sql, existing_relation, backup_relation, intermediate_relation) -%}
+    {{- log('Applying REPLACE to: ' ~ relation) -}}
+    {{ drop_relation(existing_relation) }}
+    {{ snowflake__get_create_dynamic_table_as_sql(relation, sql) }}
+{%- endmacro %}
+
+
+{% macro snowflake__refresh_dynamic_table(relation) -%}
+    {{- log('Applying REFRESH to: ' ~ relation) -}}
+    {{ '' }}
+{%- endmacro %}
+
+
+{% macro snowflake__get_dynamic_table_configuration_changes(relation, new_config) -%}
+    {{- log('Determining configuration changes on: ' ~ relation) -}}
+    {%- do return({}) -%}
+{%- endmacro %}
