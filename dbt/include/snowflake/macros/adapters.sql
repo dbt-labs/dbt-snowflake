@@ -372,3 +372,14 @@
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
   {%- endcall %}
 {% endmacro %}
+
+
+{% macro snowflake__drop_relation(relation) -%}
+    {%- if relation.is_dynamic_table -%}
+        {% call statement('drop_relation', auto_begin=False) -%}
+            {{ drop_view(relation) }}
+        {%- endcall %}
+    {%- else -%}
+        {{- default__drop_relation(relation) -}}
+    {%- endif -%}
+{% endmacro %}

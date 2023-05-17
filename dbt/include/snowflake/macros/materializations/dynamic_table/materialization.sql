@@ -56,7 +56,7 @@
     -- determine the scenario we're in: create, full_refresh, alter, refresh data
     {% if existing_relation is none %}
         {% set build_sql = snowflake__get_create_dynamic_table_as_sql(target_relation, sql) %}
-    {% elif full_refresh_mode or not existing_relation.is_dynamic_table %}
+    {% elif full_refresh_mode or not existing_relation.is_view %}
         {% set build_sql = snowflake__get_replace_dynamic_table_as_sql(target_relation, sql, existing_relation, backup_relation, intermediate_relation) %}
     {% else %}
 

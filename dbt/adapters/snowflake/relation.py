@@ -1,13 +1,12 @@
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Optional
 
 from dbt.adapters.base.relation import BaseRelation, Policy
+from dbt.dataclass_schema import StrEnum
 from dbt.utils import classproperty
-from dbt.exceptions import DbtRuntimeError
 
 
-class SnowflakeRelationType(Enum):
+class SnowflakeRelationType(StrEnum):
     Table = "table"
     View = "view"
     CTE = "cte"
@@ -34,11 +33,3 @@ class SnowflakeRelation(BaseRelation):
     @classproperty
     def DynamicTable(cls) -> str:
         return str(SnowflakeRelationType.DynamicTable)
-
-    @property
-    def is_materialized_view(self) -> bool:
-        raise DbtRuntimeError("Materialized Views are not supported for dbt-snowflake")
-
-    @classproperty
-    def MaterializedView(cls) -> str:
-        raise DbtRuntimeError("Materialized Views are not supported for dbt-snowflake")
