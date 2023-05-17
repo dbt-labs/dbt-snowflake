@@ -1,28 +1,40 @@
 import pytest
 
 from dbt.contracts.results import RunStatus
-from dbt.tests.util import relation_from_name
 from dbt.tests.adapter.materialized_view.base import run_model
-from dbt.tests.adapter.materialized_view.on_configuration_change import OnConfigurationChangeBase
 
-from tests.functional.adapter.dynamic_table_tests.test_basic import SnowflakeBase
+from tests.functional.adapter.dynamic_table_tests.fixtures import (
+    SnowflakeBase,
+    SnowflakeOnConfigurationChangeBase,
+)
 
 
-class SnowflakeOnConfigurationChangeBase(SnowflakeBase, OnConfigurationChangeBase):
-    @pytest.fixture(scope="function")
-    def configuration_changes(self, project):
-        pass
+class TestBasic(SnowflakeBase):
+    def test_relation_is_dynamic_table_on_initial_creation(self, project):
+        self.assert_relation_is_dynamic_table(project)
 
-    @pytest.fixture(scope="function")
-    def configuration_change_message(self, project):
-        # We need to do this because the default quote policy is overriden
-        # in `SnowflakeAdapter.list_relations_without_caching`; we wind up with
-        # an uppercase quoted name when supplied with a lowercase name with un-quoted quote policy.
-        relation = relation_from_name(project.adapter, self.base_materialized_view.name)
-        database, schema, name = str(relation).split(".")
-        relation_upper = f'"{database.upper()}"."{schema.upper()}"."{name.upper()}"'
-        return f"Determining configuration changes on: {relation_upper}"
+    def test_relation_is_dynamic_table_when_rerun(self, project):
+        run_model(self.base_dynamic_table.name)
+        self.assert_relation_is_dynamic_table(project)
 
+    def test_relation_is_dynamic_table_on_full_refresh(self, project):
+        run_model(self.base_dynamic_table.name, full_refresh=True)
+        self.assert_relation_is_dynamic_table(project)
+
+    def test_relation_is_dynamic_table_on_update(self, project):
+        run_model(self.base_dynamic_table.name, run_args=["--vars", "quoting: {identifier: True}"])
+        self.assert_relation_is_dynamic_table(project)
+
+    @pytest.mark.skip("Fails because stub uses traditional view")
+    def test_updated_base_table_data_only_shows_in_dynamic_table_after_rerun(self, project):
+        self.insert_records(project, self.inserted_records)
+        assert self.get_records(project) == self.starting_records
+
+        run_model(self.base_dynamic_table.name)
+        assert self.get_records(project) == self.starting_records + self.inserted_records
+
+
+class OnConfigurationChangeCommon(SnowflakeOnConfigurationChangeBase):
     def test_full_refresh_takes_precedence_over_any_configuration_changes(
         self, configuration_changes, replace_message, configuration_change_message
     ):
@@ -47,7 +59,7 @@ class SnowflakeOnConfigurationChangeBase(SnowflakeBase, OnConfigurationChangeBas
         )
 
 
-class TestOnConfigurationChangeApply(SnowflakeOnConfigurationChangeBase):
+class TestOnConfigurationChangeApply(OnConfigurationChangeCommon):
     on_configuration_change = "apply"
 
     @pytest.mark.skip("This fails because there are no changes in the stub")
@@ -63,7 +75,7 @@ class TestOnConfigurationChangeApply(SnowflakeOnConfigurationChangeBase):
         )
 
 
-class TestOnConfigurationChangeSkip(SnowflakeOnConfigurationChangeBase):
+class TestOnConfigurationChangeSkip(OnConfigurationChangeCommon):
     on_configuration_change = "skip"
 
     @pytest.mark.skip("This fails because there are no changes in the stub")
@@ -76,7 +88,7 @@ class TestOnConfigurationChangeSkip(SnowflakeOnConfigurationChangeBase):
         )
 
 
-class TestOnConfigurationChangeFail(SnowflakeOnConfigurationChangeBase):
+class TestOnConfigurationChangeFail(OnConfigurationChangeCommon):
     on_configuration_change = "fail"
 
     @pytest.mark.skip("This fails because there are no changes in the stub")
