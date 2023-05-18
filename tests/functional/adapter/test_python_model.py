@@ -5,7 +5,6 @@ from dbt.tests.adapter.python_model.test_python_model import (
     BasePythonIncrementalTests,
 )
 
-
 models__simple_python_model = """
 import pandas
 
@@ -121,11 +120,12 @@ class TestImportSnowflake:
 
 # https://github.com/dbt-labs/dbt-snowflake/issues/393 is notorious for being triggered on some
 # environments but not others. As of writing this, we don't know the true root cause. This test may
-# not fail on all systems.
-class TestCustomSchema:
+# not fail on all systems with problems regarding custom schema model configurations.
+class TestCustomSchemaWorks:
     @pytest.fixture(scope="class")
     def models(self):
         return {"custom_target_model.py": models__custom_target_model}
 
     def test_custom_target(self, project):
-        run_dbt()
+        results = run_dbt()
+        assert results[0].node.schema == f"{project.test_schema}_MY_CUSTOM_SCHEMA"
