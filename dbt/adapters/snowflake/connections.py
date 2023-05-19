@@ -226,11 +226,19 @@ class SnowflakeCredentials(Credentials):
             encoded_passphrase = None
 
         if self.private_key:
-            p_key = serialization.load_der_private_key(
-                base64.b64decode(self.private_key),
-                password=encoded_passphrase,
-                backend=default_backend(),
-            )
+            try:
+                p_key = serialization.load_der_private_key(
+                    base64.b64decode(self.private_key),
+                    password=encoded_passphrase,
+                    backend=default_backend(),
+                )
+            except ValueError as e:
+                logger.info("private key not in der format.  Trying pem.")
+                p_key = serialization.load_pem_private_key(
+                    base64.b64decode(self.private_key),
+                    password=encoded_passphrase,
+                    backend=default_backend(),
+                )
         elif self.private_key_path:
             with open(self.private_key_path, "rb") as key:
                 p_key = serialization.load_pem_private_key(
