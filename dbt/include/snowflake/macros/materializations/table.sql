@@ -47,6 +47,8 @@ def materialize(session, df, target_relation):
     if importlib.util.find_spec(package_name):
         import pandas
         if isinstance(df, pandas.core.frame.DataFrame):
+          session.use_database(target_relation.database)
+          session.use_schema(target_relation.schema)
           # session.write_pandas does not have overwrite function
           df = session.createDataFrame(df)
     {% set target_relation_name = resolve_model_name(target_relation) %}
