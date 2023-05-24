@@ -67,7 +67,8 @@ class TestChangingSchemaSnowflake:
     def models(self):
         return {
             "simple_python_model.py": models__simple_python_model
-            }
+        }
+
     def test_changing_schema(self,project):
         run_dbt(["run"])
         write_file(models__simple_python_model_v2, project.project_root + '/models', "simple_python_model.py")
@@ -78,7 +79,7 @@ USE_IMPORT_MODEL = """
 import sys
 from snowflake.snowpark.types import StructType, FloatType, StringType, StructField
 
-def model( dbt, session):
+def model(dbt, session):
 
     dbt.config(
         materialized='table',
