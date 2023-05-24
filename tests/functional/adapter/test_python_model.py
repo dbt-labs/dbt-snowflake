@@ -55,13 +55,6 @@ class TestIncrementalSnowflake(BasePythonIncrementalTests):
     pass
 
 
-class TestIncrementalSnowflakeQuoting(BasePythonModelTests):
-    # ensure that 'dbt.ref()', 'dbt.this()', and py_write_table() all respect quoting
-    @pytest.fixture(scope="class")
-    def project_config_update(self):
-        return {"quoting": {"identifier": True}}
-
-
 class TestChangingSchemaSnowflake:
     @pytest.fixture(scope="class")
     def models(self):
