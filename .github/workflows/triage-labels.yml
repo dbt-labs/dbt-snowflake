@@ -23,6 +23,7 @@ permissions:
 
 jobs:
   triage_label:
+    if: contains(github.event.issue.labels.*.name, 'awaiting_response')
     uses: dbt-labs/actions/.github/workflows/swap-labels.yml@main
     with:
       add_label: "triage"
