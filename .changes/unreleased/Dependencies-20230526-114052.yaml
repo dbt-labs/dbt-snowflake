@@ -1,0 +1,6 @@
+kind: Dependencies
+body: Exclude `snowflake-connector-python==3.0.4` due to missing wheel files
+time: 2023-05-26T11:40:52.914353-04:00
+custom:
+  Author: mikealfare
+  PR: "629"
