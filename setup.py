@@ -3,12 +3,6 @@ import os
 import sys
 import re
 
-# require python 3.7 or newer
-if sys.version_info < (3, 7):
-    print("Error: dbt does not support this version of Python.")
-    print("Please upgrade to Python 3.7 or higher.")
-    sys.exit(1)
-
 
 # require version of setuptools that supports find_namespace_packages
 from setuptools import setup
