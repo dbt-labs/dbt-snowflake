@@ -1,0 +1,6 @@
+kind: Dependencies
+body: Removed extra python version version check in setup.py.
+time: 2023-05-26T15:19:10.649472-05:00
+custom:
+  Author: DustinMoriarty
+  PR: "634"
