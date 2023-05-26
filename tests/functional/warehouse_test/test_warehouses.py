@@ -1,8 +1,5 @@
 import pytest
-from dbt.tests.util import (
-    run_dbt,
-    check_relations_equal
-)
+from dbt.tests.util import run_dbt, check_relations_equal
 
 import os
 
@@ -48,14 +45,18 @@ class TestModelWarehouse:
         }
 
     def test_snowflake_override_ok(self, project):
-        run_dbt([
-            'run',
-            '--models', 'override_warehouse', 'expected_warehouse',
-        ])
-        check_relations_equal(project.adapter, ['OVERRIDE_WAREHOUSE', 'EXPECTED_WAREHOUSE'])
+        run_dbt(
+            [
+                "run",
+                "--models",
+                "override_warehouse",
+                "expected_warehouse",
+            ]
+        )
+        check_relations_equal(project.adapter, ["OVERRIDE_WAREHOUSE", "EXPECTED_WAREHOUSE"])
 
     def test_snowflake_override_noexist(self, project):
-        run_dbt(['run', '--models', 'invalid_warehouse'], expect_pass=False)
+        run_dbt(["run", "--models", "invalid_warehouse"], expect_pass=False)
 
 
 class TestConfigWarehouse:
@@ -69,17 +70,23 @@ class TestConfigWarehouse:
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {
-            'config-version': 2,
-            'models': {
-                'test': {
-                    'snowflake_warehouse': os.getenv('SNOWFLAKE_TEST_ALT_WAREHOUSE', 'DBT_TEST_ALT'),
+            "config-version": 2,
+            "models": {
+                "test": {
+                    "snowflake_warehouse": os.getenv(
+                        "SNOWFLAKE_TEST_ALT_WAREHOUSE", "DBT_TEST_ALT"
+                    ),
                 },
             },
         }
 
     def test_snowflake_override_ok(self, project):
-        run_dbt([
-            'run',
-            '--models', 'override_warehouse', 'expected_warehouse',
-        ])
-        check_relations_equal(project.adapter, ['OVERRIDE_WAREHOUSE', 'EXPECTED_WAREHOUSE'])
+        run_dbt(
+            [
+                "run",
+                "--models",
+                "override_warehouse",
+                "expected_warehouse",
+            ]
+        )
+        check_relations_equal(project.adapter, ["OVERRIDE_WAREHOUSE", "EXPECTED_WAREHOUSE"])

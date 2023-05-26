@@ -3,22 +3,21 @@ from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
-from dbt.adapters.base.impl import AdapterConfig
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
 from dbt.adapters.base.meta import available
 from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
+
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.contracts.graph.manifest import Manifest
+from dbt.contracts.graph.nodes import ConstraintType
 from dbt.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt.utils import filter_null_values
-
-
-SNOWFLAKE_WAREHOUSE_MACRO_NAME = "snowflake_warehouse"
 
 
 @dataclass
@@ -40,6 +39,14 @@ class SnowflakeAdapter(SQLAdapter):
     ConnectionManager = SnowflakeConnectionManager
 
     AdapterSpecificConfigs = SnowflakeConfig
+
+    CONSTRAINT_SUPPORT = {
+        ConstraintType.check: ConstraintSupport.NOT_SUPPORTED,
+        ConstraintType.not_null: ConstraintSupport.ENFORCED,
+        ConstraintType.unique: ConstraintSupport.NOT_ENFORCED,
+        ConstraintType.primary_key: ConstraintSupport.NOT_ENFORCED,
+        ConstraintType.foreign_key: ConstraintSupport.NOT_ENFORCED,
+    }
 
     @classmethod
     def date_function(cls):
@@ -74,10 +81,8 @@ class SnowflakeAdapter(SQLAdapter):
             raise DbtRuntimeError("Could not get current warehouse: no results")
         return str(table[0][0])
 
-    def _use_warehouse(self, warehouse):
+    def _use_warehouse(self, warehouse: str):
         """Use the given warehouse. Quotes are never applied."""
-        kwargs = {"warehouse": warehouse}
-        warehouse = self.execute_macro(SNOWFLAKE_WAREHOUSE_MACRO_NAME, kwargs=kwargs)  # type: ignore
         self.execute("use warehouse {}".format(warehouse))
 
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:

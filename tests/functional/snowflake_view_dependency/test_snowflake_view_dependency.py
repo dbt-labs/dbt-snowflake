@@ -12,7 +12,6 @@ select * from {{ ref('base_table') }}
 """
 
 
-
 _MODELS__BASE_TABLE_SQL = """
 {{ config(materialized='table') }}
 select *
@@ -29,29 +28,26 @@ _SEEDS__PEOPLE_CSV = """id,name
 3,Connor
 """
 
+
 class TestSnowflakeLateBindingViewDependency:
     @pytest.fixture(scope="class")
     def models(self):
         return {
-            "dependent_model.sql":  _MODELS__DEPENDENT_MODEL_SQL,
-            "base_table.sql": _MODELS__BASE_TABLE_SQL
+            "dependent_model.sql": _MODELS__DEPENDENT_MODEL_SQL,
+            "base_table.sql": _MODELS__BASE_TABLE_SQL,
         }
 
     @pytest.fixture(scope="class")
     def seeds(self):
         return {"people.csv": _SEEDS__PEOPLE_CSV}
 
-
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {
-            'seeds': {
-                'quote_columns': False,
+            "seeds": {
+                "quote_columns": False,
             },
-            'quoting': {
-                'schema': False,
-                'identifier': False
-            }
+            "quoting": {"schema": False, "identifier": False},
         }
 
     @pytest.fixture(scope="class", autouse=True)
@@ -97,18 +93,12 @@ class TestSnowflakeLateBindingViewDependency:
     def test__snowflake__changed_table_schema_for_downstream_view_changed_to_table(self, project):
         run_dbt(["seed"])
         results = run_dbt(["run"])
-        expected_types = {
-            'base_table': 'table',
-            'dependent_model': 'view'
-        }
+        expected_types = {"base_table": "table", "dependent_model": "view"}
         # ensure that the model actually was materialized as a view
         self.check_result(project, results, expected_types)
         results = run_dbt(["run", "--vars", "{add_table_field: true, dependent_type: table}"])
         assert len(results) == 2
         check_relations_equal(project.adapter, ["BASE_TABLE", "DEPENDENT_MODEL"])
-        expected_types = {
-            'base_table': 'table',
-            'dependent_model': 'table'
-        }
+        expected_types = {"base_table": "table", "dependent_model": "table"}
         # ensure that the model actually was materialized as a table
         self.check_result(project, results, expected_types)

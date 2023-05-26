@@ -1,10 +1,7 @@
 import json
 import os
-import pytest
 
-from dbt.tests.util import (
-    run_dbt
-)
+from dbt.tests.util import run_dbt
 
 from dbt.tests.adapter.persist_docs.test_persist_docs import (
     BasePersistDocs,
@@ -19,7 +16,10 @@ class TestPersistDocs(BasePersistDocs):
             assert '"with double quotes"' in comment
             assert """'''abc123'''""" in comment
             assert "\n" in comment
-            assert "Some [$]lbl[$] labeled [$]lbl[$] and [$][$] unlabeled [$][$] dollar-quoting" in comment
+            assert (
+                "Some [$]lbl[$] labeled [$]lbl[$] and [$][$] unlabeled [$][$] dollar-quoting"
+                in comment
+            )
             assert "/* comment */" in comment
             if os.name == "nt":
                 assert "--\r\n" in comment or "--\n" in comment

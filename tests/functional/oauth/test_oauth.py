@@ -33,10 +33,7 @@ integration the same, just the refresh token changed)
 
 import pytest
 import os
-from dbt.tests.util import (
-    run_dbt,
-    check_relations_equal
-)
+from dbt.tests.util import run_dbt, check_relations_equal
 
 
 _MODELS__MODEL_1_SQL = """
@@ -64,7 +61,6 @@ select 2 as id
 
 
 class TestSnowflakeOauth:
-
     @pytest.fixture(scope="class", autouse=True)
     def dbt_profile_target(self):
         return {

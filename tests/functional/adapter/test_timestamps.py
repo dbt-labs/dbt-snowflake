@@ -1,4 +1,3 @@
-import imp
 import pytest
 from dbt.tests.adapter.utils.test_timestamps import BaseCurrentTimestamps
 
@@ -17,10 +16,10 @@ class TestCurrentTimestampSnowflake(BaseCurrentTimestamps):
     @pytest.fixture(scope="class")
     def expected_schema(self):
         return {
-                "CURRENT_TIMESTAMP": "TIMESTAMP_TZ",
-                "CURRENT_TIMESTAMP_IN_UTC_BACKCOMPAT": "TIMESTAMP_NTZ",
-                "CURRENT_TIMESTAMP_BACKCOMPAT": "TIMESTAMP_NTZ",
-            }
+            "CURRENT_TIMESTAMP": "TIMESTAMP_TZ",
+            "CURRENT_TIMESTAMP_IN_UTC_BACKCOMPAT": "TIMESTAMP_NTZ",
+            "CURRENT_TIMESTAMP_BACKCOMPAT": "TIMESTAMP_NTZ",
+        }
 
     @pytest.fixture(scope="class")
     def expected_sql(self):

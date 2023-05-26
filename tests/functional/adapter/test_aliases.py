@@ -25,5 +25,5 @@ class TestAliasesSnowflake(BaseAliases):
     def macros(self):
         return {
             "snowflake_cast.sql": MACROS__SNOWFLAKE_CAST_SQL,
-            "expect_value.sql": MACROS__EXPECT_VALUE_SQL
+            "expect_value.sql": MACROS__EXPECT_VALUE_SQL,
         }

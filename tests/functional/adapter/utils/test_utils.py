@@ -1,5 +1,3 @@
-import pytest
-
 from dbt.tests.adapter.utils.test_array_append import BaseArrayAppend
 from dbt.tests.adapter.utils.test_array_concat import BaseArrayConcat
 from dbt.tests.adapter.utils.test_array_construct import BaseArrayConstruct
@@ -69,6 +67,10 @@ class TestDateDiff(BaseDateDiff):
 
 
 class TestDateTrunc(BaseDateTrunc):
+    pass
+
+
+class TestEscapeSingleQuotesQuote(BaseEscapeSingleQuotesQuote):
     pass
 
 

@@ -1,6 +1,0 @@
-kind: Features
-body: Support Python 3.11
-time: 2023-01-30T12:22:57.228991-07:00
-custom:
-  Author: mikealfare joshuataylor dataders
-  Issue: "331"
