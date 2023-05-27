@@ -27,12 +27,20 @@ class DynamicTableLag:
 
 
 class DynamicTableRefreshStrategy(Metadata):
+    """
+    no_wait	(default): dbt will not wait, it will proceed as soon as the DDL statement is issued
+    refresh	(optional): dbt will wait until the DT is in the SUCCEEDED state, polling every few seconds its status
+
+    In order to avoid waiting indefinitely, in `refresh` mode, the polling will stop and the run will fail when:
+    - after the LAG period has lapsed, any state other than SCHEDULED, EXECUTING is returned
+    - after 2 LAG periods have lapsed, regardless of state
+    """
+
     no_wait = "no_wait"
     refreshed = "refresh"
 
     @classmethod
     def default_field(cls) -> "DynamicTableRefreshStrategy":
-        # TODO: which is the default?
         return cls.no_wait
 
     @classmethod

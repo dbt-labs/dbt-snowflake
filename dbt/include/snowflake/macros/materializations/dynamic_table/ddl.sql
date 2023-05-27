@@ -32,5 +32,22 @@
 
 {% macro snowflake__get_dynamic_table_configuration_changes(relation, new_config) -%}
     {{- log('Determining configuration changes on: ' ~ relation) -}}
-    {%- do return({}) -%}
+    {%- set last_refresh = run_query(snowflake__get_dynamic_table_latest_refresh(relation)) -%}
+    {%- set _refresh_strategy_updates = relation.get_refresh_strategy_updates(last_refresh, new_config) -%}
+
+    {% set _configuration_changes = {} %}
+
+    {%- if _refresh_strategy_updates -%}
+        {%- set _dummy = _configuration_changes.update({"refresh_strategy": _refresh_strategy_updates}) -%}
+    {%- endif -%}
+
+    {%- do return(_configuration_changes) -%}
+
 {%- endmacro %}
+
+
+{% macro snowflake__get_dynamic_table_latest_refresh(relation) %}
+    select top 1 *
+    from table(information_schema.dynamic_table_refresh_history(name => {{ relation }}))
+    order by refresh_version desc;
+{% endmacro %}
