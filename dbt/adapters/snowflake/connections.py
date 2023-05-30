@@ -48,7 +48,7 @@ from dbt.ui import line_wrap_message, warning_tag
 
 logger = AdapterLogger("Snowflake")
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
-ROW_VALUE_REGEX = re.compile(r"Row Values: \[.*\]")
+ROW_VALUE_REGEX = re.compile(r"Row Values: \[(.|\n)*\]")
 
 
 @dataclass
