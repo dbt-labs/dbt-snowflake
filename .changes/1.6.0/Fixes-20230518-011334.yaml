@@ -1,0 +1,6 @@
+kind: Fixes
+body: Address some issues regarding gustom schema overrides.
+time: 2023-05-18T01:13:34.108819-07:00
+custom:
+  Author: versusfacit
+  Issue: "393"

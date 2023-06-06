@@ -15,7 +15,7 @@ from dbt.tests.adapter.constraints.test_constraints import (
 
 _expected_sql_snowflake = """
 create or replace transient table <model_identifier> (
-    id integer not null primary key,
+    id integer not null primary key references <foreign_key_model_identifier> (id) unique,
     color text,
     date_day text
 ) as ( select
@@ -23,6 +23,7 @@ create or replace transient table <model_identifier> (
         color,
         date_day from
     (
+    -- depends_on: <foreign_key_model_identifier>
     select
         'blue' as color,
         1 as id,
@@ -114,15 +115,17 @@ create or replace transient table <model_identifier> (
     color text,
     date_day text,
     primary key (id),
-    constraint strange_uniqueness_requirement unique (color, date_day)
+    constraint strange_uniqueness_requirement unique (color, date_day),
+    foreign key (id) references <foreign_key_model_identifier> (id)
 ) as ( select
         id,
         color,
         date_day from
     (
+    -- depends_on: <foreign_key_model_identifier>
     select
-        1 as id,
         'blue' as color,
+        1 as id,
         '2019-01-01' as date_day
     ) as model_subq
 );
