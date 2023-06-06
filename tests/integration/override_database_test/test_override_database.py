@@ -34,7 +34,7 @@ class BaseOverrideDatabase(DBTIntegrationTest):
                         'account': os.getenv('SNOWFLAKE_TEST_ACCOUNT'),
                         'user': os.getenv('SNOWFLAKE_TEST_USER'),
                         'password': os.getenv('SNOWFLAKE_TEST_PASSWORD'),
-                        'database': os.getenv('SNOWFLAKE_TEST_QUOTED_DATABASE'),
+                        'database': os.getenv('SNOWFLAKE_TEST_ALT_DATABASE'),
                         'schema': self.unique_schema(),
                         'warehouse': os.getenv('SNOWFLAKE_TEST_WAREHOUSE'),
                     },
