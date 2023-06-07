@@ -17,32 +17,39 @@ from tests.functional.adapter.dynamic_table_tests.fixtures import (
 
 
 class TestBasic(SnowflakeBasicBase):
-    def test_relation_is_dynamic_table_on_initial_creation(self, project):
+    def test_relation_is_dynamic_table_on_initial_creation(self, project, adapter):
+        self.refresh_dynamic_table(adapter)
         assert_model_exists_and_is_correct_type(
             project, "base_dynamic_table", SnowflakeRelationType.DynamicTable
         )
         assert_model_exists_and_is_correct_type(project, "base_table", SnowflakeRelationType.Table)
 
-    def test_relation_is_dynamic_table_when_rerun(self, project):
+    def test_relation_is_dynamic_table_when_rerun(self, project, adapter):
         run_model("base_dynamic_table")
+        self.refresh_dynamic_table(adapter)
         assert_model_exists_and_is_correct_type(
             project, "base_dynamic_table", SnowflakeRelationType.DynamicTable
         )
 
-    def test_relation_is_dynamic_table_on_full_refresh(self, project):
+    def test_relation_is_dynamic_table_on_full_refresh(self, project, adapter):
         run_model("base_dynamic_table", full_refresh=True)
+        self.refresh_dynamic_table(adapter)
         assert_model_exists_and_is_correct_type(
             project, "base_dynamic_table", SnowflakeRelationType.DynamicTable
         )
 
-    def test_relation_is_dynamic_table_on_update(self, project):
+    def test_relation_is_dynamic_table_on_update(self, project, adapter):
         run_model("base_dynamic_table", run_args=["--vars", "quoting: {identifier: True}"])
+        self.refresh_dynamic_table(adapter)
         assert_model_exists_and_is_correct_type(
             project, "base_dynamic_table", SnowflakeRelationType.DynamicTable
         )
 
-    @pytest.mark.skip("Fails because stub uses traditional view")
-    def test_updated_base_table_data_only_shows_in_dynamic_table_after_rerun(self, project):
+    def test_updated_base_table_data_only_shows_in_dynamic_table_after_rerun(
+        self, project, adapter
+    ):
+        self.refresh_dynamic_table(adapter)
+
         # poll database
         table_start = get_row_count(project, "base_table")
         dyn_start = get_row_count(project, "base_dynamic_table")
@@ -57,6 +64,7 @@ class TestBasic(SnowflakeBasicBase):
 
         # refresh the dynamic table
         run_model("base_dynamic_table")
+        self.refresh_dynamic_table(adapter)
 
         # poll database
         table_end = get_row_count(project, "base_table")
@@ -69,8 +77,9 @@ class TestBasic(SnowflakeBasicBase):
 
 class OnConfigurationChangeCommon(SnowflakeOnConfigurationChangeBase):
     def test_full_refresh_takes_precedence_over_any_configuration_changes(
-        self, configuration_changes, replace_message, configuration_change_message
+        self, configuration_changes, replace_message, configuration_change_message, adapter
     ):
+        self.refresh_dynamic_table(adapter)
         results, logs = run_model("base_dynamic_table", full_refresh=True)
         assert_proper_scenario(
             self.on_configuration_change,
@@ -82,8 +91,9 @@ class OnConfigurationChangeCommon(SnowflakeOnConfigurationChangeBase):
         )
 
     def test_model_is_refreshed_with_no_configuration_changes(
-        self, refresh_message, configuration_change_message
+        self, refresh_message, configuration_change_message, adapter
     ):
+        self.refresh_dynamic_table(adapter)
         results, logs = run_model("base_dynamic_table")
         assert_proper_scenario(
             self.on_configuration_change,
