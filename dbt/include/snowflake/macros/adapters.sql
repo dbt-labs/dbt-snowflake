@@ -377,7 +377,7 @@
 {% macro snowflake__drop_relation(relation) -%}
     {%- if relation.is_dynamic_table -%}
         {% call statement('drop_relation', auto_begin=False) -%}
-            {{ drop_view(relation) }}
+            drop dynamic table {{ relation }}
         {%- endcall %}
     {%- else -%}
         {{- default__drop_relation(relation) -}}

@@ -109,8 +109,8 @@ class TestOnConfigurationChangeApply(OnConfigurationChangeCommon):
         )
 
 
-class TestOnConfigurationChangeSkip(OnConfigurationChangeCommon):
-    on_configuration_change = "skip"
+class TestOnConfigurationChangeContinue(OnConfigurationChangeCommon):
+    on_configuration_change = "continue"
 
     @pytest.mark.skip("This fails because there are no changes in the stub")
     def test_model_is_skipped_with_configuration_changes(

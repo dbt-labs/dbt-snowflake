@@ -13,15 +13,35 @@ class SnowflakeBasicBase(Base):
         select 1 as base_column
         """
         base_dynamic_table = """
-        {{ config(materialized='dynamic_table') }}
+        {{ config(
+            materialized='dynamic_table',
+            warehouse=DBT_TESTING,
+            lag='5 minutes',
+        ) }}
         select * from {{ ref('base_table') }}
         """
         return {"base_table.sql": base_table, "base_dynamic_table.sql": base_dynamic_table}
 
 
-class SnowflakeOnConfigurationChangeBase(SnowflakeBasicBase, OnConfigurationChangeBase):
+class SnowflakeOnConfigurationChangeBase(OnConfigurationChangeBase):
     # this avoids rewriting several log message lookups
     base_materialized_view = "base_dynamic_table"
+
+    @pytest.fixture(scope="class")
+    def models(self):
+        base_table = """
+        {{ config(materialized='table') }}
+        select 1 as base_column
+        """
+        base_dynamic_table = """
+        {{ config(
+            materialized='dynamic_table'
+            warehouse=DBT_TESTING,
+            lag='5 minutes',
+        ) }}
+        select * from {{ ref('base_table') }}
+        """
+        return {"base_table.sql": base_table, "base_dynamic_table.sql": base_dynamic_table}
 
     @pytest.fixture(scope="function")
     def configuration_changes(self, project):
