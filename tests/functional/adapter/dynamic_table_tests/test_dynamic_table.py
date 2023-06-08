@@ -20,7 +20,6 @@ from tests.functional.adapter.dynamic_table_tests.fixtures import (
 
 class TestBasic(SnowflakeBasicBase):
     def test_relation_is_dynamic_table_on_initial_creation(self, project, adapter):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         assert_model_exists_and_is_correct_type(
             project, "base_dynamic_table", SnowflakeRelationType.DynamicTable
         )
@@ -28,21 +27,18 @@ class TestBasic(SnowflakeBasicBase):
 
     def test_relation_is_dynamic_table_when_rerun(self, project, adapter):
         run_model("base_dynamic_table")
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         assert_model_exists_and_is_correct_type(
             project, "base_dynamic_table", SnowflakeRelationType.DynamicTable
         )
 
     def test_relation_is_dynamic_table_on_full_refresh(self, project, adapter):
         run_model("base_dynamic_table", full_refresh=True)
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         assert_model_exists_and_is_correct_type(
             project, "base_dynamic_table", SnowflakeRelationType.DynamicTable
         )
 
     def test_relation_is_dynamic_table_on_update(self, project, adapter):
         run_model("base_dynamic_table", run_args=["--vars", "quoting: {identifier: True}"])
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         assert_model_exists_and_is_correct_type(
             project, "base_dynamic_table", SnowflakeRelationType.DynamicTable
         )
@@ -50,8 +46,6 @@ class TestBasic(SnowflakeBasicBase):
     def test_updated_base_table_data_only_shows_in_dynamic_table_after_rerun(
         self, project, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
-
         # poll database
         table_start = get_row_count(project, "base_table")
         dyn_start = get_row_count(project, "base_dynamic_table")
@@ -65,7 +59,7 @@ class TestBasic(SnowflakeBasicBase):
         dyn_mid = get_row_count(project, "base_dynamic_table")
 
         # refresh the dynamic table
-        run_model("base_dynamic_table")
+        refresh_dynamic_table(adapter, "base_dynamic_table")
 
         # poll database
         table_end = get_row_count(project, "base_table")
@@ -74,6 +68,10 @@ class TestBasic(SnowflakeBasicBase):
         # new records were inserted in the table but didn't show up in the dynamic table until it was refreshed
         assert table_start < table_mid == table_end
         assert dyn_start == dyn_mid < dyn_end
+
+        # record counts tie at start an end, and only differ in the middle due to refresh timing
+        assert table_start == dyn_start
+        assert table_end == dyn_end
 
 
 @pytest.mark.skip("We're not looking for changes yet")

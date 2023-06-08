@@ -15,7 +15,7 @@
     {{- log('Applying CREATE to: ' ~ relation) -}}
 
     create or replace dynamic table {{ relation }}
-        lag = '{{ config.get("lag") }}'
+        lag = '{{ config.get("target_lag") }}'
         warehouse = {{ config.get("warehouse") }}
         as ({{ sql }})
 
@@ -31,7 +31,7 @@
 
 {% macro snowflake__refresh_dynamic_table(relation) -%}
     {{- log('Applying REFRESH to: ' ~ relation) -}}
-    alter dynamic table {{ relation }} set lag = '{{ config.get("lag") }}'
+    {%- do return('') -%}
 {%- endmacro %}
 
 

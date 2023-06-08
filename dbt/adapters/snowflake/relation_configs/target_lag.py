@@ -4,7 +4,7 @@ from dbt.adapters.relation_configs import RelationConfigBase
 from dbt.dataclass_schema import StrEnum
 
 
-class SnowflakeDynamicTableLagPeriod(StrEnum):
+class SnowflakeDynamicTableTargetLagPeriod(StrEnum):
     seconds = "seconds"
     minutes = "minutes"
     hours = "hours"
@@ -12,10 +12,10 @@ class SnowflakeDynamicTableLagPeriod(StrEnum):
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
-class SnowflakeDynamicTableLagConfig(RelationConfigBase):
+class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase):
     """
     This config follow the specs found here:
-    https://docs.snowflake.com/en/LIMITEDACCESS/create-dynamic-table
+    TODO: add URL once it's GA
 
     The following parameters are configurable by dbt:
     - duration: the numeric part of the lag
@@ -25,4 +25,4 @@ class SnowflakeDynamicTableLagConfig(RelationConfigBase):
     """
 
     duration: int
-    period: SnowflakeDynamicTableLagPeriod
+    period: SnowflakeDynamicTableTargetLagPeriod

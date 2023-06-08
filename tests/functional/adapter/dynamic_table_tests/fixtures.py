@@ -5,26 +5,53 @@ import pytest
 from snowflake.connector.errors import ProgrammingError
 
 from dbt.dataclass_schema import StrEnum
-from dbt.tests.util import relation_from_name, run_sql_with_adapter, get_manifest
+from dbt.tests.util import relation_from_name, get_manifest
 from dbt.tests.adapter.materialized_view.base import Base
 from dbt.tests.adapter.materialized_view.on_configuration_change import OnConfigurationChangeBase
 
 
+BASE_TABLE = """
+{{ config(materialized='table') }}
+select 1 as base_column
+"""
+
+
+TARGET_LAG_IN_S = 60
+BASE_DYNAMIC_TABLE = """
+{{ config(
+    materialized='dynamic_table',
+    warehouse='DBT_TESTING',
+    target_lag='60 seconds',
+) }}
+select * from {{ ref('base_table') }}
+"""
+BASE_DYNAMIC_TABLE_UPDATED = """
+{{ config(
+    materialized='dynamic_table'
+    warehouse='DBT_TESTING',
+    target_lag='120 seconds',
+) }}
+select * from {{ ref('base_table') }}
+"""
+
+
 def refresh_dynamic_table(adapter, model: str):
-    sql = f"alter dynamic table {model} set lag = '60 seconds'"
-    run_sql_with_adapter(adapter, sql)
+    # there's no forced refresh, so just wait
+    sleep(80)
 
 
 def get_row_count(project, model: str) -> int:
     sql = f"select count(*) from {project.database}.{project.test_schema}.{model};"
 
     now = datetime.now()
-    while (datetime.now() - now).total_seconds() < 120:
+    while (datetime.now() - now).total_seconds() < 2 * TARGET_LAG_IN_S:
         try:
             return project.run_sql(sql, fetch="one")[0]
         except ProgrammingError:
             sleep(5)
-    raise ProgrammingError("90 seconds has passed and the dynamic table is still not initialized.")
+    raise ProgrammingError(
+        f"{2 * TARGET_LAG_IN_S} seconds has passed and the dynamic table is still not initialized."
+    )
 
 
 def assert_model_exists_and_is_correct_type(project, model: str, relation_type: StrEnum):
@@ -39,44 +66,16 @@ def assert_model_exists_and_is_correct_type(project, model: str, relation_type: 
 class SnowflakeBasicBase(Base):
     @pytest.fixture(scope="class")
     def models(self):
-        base_table = """
-        {{ config(materialized='table') }}
-        select 1 as base_column
-        """
-        base_dynamic_table = """
-        {{ config(
-            materialized='dynamic_table',
-            warehouse='DBT_TESTING',
-            lag='60 seconds',
-        ) }}
-        select * from {{ ref('base_table') }}
-        """
-        return {"base_table.sql": base_table, "base_dynamic_table.sql": base_dynamic_table}
+        return {"base_table.sql": BASE_TABLE, "base_dynamic_table.sql": BASE_DYNAMIC_TABLE}
 
 
 class SnowflakeOnConfigurationChangeBase(OnConfigurationChangeBase):
     # this avoids rewriting several log message lookups
     base_materialized_view = "base_dynamic_table"
 
-    def refresh_dynamic_table(self, adapter):
-        sql = "alter dynamic table base_dynamic_table set lag = '60 seconds'"
-        run_sql_with_adapter(adapter, sql)
-
     @pytest.fixture(scope="class")
     def models(self):
-        base_table = """
-        {{ config(materialized='table') }}
-        select 1 as base_column
-        """
-        base_dynamic_table = """
-        {{ config(
-            materialized='dynamic_table'
-            warehouse='DBT_TESTING',
-            lag='5 minutes',
-        ) }}
-        select * from {{ ref('base_table') }}
-        """
-        return {"base_table.sql": base_table, "base_dynamic_table.sql": base_dynamic_table}
+        return {"base_table.sql": BASE_TABLE, "base_dynamic_table.sql": BASE_DYNAMIC_TABLE_UPDATED}
 
     @pytest.fixture(scope="function")
     def configuration_changes(self, project):

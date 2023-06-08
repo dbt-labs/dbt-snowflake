@@ -2,14 +2,14 @@ from dataclasses import dataclass
 
 from dbt.adapters.relation_configs import RelationConfigBase
 
-from dbt.adapters.snowflake.relation_configs.lag import SnowflakeDynamicTableLagConfig
+from dbt.adapters.snowflake.relation_configs.target_lag import SnowflakeDynamicTableTargetLagConfig
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
 class SnowflakeDynamicTableConfig(RelationConfigBase):
     """
     This config follow the specs found here:
-    https://docs.snowflake.com/en/LIMITEDACCESS/create-dynamic-table
+    TODO: add URL once it's GA
 
     The following parameters are configurable by dbt:
     - name: name of the dynamic table
@@ -22,5 +22,5 @@ class SnowflakeDynamicTableConfig(RelationConfigBase):
 
     name: str
     query: str
-    lag: SnowflakeDynamicTableLagConfig
+    target_lag: SnowflakeDynamicTableTargetLagConfig
     warehouse: str
