@@ -13,24 +13,34 @@
 
 {% macro snowflake__get_create_dynamic_table_as_sql(relation, sql) -%}
     {{- log('Applying CREATE to: ' ~ relation) -}}
-    {{- get_create_view_as_sql(relation, sql) -}}
+
+    create or replace dynamic table {{ relation }}
+        lag = '{{ config.get("lag") }}'
+        warehouse = {{ config.get("warehouse") }}
+        as ({{ sql }})
+
 {%- endmacro %}
 
 
 {% macro snowflake__get_replace_dynamic_table_as_sql(relation, sql, existing_relation, backup_relation, intermediate_relation) -%}
     {{- log('Applying REPLACE to: ' ~ relation) -}}
-    {{ drop_relation(existing_relation) }}
+    {{ snowflake__get_drop_dynamic_table_sql(existing_relation) }};
     {{ snowflake__get_create_dynamic_table_as_sql(relation, sql) }}
 {%- endmacro %}
 
 
 {% macro snowflake__refresh_dynamic_table(relation) -%}
     {{- log('Applying REFRESH to: ' ~ relation) -}}
-    {{ '' }}
+    alter dynamic table {{ relation }} set lag = '{{ config.get("lag") }}'
 {%- endmacro %}
 
 
 {% macro snowflake__get_dynamic_table_configuration_changes(relation, new_config) -%}
     {{- log('Determining configuration changes on: ' ~ relation) -}}
-    {%- do return({}) -%}
+    {%- do return(None) -%}
 {%- endmacro %}
+
+
+{% macro snowflake__get_drop_dynamic_table_sql(relation) %}
+    drop dynamic table if exists {{ relation }}
+{% endmacro %}
