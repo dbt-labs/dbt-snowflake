@@ -61,7 +61,7 @@
     -- determine the scenario we're in: create, full_refresh, alter, refresh data
     {% if existing_relation is none %}
         {% set build_sql = snowflake__get_create_dynamic_table_as_sql(target_relation, sql) %}
-    {% elif full_refresh_mode or not existing_relation.is_view %}
+    {% elif full_refresh_mode or not existing_relation.is_dynamic_table %}
         {% set build_sql = snowflake__get_replace_dynamic_table_as_sql(target_relation, sql, existing_relation, backup_relation, intermediate_relation) %}
     {% else %}
 
@@ -74,15 +74,15 @@
 
         {% elif on_configuration_change == 'apply' %}
             {% set build_sql = snowflake__get_alter_dynamic_table_as_sql(target_relation, configuration_changes, sql, existing_relation, backup_relation, intermediate_relation) %}
-        {% elif on_configuration_change == 'skip' %}
+        {% elif on_configuration_change == 'continue' %}
             {% set build_sql = '' %}
-            {{ exceptions.warn("Configuration changes were identified and `on_configuration_change` was set to `skip` for `" ~ target_relation ~ "`") }}
+            {{ exceptions.warn("Configuration changes were identified and `on_configuration_change` was set to `continue` for `" ~ target_relation ~ "`") }}
         {% elif on_configuration_change == 'fail' %}
-            {{ exceptions.raise_compiler_error("Configuration changes were identified and `on_configuration_change` was set to `fail` for `" ~ target_relation ~ "`") }}
+            {{ exceptions.raise_fail_fast_error("Configuration changes were identified and `on_configuration_change` was set to `fail` for `" ~ target_relation ~ "`") }}
 
         {% else %}
-            -- this only happens if the user provides a value other than `apply`, 'skip', 'fail'
-            {{ exceptions.raise_compiler_error("Unexpected configuration scenario") }}
+            -- this only happens if the user provides a value other than `apply`, 'continue', 'fail'
+            {{ exceptions.raise_compiler_error("Unexpected configuration scenario: `" ~ on_configuration_change ~ "`") }}
 
         {% endif %}
 

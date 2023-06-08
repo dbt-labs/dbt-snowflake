@@ -50,6 +50,9 @@ class TestBasic(SnowflakeBasicBase):
         table_start = get_row_count(project, "base_table")
         dyn_start = get_row_count(project, "base_dynamic_table")
 
+        # make sure we're starting equal
+        assert table_start == dyn_start
+
         # insert new record in table
         new_record = (2,)
         insert_record(project, new_record, "base_table", ["base_column"])
@@ -65,16 +68,18 @@ class TestBasic(SnowflakeBasicBase):
         table_end = get_row_count(project, "base_table")
         dyn_end = get_row_count(project, "base_dynamic_table")
 
+        # make sure we're ending equal
+        assert table_end == dyn_end
+
         # new records were inserted in the table but didn't show up in the dynamic table until it was refreshed
+        # this differentiates a dynamic table from a view
         assert table_start < table_mid == table_end
         assert dyn_start == dyn_mid < dyn_end
 
-        # record counts tie at start an end, and only differ in the middle due to refresh timing
-        assert table_start == dyn_start
-        assert table_end == dyn_end
 
-
-@pytest.mark.skip("We're not looking for changes yet")
+@pytest.mark.skip(
+    "We're not looking for changes yet. This is under active development, after which these tests will be turned on."
+)
 class TestOnConfigurationChangeApply(SnowflakeOnConfigurationChangeBase):
     # we don't need to specify OnConfigurationChangeOption.Apply because it's the default
     # this is part of the test
@@ -120,7 +125,9 @@ class TestOnConfigurationChangeApply(SnowflakeOnConfigurationChangeBase):
         )
 
 
-@pytest.mark.skip("We're not looking for changes yet")
+@pytest.mark.skip(
+    "We're not looking for changes yet. This is under active development, after which these tests will be turned on."
+)
 class TestOnConfigurationChangeContinue(SnowflakeOnConfigurationChangeBase):
     @pytest.fixture(scope="class")
     def project_config_update(self):
@@ -167,7 +174,9 @@ class TestOnConfigurationChangeContinue(SnowflakeOnConfigurationChangeBase):
         )
 
 
-@pytest.mark.skip("We're not looking for changes yet")
+@pytest.mark.skip(
+    "We're not looking for changes yet. This is under active development, after which these tests will be turned on."
+)
 class TestOnConfigurationChangeFail(SnowflakeOnConfigurationChangeBase):
     @pytest.fixture(scope="class")
     def project_config_update(self):
