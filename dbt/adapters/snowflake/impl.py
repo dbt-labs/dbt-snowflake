@@ -254,3 +254,7 @@ CALL {proc_name}();
 
     def valid_incremental_strategies(self):
         return ["append", "merge", "delete+insert"]
+
+    def debug_query(self):
+        """Override for DebugTask method"""
+        self.execute("select 1 as id")
