@@ -58,7 +58,19 @@ class TestCustomProjectSchemaWithPrefix:
     def project_config_update(self):
         return {"models": {"schema": "dbt_test"}}
 
-    def test__snowflake__custom_schema_with_prefix(self, project):
+    @pytest.fixture(scope="function")
+    def clean_up(self, project):
+        yield
+        with project.adapter.connection_named("__test"):
+            alt_schema_list = ["DBT_TEST", "CUSTOM", "TEST"]
+            for alt_schema in alt_schema_list:
+                alt_test_schema = f"{project.test_schema}_{alt_schema}"
+                relation = project.adapter.Relation.create(
+                    database=project.database, schema=alt_test_schema
+                )
+                project.adapter.drop_schema(relation)
+
+    def test__snowflake__custom_schema_with_prefix(self, project, clean_up):
         seed_results = run_dbt(["seed"])
         assert len(seed_results) == 2
         results = run_dbt()

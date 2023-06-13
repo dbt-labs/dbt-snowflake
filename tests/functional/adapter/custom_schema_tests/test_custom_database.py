@@ -78,7 +78,16 @@ class TestOverrideDatabase:
             "view_3.sql": _VIEW_3_SQL,
         }
 
-    def test_snowflake_override_generate_db_name(self, project):
+    @pytest.fixture(scope="function")
+    def clean_up(self, project):
+        yield
+        with project.adapter.connection_named("__test"):
+            relation = project.adapter.Relation.create(
+                database=ALT_DATABASE, schema=project.test_schema
+            )
+            project.adapter.drop_schema(relation)
+
+    def test_snowflake_override_generate_db_name(self, project, clean_up):
         seed_results = run_dbt(["seed", "--full-refresh"])
         assert len(seed_results) == 2
 
