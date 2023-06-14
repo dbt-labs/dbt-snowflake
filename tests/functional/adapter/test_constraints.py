@@ -9,6 +9,7 @@ from dbt.tests.adapter.constraints.test_constraints import (
     BaseIncrementalConstraintsRuntimeDdlEnforcement,
     BaseIncrementalConstraintsRollback,
     BaseModelConstraintsRuntimeEnforcement,
+    BaseConstraintQuotedColumn,
 )
 
 
@@ -126,6 +127,26 @@ create or replace transient table <model_identifier> (
         'blue' as color,
         1 as id,
         '2019-01-01' as date_day
+    ) as model_subq
+);
+"""
+
+
+class TestSnowflakeConstraintQuotedColumn(BaseConstraintQuotedColumn):
+    @pytest.fixture(scope="class")
+    def expected_sql(self):
+        return """
+create or replace transient table <model_identifier> (
+    id integer not null,
+    "from" text not null,
+    date_day text
+) as (
+    select id, "from", date_day
+    from (
+        select
+          'blue' as "from",
+          1 as id,
+          '2019-01-01' as date_day
     ) as model_subq
 );
 """
