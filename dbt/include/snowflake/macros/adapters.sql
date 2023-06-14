@@ -383,3 +383,12 @@
         {{- default__drop_relation(relation) -}}
     {%- endif -%}
 {% endmacro %}
+
+
+{% macro snowflake__drop_relation_sql(relation) -%}
+    {%- if relation.is_dynamic_table -%}
+        {{ snowflake__drop_dynamic_table(relation) }}
+    {%- else -%}
+        drop if exists {{ relation.type }} cascade;
+    {%- endif -%}
+{% endmacro %}

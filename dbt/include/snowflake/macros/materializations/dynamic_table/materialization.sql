@@ -1,6 +1,7 @@
 {% materialization dynamic_table, adapter='snowflake' %}
 
-    {% set original_query_tag = set_query_tag() %}
+    -- Try to create a valid dynamic table from the config before doing anything else
+    {% set dynamic_table = relation.dynamic_table_from_runtime_config(config) %}
 
     {% set existing_relation = load_cached_relation(this) %}
     {% set target_relation = this.incorporate(type=this.DynamicTable) %}
@@ -10,17 +11,15 @@
 
     {{ dynamic_table_setup(backup_relation, intermediate_relation, pre_hooks) }}
 
-        {% set build_sql = dynamic_table_get_build_sql(existing_relation, target_relation, backup_relation, intermediate_relation) %}
+        {% set build_sql = dynamic_table_build_sql(dynamic_table, existing_relation, backup_relation, intermediate_relation) %}
 
         {% if build_sql == '' %}
-            {{ dynamic_table_execute_no_op(target_relation) }}
+            {{ dynamic_table_execute_no_op(dynamic_table) }}
         {% else %}
-            {{ dynamic_table_execute_build_sql(build_sql, existing_relation, target_relation, post_hooks) }}
+            {{ dynamic_table_execute_build_sql(build_sql, dynamic_table, existing_relation, post_hooks) }}
         {% endif %}
 
     {{ dynamic_table_teardown(backup_relation, intermediate_relation, post_hooks) }}
-
-    {% do unset_query_tag(original_query_tag) %}
 
     {{ return({'relations': [target_relation]}) }}
 
@@ -54,31 +53,31 @@
 {% endmacro %}
 
 
-{% macro dynamic_table_get_build_sql(existing_relation, target_relation, backup_relation, intermediate_relation) %}
+{% macro dynamic_table_build_sql(dynamic_table, existing_relation, backup_relation, intermediate_relation) %}
 
     {% set full_refresh_mode = should_full_refresh() %}
 
     -- determine the scenario we're in: create, full_refresh, alter, refresh data
     {% if existing_relation is none %}
-        {% set build_sql = snowflake__get_create_dynamic_table_as_sql(target_relation, sql) %}
+        {% set build_sql = snowflake__create_dynamic_table_sql(dynamic_table) %}
     {% elif full_refresh_mode or not existing_relation.is_dynamic_table %}
-        {% set build_sql = snowflake__get_replace_dynamic_table_as_sql(target_relation, sql, existing_relation, backup_relation, intermediate_relation) %}
+        {% set build_sql = snowflake__replace_dynamic_table_sql(dynamic_table, existing_relation, backup_relation, intermediate_relation) %}
     {% else %}
 
         -- get config options
         {% set on_configuration_change = config.get('on_configuration_change') %}
-        {% set configuration_changes = snowflake__get_dynamic_table_configuration_changes(existing_relation, config) %}
+        {% set configuration_changes = snowflake__dynamic_table_configuration_changes(dynamic_table) %}
 
         {% if configuration_changes is none %}
-            {% set build_sql = snowflake__refresh_dynamic_table(target_relation) %}
+            {% set build_sql = snowflake__refresh_dynamic_table(dynamic_table) %}
 
         {% elif on_configuration_change == 'apply' %}
-            {% set build_sql = snowflake__get_alter_dynamic_table_as_sql(target_relation, configuration_changes, sql, existing_relation, backup_relation, intermediate_relation) %}
+            {% set build_sql = snowflake__alter_dynamic_table_sql(dynamic_table, configuration_changes, existing_relation, backup_relation, intermediate_relation) %}
         {% elif on_configuration_change == 'continue' %}
             {% set build_sql = '' %}
-            {{ exceptions.warn("Configuration changes were identified and `on_configuration_change` was set to `continue` for `" ~ target_relation ~ "`") }}
+            {{ exceptions.warn("Configuration changes were identified and `on_configuration_change` was set to `continue` for `" ~ dynamic_table.name ~ "`") }}
         {% elif on_configuration_change == 'fail' %}
-            {{ exceptions.raise_fail_fast_error("Configuration changes were identified and `on_configuration_change` was set to `fail` for `" ~ target_relation ~ "`") }}
+            {{ exceptions.raise_fail_fast_error("Configuration changes were identified and `on_configuration_change` was set to `fail` for `" ~ dynamic_table.name ~ "`") }}
 
         {% else %}
             -- this only happens if the user provides a value other than `apply`, 'continue', 'fail'
@@ -93,27 +92,31 @@
 {% endmacro %}
 
 
-{% macro dynamic_table_execute_no_op(target_relation) %}
+{% macro dynamic_table_execute_no_op(dynamic_table) %}
     {% do store_raw_result(
         name="main",
-        message="skip " ~ target_relation,
+        message="skip " ~ dynamic_table.name,
         code="skip",
         rows_affected="-1"
     ) %}
 {% endmacro %}
 
 
-{% macro dynamic_table_execute_build_sql(build_sql, existing_relation, target_relation, post_hooks) %}
+{% macro dynamic_table_execute_build_sql(build_sql, dynamic_table, existing_relation, post_hooks) %}
 
     {% set grant_config = config.get('grants') %}
+
+    {% set original_query_tag = set_query_tag() %}
 
     {% call statement(name="main") %}
         {{ build_sql }}
     {% endcall %}
 
-    {% set should_revoke = should_revoke(existing_relation, full_refresh_mode=True) %}
-    {% do apply_grants(target_relation, grant_config, should_revoke=should_revoke) %}
+    {% do unset_query_tag(original_query_tag) %}
 
-    {% do persist_docs(target_relation, model) %}
+    {% set should_revoke = should_revoke(existing_relation, full_refresh_mode=True) %}
+    {% do apply_grants(dynamic_table.name, grant_config, should_revoke=should_revoke) %}
+
+    {% do persist_docs(dynamic_table.name, model) %}
 
 {% endmacro %}
