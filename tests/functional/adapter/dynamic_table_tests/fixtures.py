@@ -37,20 +37,26 @@ select * from {{ ref('base_table') }}
 
 def refresh_dynamic_table(adapter, model: str):
     # there's no forced refresh, so just wait
-    sleep(80)
+    sleep(120)
 
 
 def get_row_count(project, model: str) -> int:
     sql = f"select count(*) from {project.database}.{project.test_schema}.{model};"
 
     now = datetime.now()
-    while (datetime.now() - now).total_seconds() < 2 * TARGET_LAG_IN_S:
+    while (datetime.now() - now).total_seconds() < 5 * TARGET_LAG_IN_S:
         try:
             return project.run_sql(sql, fetch="one")[0]
-        except ProgrammingError:
-            sleep(5)
+        except ProgrammingError as err:
+            not_initialized_msg = (
+                "Please run a manual refresh or wait for a scheduled refresh before querying."
+            )
+            if not_initialized_msg in err.msg:
+                sleep(5)
+            else:
+                raise err
     raise ProgrammingError(
-        f"{2 * TARGET_LAG_IN_S} seconds has passed and the dynamic table is still not initialized."
+        f"{5 * TARGET_LAG_IN_S} seconds has passed and the dynamic table is still not initialized."
     )
 
 

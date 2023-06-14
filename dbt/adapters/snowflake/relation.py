@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Type
 
 from dbt.adapters.base.relation import BaseRelation, Policy
 from dbt.adapters.relation_configs import (
@@ -45,6 +45,10 @@ class SnowflakeRelation(BaseRelation):
     @classproperty
     def DynamicTable(cls) -> str:
         return str(SnowflakeRelationType.DynamicTable)
+
+    @classproperty
+    def get_relation_type(cls) -> Type[SnowflakeRelationType]:
+        return SnowflakeRelationType
 
     def dynamic_table_from_runtime_config(
         self, runtime_config: RuntimeConfigObject

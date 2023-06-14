@@ -1,7 +1,7 @@
 {% materialization dynamic_table, adapter='snowflake' %}
 
     -- Try to create a valid dynamic table from the config before doing anything else
-    {% set dynamic_table = relation.dynamic_table_from_runtime_config(config) %}
+    {% set dynamic_table = this.dynamic_table_from_runtime_config(config) %}
 
     {% set existing_relation = load_cached_relation(this) %}
     {% set target_relation = this.incorporate(type=this.DynamicTable) %}
@@ -34,8 +34,8 @@
     {% set preexisting_intermediate_relation = load_cached_relation(intermediate_relation) %}
 
     -- drop the temp relations if they exist already in the database
-    {{ snowflake__get_drop_dynamic_table_sql(preexisting_backup_relation) }}
-    {{ snowflake__get_drop_dynamic_table_sql(preexisting_intermediate_relation) }}
+    {{ drop_relation_if_exists(preexisting_backup_relation) }}
+    {{ drop_relation_if_exists(preexisting_intermediate_relation) }}
 
     {{ run_hooks(pre_hooks) }}
 
@@ -45,8 +45,8 @@
 {% macro dynamic_table_teardown(backup_relation, intermediate_relation, post_hooks) %}
 
     -- drop the temp relations if they exist to leave the database clean for the next run
-    {{ snowflake__get_drop_dynamic_table_sql(backup_relation) }}
-    {{ snowflake__get_drop_dynamic_table_sql(intermediate_relation) }}
+    {{ drop_relation_if_exists(backup_relation) }}
+    {{ drop_relation_if_exists(intermediate_relation) }}
 
     {{ run_hooks(post_hooks) }}
 

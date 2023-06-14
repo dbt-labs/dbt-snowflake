@@ -17,8 +17,11 @@ from dbt.exceptions import DbtRuntimeError
 class SnowflakeDynamicTableTargetLagPeriod(StrEnum):
     seconds = "seconds"
     minutes = "minutes"
+    minute = "minute"
     hours = "hours"
+    hour = "hour"
     days = "days"
+    day = "day"
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
@@ -58,7 +61,7 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
                     )
                 ),
                 validation_error=DbtRuntimeError(
-                    f"The minimum for target lag for a materialized view is 1 minutes. "
+                    f"The minimum for target lag for a materialized view is 1 minute. "
                     f"The provided value is {self.duration} {self.period.value}."
                 ),
             ),
@@ -93,7 +96,7 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
 
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> dict:
-        if materialized_view := relation_results.get("materialized_view"):
+        if materialized_view := relation_results.get("dynamic_table"):
             materialized_view_config = materialized_view.rows[0]
         else:
             materialized_view_config = {}
@@ -101,7 +104,7 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
         target_lag = materialized_view_config.get("target_lag")
         try:
             duration, period = target_lag.split(" ")
-        except IndexError:
+        except (AttributeError, IndexError):
             duration, period = None, None
 
         config_dict = {

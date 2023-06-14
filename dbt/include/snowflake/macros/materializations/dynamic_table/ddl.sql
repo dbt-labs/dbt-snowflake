@@ -52,7 +52,7 @@
 
 {% macro snowflake__dynamic_table_configuration_changes(dynamic_table) -%}
     {% set existing_dynamic_table = snowflake__describe_dynamic_table(dynamic_table) %}
-    {% set _configuration_changes = relation.dynamic_table_config_changeset(dynamic_table, existing_dynamic_table) %}
+    {% set _configuration_changes = this.dynamic_table_config_changeset(dynamic_table, existing_dynamic_table) %}
     {% do return(_configuration_changes) %}
 {%- endmacro %}
 
@@ -66,14 +66,16 @@
 
     {%- set _dynamic_table_sql -%}
         show dynamic tables
-            like {{ dynamic_table.name }}
+            like '{{ dynamic_table.name }}'
             in schema {{ dynamic_table.database_name }}.{{ dynamic_table.schema_name }}
         ;
         select
-            name,
-            text,
-            target_lag,
-            warehouse
+            "name",
+            "schema_name",
+            "database_name",
+            "text",
+            "target_lag",
+            "warehouse"
         from table(result_scan(last_query_id()))
     {%- endset %}
     {% set _dynamic_table = run_query(_dynamic_table_sql) %}

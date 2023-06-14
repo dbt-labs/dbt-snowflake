@@ -36,7 +36,7 @@ class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMi
     name: str
     schema_name: str
     database_name: str
-    text: str
+    query: str
     target_lag: SnowflakeDynamicTableTargetLagConfig
     warehouse: str
 
@@ -50,7 +50,7 @@ class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMi
             "name": config_dict.get("name"),
             "schema_name": config_dict.get("schema_name"),
             "database_name": config_dict.get("database_name"),
-            "text": config_dict.get("text"),
+            "query": config_dict.get("query"),
             "warehouse": config_dict.get("warehouse"),
         }
 
@@ -74,7 +74,7 @@ class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMi
             "name": model_node.identifier,
             "schema_name": model_node.schema,
             "database_name": model_node.database,
-            "text": model_node.compiled_code,
+            "query": model_node.compiled_code,
             "target_lag": SnowflakeDynamicTableTargetLagConfig.parse_model_node(model_node),
             "warehouse": model_node.config.extra.get("warehouse"),
         }
@@ -90,7 +90,7 @@ class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMi
 
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> dict:
-        if dynamic_table := relation_results.get("materialized_view"):
+        if dynamic_table := relation_results.get("dynamic_table"):
             dynamic_table_config = dynamic_table.rows[0]
         else:
             dynamic_table_config = {}
@@ -99,7 +99,7 @@ class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMi
             "name": dynamic_table_config.get("name"),
             "schema_name": dynamic_table_config.get("schema_name"),
             "database_name": dynamic_table_config.get("database_name"),
-            "text": dynamic_table_config.get("text"),
+            "query": dynamic_table_config.get("text"),
             "target_lag": SnowflakeDynamicTableTargetLagConfig.parse_relation_results(
                 relation_results
             ),
