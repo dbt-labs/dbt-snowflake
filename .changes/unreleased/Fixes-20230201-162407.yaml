@@ -1,6 +1,0 @@
-kind: Fixes
-body: Fix a minor typo in the user message for too many objects in a schema
-time: 2023-02-01T16:24:07.229919-08:00
-custom:
-  Author: goFrendiAsgard
-  Issue: "443"

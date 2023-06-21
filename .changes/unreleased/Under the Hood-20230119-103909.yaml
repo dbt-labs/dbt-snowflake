@@ -1,7 +1,0 @@
-kind: Under the Hood
-body: 'Enable a `tmp_relation_type` config for applicable incremental models'
-time: 2023-01-19T10:39:09.774872-06:00
-custom:
-  Author: McKnight-42 dbeatty10
-  Issue: "402"
-  PR: "403"

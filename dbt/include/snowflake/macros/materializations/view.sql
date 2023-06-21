@@ -7,8 +7,8 @@
 
     {% do persist_docs(target_relation, model, for_columns=false) %}
 
-    {% do return(to_return) %}
-
     {% do unset_query_tag(original_query_tag) %}
+
+    {% do return(to_return) %}
 
 {%- endmaterialization %}

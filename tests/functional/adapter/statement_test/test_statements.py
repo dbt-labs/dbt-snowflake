@@ -1,12 +1,6 @@
 import pytest
-from dbt.tests.util import (
-    check_relations_equal,
-    run_dbt
-)
-from tests.functional.adapter.statement_test.seeds import (
-    seeds_csv,
-    statement_expected_csv
-)
+from dbt.tests.util import check_relations_equal, run_dbt
+from tests.functional.adapter.statement_test.seeds import seeds_csv, statement_expected_csv
 
 _STATEMENT_ACTUAL_SQL = """
 -- {{ ref('seed') }}
@@ -37,9 +31,7 @@ select 'table' as source, {{ table_value }} as value
 class TestStatements:
     @pytest.fixture(scope="class")
     def models(self):
-        return {
-            "statement_actual.sql" : _STATEMENT_ACTUAL_SQL
-        }
+        return {"statement_actual.sql": _STATEMENT_ACTUAL_SQL}
 
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -55,5 +47,7 @@ class TestStatements:
         assert len(results) == 1
 
         db_with_schema = f"{project.database}.{project.test_schema}"
-        check_relations_equal(project.adapter, [f"{db_with_schema}.STATEMENT_ACTUAL",
-                                                f"{db_with_schema}.STATEMENT_EXPECTED"])
+        check_relations_equal(
+            project.adapter,
+            [f"{db_with_schema}.STATEMENT_ACTUAL", f"{db_with_schema}.STATEMENT_EXPECTED"],
+        )
