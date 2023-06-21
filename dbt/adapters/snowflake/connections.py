@@ -48,7 +48,7 @@ from dbt.ui import line_wrap_message, warning_tag
 
 logger = AdapterLogger("Snowflake")
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
-ROW_VALUE_REGEX = re.compile(r"Row Values: \[.*\]")
+ROW_VALUE_REGEX = re.compile(r"Row Values: \[(.|\n)*\]")
 
 
 @dataclass
@@ -108,11 +108,28 @@ class SnowflakeCredentials(Credentials):
             "account",
             "user",
             "database",
-            "schema",
             "warehouse",
             "role",
-            "client_session_keep_alive",
+            "schema",
+            "authenticator",
+            "private_key",
+            "private_key_path",
+            "private_key_passphrase",
+            "token",
+            "oauth_client_id",
             "query_tag",
+            "client_session_keep_alive",
+            "host",
+            "port",
+            "proxy_host",
+            "proxy_port",
+            "protocol",
+            "connect_retries",
+            "connect_timeout",
+            "retry_on_database_errors",
+            "retry_all",
+            "insecure_mode",
+            "reuse_connections",
         )
 
     def auth_args(self):
