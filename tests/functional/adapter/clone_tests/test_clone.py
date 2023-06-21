@@ -144,7 +144,6 @@ class TestClone(BaseClonePossible):
         schema_relations = project.adapter.list_relations(
             database=project.database, schema=other_schema
         )
-        # assert all(r.type == "view" for r in schema_relations)
         types = [r.type for r in schema_relations]
         count_types = Counter(types)
         assert count_types == Counter({"table": 3, "view": 1})
@@ -157,7 +156,6 @@ class TestClone(BaseClonePossible):
         # recreate all objects
         results = run_dbt([*clone_args, "--full-refresh"])
         assert len(results) == 4
-        # assert all("create view" in r.message.lower() for r in results)
 
         # select only models this time
         results = run_dbt([*clone_args, "--resource-type", "model"])
