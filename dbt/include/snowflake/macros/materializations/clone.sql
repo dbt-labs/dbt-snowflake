@@ -1,4 +1,4 @@
-{% macro snowflake__can_clone_tables() %}
+{% macro snowflake__can_clone_table() %}
     {{ return(True) }}
 {% endmacro %}
 
