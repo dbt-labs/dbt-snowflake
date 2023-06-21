@@ -1,0 +1,6 @@
+kind: Features
+body: Add support for dynamic tables
+time: 2023-06-20T22:49:44.032972-04:00
+custom:
+  Author: mikealfare
+  Issue: "603"
