@@ -388,8 +388,8 @@
 {% macro snowflake__drop_relation_sql(relation) -%}
     {{- log('Applying DROP to: ' ~ relation) -}}
     {%- if relation.is_dynamic_table -%}
-        {{ snowflake__drop_dynamic_table_sql(relation) }}
+        drop dynamic table if exists {{ relation }} cascade
     {%- else -%}
-        drop {{ relation.type }} if exists {{ relation }} cascade;
+        drop {{ relation.type }} if exists {{ relation }} cascade
     {%- endif -%}
 {% endmacro %}

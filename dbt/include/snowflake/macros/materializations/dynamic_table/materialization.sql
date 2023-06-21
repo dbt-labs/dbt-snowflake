@@ -1,7 +1,7 @@
 {% materialization dynamic_table, adapter='snowflake' %}
 
     -- Try to create a valid dynamic table from the config before doing anything else
-    {% set dynamic_table = this.dynamic_table_from_runtime_config(config) %}
+    {% set dynamic_table = this.from_runtime_config(config) %}
 
     {% set existing_relation = load_cached_relation(this) %}
     {% set target_relation = this.incorporate(type=this.DynamicTable) %}
@@ -69,15 +69,15 @@
         {% set configuration_changes = snowflake__dynamic_table_configuration_changes(dynamic_table) %}
 
         {% if configuration_changes is none %}
-            {% set build_sql = snowflake__refresh_dynamic_table(dynamic_table) %}
+            {% set build_sql = snowflake__refresh_dynamic_table_sql(dynamic_table) %}
 
         {% elif on_configuration_change == 'apply' %}
             {% set build_sql = snowflake__alter_dynamic_table_sql(dynamic_table, configuration_changes, existing_relation, backup_relation, intermediate_relation) %}
         {% elif on_configuration_change == 'continue' %}
             {% set build_sql = '' %}
-            {{ exceptions.warn("Configuration changes were identified and `on_configuration_change` was set to `continue` for `" ~ dynamic_table.name ~ "`") }}
+            {{ exceptions.warn("Configuration changes were identified and `on_configuration_change` was set to `continue` for `" ~ dynamic_table.path ~ "`") }}
         {% elif on_configuration_change == 'fail' %}
-            {{ exceptions.raise_fail_fast_error("Configuration changes were identified and `on_configuration_change` was set to `fail` for `" ~ dynamic_table.name ~ "`") }}
+            {{ exceptions.raise_fail_fast_error("Configuration changes were identified and `on_configuration_change` was set to `fail` for `" ~ dynamic_table.path ~ "`") }}
 
         {% else %}
             -- this only happens if the user provides a value other than `apply`, 'continue', 'fail'

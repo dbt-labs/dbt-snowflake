@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Set, Optional
 
 from dbt.adapters.relation_configs import (
-    RelationConfigBase,
     RelationResults,
     RelationConfigValidationMixin,
     RelationConfigValidationRule,
@@ -10,8 +9,10 @@ from dbt.adapters.relation_configs import (
     RelationConfigChangeAction,
 )
 from dbt.contracts.graph.nodes import ModelNode
+from dbt.contracts.relation import ComponentName
 from dbt.exceptions import DbtRuntimeError
 
+from dbt.adapters.snowflake.relation_configs.base import SnowflakeRelationConfigBase
 from dbt.adapters.snowflake.relation_configs.target_lag import (
     SnowflakeDynamicTableTargetLagConfig,
     SnowflakeDynamicTableTargetLagConfigChange,
@@ -19,7 +20,7 @@ from dbt.adapters.snowflake.relation_configs.target_lag import (
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
-class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMixin):
+class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase, RelationConfigValidationMixin):
     """
     This config follow the specs found here:
     TODO: add URL once it's GA
@@ -41,18 +42,38 @@ class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMi
     warehouse: str
 
     @property
+    def path(self) -> str:
+        return ".".join(
+            part for part in [self.database_name, self.schema_name, self.name] if part is not None
+        )
+
+    @property
+    def schema_path(self) -> str:
+        return ".".join(
+            part for part in [self.database_name, self.schema_name] if part is not None
+        )
+
+    @property
     def validation_rules(self) -> Set[RelationConfigValidationRule]:
         return super().validation_rules
 
     @classmethod
     def from_dict(cls, config_dict: dict) -> "SnowflakeDynamicTableConfig":
         kwargs_dict = {
-            "name": config_dict.get("name"),
-            "schema_name": config_dict.get("schema_name"),
-            "database_name": config_dict.get("database_name"),
             "query": config_dict.get("query"),
             "warehouse": config_dict.get("warehouse"),
         }
+
+        if name := config_dict.get("name"):
+            kwargs_dict.update({"name": cls._render_part(ComponentName.Identifier, name)})
+        if schema_name := config_dict.get("schema_name"):
+            kwargs_dict.update(
+                {"schema_name": cls._render_part(ComponentName.Schema, schema_name)}
+            )
+        if database_name := config_dict.get("database_name"):
+            kwargs_dict.update(
+                {"database_name": cls._render_part(ComponentName.Database, database_name)}
+            )
 
         if target_lag := config_dict.get("target_lag"):
             kwargs_dict.update(
@@ -60,12 +81,6 @@ class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMi
             )
 
         dynamic_table: "SnowflakeDynamicTableConfig" = super().from_dict(kwargs_dict)  # type: ignore
-        return dynamic_table
-
-    @classmethod
-    def from_model_node(cls, model_node: ModelNode) -> "SnowflakeDynamicTableConfig":
-        dynamic_table_config = cls.parse_model_node(model_node)
-        dynamic_table = cls.from_dict(dynamic_table_config)
         return dynamic_table
 
     @classmethod
@@ -81,14 +96,6 @@ class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMi
         return config_dict
 
     @classmethod
-    def from_relation_results(
-        cls, relation_results: RelationResults
-    ) -> "SnowflakeDynamicTableConfig":
-        dynamic_table_config = cls.parse_relation_results(relation_results)
-        dynamic_table = cls.from_dict(dynamic_table_config)
-        return dynamic_table
-
-    @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> dict:
         if dynamic_table := relation_results.get("dynamic_table"):
             dynamic_table_config = dynamic_table.rows[0]
@@ -99,13 +106,38 @@ class SnowflakeDynamicTableConfig(RelationConfigBase, RelationConfigValidationMi
             "name": dynamic_table_config.get("name"),
             "schema_name": dynamic_table_config.get("schema_name"),
             "database_name": dynamic_table_config.get("database_name"),
-            "query": dynamic_table_config.get("text"),
+            "query": cls._parse_query(dynamic_table_config.get("text")),
             "target_lag": SnowflakeDynamicTableTargetLagConfig.parse_relation_results(
                 relation_results
             ),
             "warehouse": dynamic_table_config.get("warehouse"),
         }
         return config_dict
+
+    @classmethod
+    def _parse_query(cls, query: str) -> str:
+        """
+        Get the select statement from the dynamic table definition in Snowflake.
+
+        Args:
+            query: the `create dynamic table` statement from `show dynamic tables`, for example:
+
+            create dynamic table my_dynamic_table
+                target_lag = '1 minute'
+                warehouse = MY_WAREHOUSE
+                as (
+                    select * from my_base_table
+                )
+            ;
+
+        Returns: the `select ...` statement, for example:
+
+            select * from my_base_table
+
+        """
+        open_paren = query.find("as (") + len("as (")
+        close_paren = query.rindex(")")
+        return query[open_paren:close_paren].strip()
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
