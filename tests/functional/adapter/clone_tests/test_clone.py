@@ -2,6 +2,8 @@ import os
 import shutil
 from copy import deepcopy
 import pytest
+from collections import Counter
+from dbt.exceptions import DbtRuntimeError
 from dbt.tests.util import run_dbt
 from tests.functional.adapter.clone_tests.fixtures import (
     seed_csv,
@@ -14,7 +16,7 @@ from tests.functional.adapter.clone_tests.fixtures import (
     get_schema_name_sql,
     macros_sql,
     infinite_macros_sql,
-    custom_can_clone_tables_macros_sql,
+    custom_can_clone_tables_false_macros_sql,
 )
 
 
@@ -106,7 +108,7 @@ class BaseCloneNotPossible(BaseClone):
     def macros(self):
         return {
             "macros.sql": macros_sql,
-            "my_can_clone_tables.sql": custom_can_clone_tables_macros_sql,
+            "my_can_clone_tables.sql": custom_can_clone_tables_false_macros_sql,
             "infinite_macros.sql": infinite_macros_sql,
             "get_schema_name.sql": get_schema_name_sql,
         }
@@ -114,8 +116,16 @@ class BaseCloneNotPossible(BaseClone):
     pass
 
 
-class TestClonePossible(BaseClonePossible):
-    def test_clone(self, project, unique_schema, other_schema):
+class TestClone(BaseClonePossible):
+    @pytest.fixture(scope="class")
+    def macros(self):
+        return {
+            "macros.sql": macros_sql,
+            "infinite_macros.sql": infinite_macros_sql,
+            "get_schema_name.sql": get_schema_name_sql,
+        }
+
+    def test_can_clone_true(self, project, unique_schema, other_schema):
         project.create_test_schema(other_schema)
         self.run_and_save_state(project.project_root, with_snapshot=True)
 
@@ -128,62 +138,80 @@ class TestClonePossible(BaseClonePossible):
         ]
 
         results = run_dbt(clone_args)
-        # TODO: need an "adapter zone" version of this test that checks to see
-        # how many of the cloned objects are "pointers" (views) versus "true clones" (tables)
-        # e.g. on Postgres we expect to see 4 views
-        # whereas on Snowflake we'd expect to see 3 cloned tables + 1 view
-        assert [r.message for r in results] == ["CREATE VIEW"] * 1
-        assert [r.message for r in results] == ["CREATE TABLE"] * 3
+        assert len(results) == 4
+
+        # assert all("create view" in r.message.lower() for r in results)
         schema_relations = project.adapter.list_relations(
             database=project.database, schema=other_schema
         )
-        assert [r.type for r in schema_relations] == ["view"] * 1
+        # assert all(r.type == "view" for r in schema_relations)
+        types = [r.type for r in schema_relations]
+        count_types = Counter(types)
+        assert count_types == Counter({"table": 3, "view": 1})
 
         # objects already exist, so this is a no-op
         results = run_dbt(clone_args)
-        assert [r.message for r in results] == ["No-op"] * 4
+        assert len(results) == 4
+        assert all("no-op" in r.message.lower() for r in results)
 
         # recreate all objects
-        results = run_dbt(clone_args + ["--full-refresh"])
-        assert [r.message for r in results] == ["CREATE VIEW"] * 4
+        results = run_dbt([*clone_args, "--full-refresh"])
+        assert len(results) == 4
+        # assert all("create view" in r.message.lower() for r in results)
 
         # select only models this time
-        results = run_dbt(clone_args + ["--resource-type", "model"])
+        results = run_dbt([*clone_args, "--resource-type", "model"])
         assert len(results) == 2
+        assert all("no-op" in r.message.lower() for r in results)
+
+    def test_clone_no_state(self, project, unique_schema, other_schema):
+        project.create_test_schema(other_schema)
+        self.run_and_save_state(project.project_root, with_snapshot=True)
+
+        clone_args = [
+            "clone",
+            "--target",
+            "otherschema",
+        ]
+
+        with pytest.raises(
+            DbtRuntimeError,
+            match="--state is required for cloning relations from another environment",
+        ):
+            run_dbt(clone_args)
 
 
-# class TestCloneNotPossible(BaseCloneNotPossible):
-#     def test_clone(self, project, unique_schema, other_schema):
-#         project.create_test_schema(other_schema)
-#         self.run_and_save_state(project.project_root, with_snapshot=True)
+class TestCloneNotPossible(BaseCloneNotPossible):
+    def test_can_clone_false(self, project, unique_schema, other_schema):
+        project.create_test_schema(other_schema)
+        self.run_and_save_state(project.project_root, with_snapshot=True)
 
-#         clone_args = [
-#             "clone",
-#             "--state",
-#             "state",
-#             "--target",
-#             "otherschema",
-#         ]
+        clone_args = [
+            "clone",
+            "--state",
+            "state",
+            "--target",
+            "otherschema",
+        ]
 
-#         results = run_dbt(clone_args)
-#         # TODO: need an "adapter zone" version of this test that checks to see
-#         # how many of the cloned objects are "pointers" (views) versus "true clones" (tables)
-#         # e.g. on Postgres we expect to see 4 views
-#         # whereas on Snowflake we'd expect to see 3 cloned tables + 1 view
-#         assert [r.message for r in results] == ["CREATE VIEW"] * 4
-#         schema_relations = project.adapter.list_relations(
-#             database=project.database, schema=other_schema
-#         )
-#         assert [r.type for r in schema_relations] == ["view"] * 4
+        results = run_dbt(clone_args)
+        assert len(results) == 4
 
-#         # objects already exist, so this is a no-op
-#         results = run_dbt(clone_args)
-#         assert [r.message for r in results] == ["No-op"] * 4
+        schema_relations = project.adapter.list_relations(
+            database=project.database, schema=other_schema
+        )
+        assert all(r.type == "view" for r in schema_relations)
 
-#         # recreate all objects
-#         results = run_dbt(clone_args + ["--full-refresh"])
-#         assert [r.message for r in results] == ["CREATE VIEW"] * 4
+        # objects already exist, so this is a no-op
+        results = run_dbt(clone_args)
+        assert len(results) == 4
+        assert all("no-op" in r.message.lower() for r in results)
 
-#         # select only models this time
-#         results = run_dbt(clone_args + ["--resource-type", "model"])
-#         assert len(results) == 2
+        # recreate all objects
+        results = run_dbt([*clone_args, "--full-refresh"])
+        assert len(results) == 4
+
+        # select only models this time
+        results = run_dbt([*clone_args, "--resource-type", "model"])
+        assert len(results) == 2
+        assert all("no-op" in r.message.lower() for r in results)

@@ -99,8 +99,8 @@ infinite_macros_sql = """
 {% endmacro %}
 """
 
-custom_can_clone_tables_macros_sql = """
-{% macro custom__can_clone_tables() %}
+custom_can_clone_tables_false_macros_sql = """
+{% macro can_clone_tables() %}
     {{ return(False) }}
 {% endmacro %}
 """
