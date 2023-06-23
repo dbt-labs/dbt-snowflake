@@ -85,6 +85,32 @@ class SnowflakeRelation(BaseRelation):
         )
 
     @classmethod
+    def from_relation_results(
+        cls, relation_results: RelationResults, relation_type: SnowflakeRelationType
+    ) -> RelationConfigBase:
+        """
+        Produce a validated relation config from a series of "describe <relation>"-type queries.
+
+        The intention is to remove validation from the jinja context and put it in python. This method gets
+        called in a jinja template and it's results are used in the jinja template. For an example, please
+        refer to `dbt/include/snowflake/macros/materializations/dynamic_table/materialization.sql`.
+
+        * Note: This method was written purposely vague as the intention is to migrate this to dbt-core
+
+        Args:
+            relation_results: the results of one or more queries run against the database to describe this relation
+            relation_type: the type of relation associated with the relation results
+
+        Returns: a validated Snowflake-specific RelationConfigBase instance
+        """
+        if relation_config := cls.relation_configs.get(relation_type):
+            return relation_config.from_relation_results(relation_results)
+
+        raise DbtRuntimeError(
+            f"from_relation_results() is not supported for the provided relation type: {relation_type}"
+        )
+
+    @classmethod
     def dynamic_table_config_changeset(
         cls,
         dynamic_table: SnowflakeDynamicTableConfig,
