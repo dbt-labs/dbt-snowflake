@@ -58,6 +58,22 @@ class SnowflakeRelation(BaseRelation):
 
     @classmethod
     def from_runtime_config(cls, runtime_config: RuntimeConfigObject) -> RelationConfigBase:
+        """
+        Produce a validated relation config from the config available in the global jinja context.
+
+        The intention is to remove validation from the jinja context and put it in python. This method gets
+        called in a jinja template and it's results are used in the jinja template. For an example, please
+        refer to `dbt/include/snowflake/macros/materializations/dynamic_table/materialization.sql`. In this file,
+        the relation config is retrieved right away, to ensure that the config is validated before any sql
+        is executed against the database.
+
+        * Note: This method was written purposely vague as the intention is to migrate this to dbt-core
+
+        Args:
+            runtime_config: the `config` RuntimeConfigObject instance that's in the global jinja context
+
+        Returns: a validated Snowflake-specific RelationConfigBase instance
+        """
         model_node: ModelNode = runtime_config.model
         relation_type = SnowflakeRelationType(model_node.config.materialized)
 
