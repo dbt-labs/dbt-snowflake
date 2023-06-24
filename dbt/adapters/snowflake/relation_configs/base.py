@@ -30,13 +30,15 @@ class SnowflakeRelationConfigBase(RelationConfigBase):
         )
 
     @classmethod
-    def from_relation_results(cls, relation_results: RelationResults) -> "RelationConfigBase":
-        relation_config = cls.parse_relation_results(relation_results)
+    def from_describe_relation_results(
+        cls, describe_relation_results: RelationResults
+    ) -> "RelationConfigBase":
+        relation_config = cls.parse_describe_relation_results(describe_relation_results)
         relation = cls.from_dict(relation_config)
         return relation
 
     @classmethod
-    def parse_relation_results(cls, relation_results: RelationResults) -> dict:
+    def parse_describe_relation_results(cls, describe_relation_results: RelationResults) -> dict:
         raise NotImplementedError(
             "`parse_relation_results()` needs to be implemented on this RelationConfigBase instance"
         )

@@ -96,8 +96,8 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase, RelationConfigVal
         return config_dict
 
     @classmethod
-    def parse_relation_results(cls, relation_results: RelationResults) -> dict:
-        if dynamic_table := relation_results.get("dynamic_table"):
+    def parse_describe_relation_results(cls, describe_relation_results: RelationResults) -> dict:
+        if dynamic_table := describe_relation_results.get("dynamic_table"):
             dynamic_table_config = dynamic_table.rows[0]
         else:
             dynamic_table_config = {}
@@ -107,8 +107,8 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase, RelationConfigVal
             "schema_name": dynamic_table_config.get("schema_name"),
             "database_name": dynamic_table_config.get("database_name"),
             "query": cls._parse_query(dynamic_table_config.get("text")),
-            "target_lag": SnowflakeDynamicTableTargetLagConfig.parse_relation_results(
-                relation_results
+            "target_lag": SnowflakeDynamicTableTargetLagConfig.parse_describe_relation_results(
+                describe_relation_results
             ),
             "warehouse": dynamic_table_config.get("warehouse"),
         }

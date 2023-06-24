@@ -85,8 +85,8 @@ class SnowflakeRelation(BaseRelation):
         )
 
     @classmethod
-    def from_relation_results(
-        cls, relation_results: RelationResults, relation_type: SnowflakeRelationType
+    def from_describe_relation_results(
+        cls, describe_relation_results: RelationResults, relation_type: SnowflakeRelationType
     ) -> RelationConfigBase:
         """
         Produce a validated relation config from a series of "describe <relation>"-type queries.
@@ -98,13 +98,13 @@ class SnowflakeRelation(BaseRelation):
         * Note: This method was written purposely vague as the intention is to migrate this to dbt-core
 
         Args:
-            relation_results: the results of one or more queries run against the database to describe this relation
+            describe_relation_results: the results of one or more queries run against the database to describe this relation
             relation_type: the type of relation associated with the relation results
 
         Returns: a validated Snowflake-specific RelationConfigBase instance
         """
         if relation_config := cls.relation_configs.get(relation_type):
-            return relation_config.from_relation_results(relation_results)
+            return relation_config.from_describe_relation_results(describe_relation_results)
 
         raise DbtRuntimeError(
             f"from_relation_results() is not supported for the provided relation type: {relation_type}"
@@ -113,28 +113,53 @@ class SnowflakeRelation(BaseRelation):
     @classmethod
     def dynamic_table_config_changeset(
         cls,
-        dynamic_table: SnowflakeDynamicTableConfig,
-        relation_results: RelationResults,
+        new_dynamic_table: SnowflakeDynamicTableConfig,
+        existing_dynamic_table_describe_relation_results: RelationResults,
     ) -> Optional[SnowflakeDynamicTableConfigChangeset]:
+        """
+        Determine the changes required to update `existing_dynamic_table_relation_results` to `new_dynamic_table`
+
+        `new_dynamic_table` and `existing_dynamic_table_relation_results` effectively describe the same
+        dynamic table at two points in time: after this run of dbt (if successful) and current state, respectively.
+        This function is used to determine the changes that would need to be applied, if any, so that the
+        materialization can determine what course of action to take (full refresh, apply changes, refresh data).
+
+        Args:
+            new_dynamic_table: reflects the user's configuration as specified in the model, schema, profile, etc.;
+                it's built from the RuntimeConfigObject that's in the jinja context, likely with
+                'cls.from_runtime_config()`
+            existing_dynamic_table_describe_relation_results: reflects the configuration of the object that currently
+                exists in the database; it's built from the macro `snowflake__describe_dynamic_table()`, likely
+                with `cls.from_relation_results()`
+
+        Returns: a changeset if there are any changes, otherwise None
+        """
+        existing_dynamic_table = cls.from_describe_relation_results(
+            existing_dynamic_table_describe_relation_results, SnowflakeRelationType.DynamicTable
+        )
+
+        try:
+            assert isinstance(new_dynamic_table, SnowflakeDynamicTableConfig)
+            assert isinstance(existing_dynamic_table, SnowflakeDynamicTableConfig)
+        except AssertionError:
+            raise DbtRuntimeError(
+                f"Two dynamic table configs were expected, but received:"
+                f"/n    {new_dynamic_table}"
+                f"/n    {existing_dynamic_table}"
+            )
+
         config_changeset = SnowflakeDynamicTableConfigChangeset()
 
-        existing_dynamic_table = SnowflakeDynamicTableConfig.from_relation_results(
-            relation_results
-        )
-        assert isinstance(existing_dynamic_table, SnowflakeDynamicTableConfig)
-
-        if dynamic_table.target_lag != existing_dynamic_table.target_lag:
+        if new_dynamic_table.target_lag != existing_dynamic_table.target_lag:
             config_changeset.target_lag = SnowflakeDynamicTableTargetLagConfigChange(
                 action=RelationConfigChangeAction.alter,
-                context=dynamic_table.target_lag,
+                context=new_dynamic_table.target_lag,
             )
 
-        if dynamic_table.warehouse != existing_dynamic_table.warehouse:
+        if new_dynamic_table.warehouse != existing_dynamic_table.warehouse:
             config_changeset.warehouse = SnowflakeDynamicTableWarehouseConfigChange(
                 action=RelationConfigChangeAction.alter,
-                context=dynamic_table.warehouse,
+                context=new_dynamic_table.warehouse,
             )
 
-        if config_changeset.has_changes:
-            return config_changeset
-        return None
+        return config_changeset if config_changeset.has_changes else None

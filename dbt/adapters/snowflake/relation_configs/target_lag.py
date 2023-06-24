@@ -95,8 +95,8 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
         return config_dict
 
     @classmethod
-    def parse_relation_results(cls, relation_results: RelationResults) -> dict:
-        if materialized_view := relation_results.get("dynamic_table"):
+    def parse_describe_relation_results(cls, describe_relation_results: RelationResults) -> dict:
+        if materialized_view := describe_relation_results.get("dynamic_table"):
             materialized_view_config = materialized_view.rows[0]
         else:
             materialized_view_config = {}
