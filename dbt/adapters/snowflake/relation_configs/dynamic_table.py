@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import Set, Optional
+from typing import Set, Dict, Optional
 
+import agate
 from dbt.adapters.relation_configs import (
-    RelationResults,
     RelationConfigValidationMixin,
     RelationConfigValidationRule,
     RelationConfigChange,
@@ -64,7 +64,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase, RelationConfigVal
     def validation_rules(self) -> Set[RelationConfigValidationRule]:
         return {
             RelationConfigValidationRule(
-                validation_check=all({self.database_name, self.name}),
+                validation_check=len(self.name or "") > 0,
                 validation_error=DbtRuntimeError(
                     f"dbt-snowflake requires a name for a dynamic table, received: {self.name}"
                 ),
@@ -83,13 +83,13 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase, RelationConfigVal
     @classmethod
     def from_dict(cls, config_dict: dict) -> "SnowflakeDynamicTableConfig":
         kwargs_dict = {
-            "name": cls._render_part(ComponentName.Identifier, config_dict.get("name", "")),
-            "schema": SnowflakeSchemaConfig.from_dict(config_dict.get("schema", {})),
-            "query": config_dict.get("query"),
+            "name": cls._render_part(ComponentName.Identifier, config_dict["name"]),
+            "schema": SnowflakeSchemaConfig.from_dict(config_dict["schema"]),
+            "query": config_dict["query"],
             "target_lag": SnowflakeDynamicTableTargetLagConfig.from_dict(
-                config_dict.get("target_lag", {})
+                config_dict["target_lag"]
             ),
-            "warehouse": config_dict.get("warehouse"),
+            "warehouse": config_dict["warehouse"],
         }
 
         dynamic_table: "SnowflakeDynamicTableConfig" = super().from_dict(kwargs_dict)  # type: ignore
@@ -102,25 +102,27 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase, RelationConfigVal
             "schema": SnowflakeSchemaConfig.parse_model_node(model_node),
             "query": (model_node.compiled_code or "").strip(),
             "target_lag": SnowflakeDynamicTableTargetLagConfig.parse_model_node(model_node),
-            "warehouse": model_node.config.extra.get("warehouse"),
+            "warehouse": model_node.config.extra["warehouse"],
         }
         return config_dict
 
     @classmethod
-    def parse_describe_relation_results(cls, describe_relation_results: RelationResults) -> dict:
+    def parse_describe_relation_results(
+        cls, describe_relation_results: Dict[str, agate.Table]
+    ) -> dict:
         if dynamic_table := describe_relation_results.get("dynamic_table"):
-            dynamic_table_config = dynamic_table.rows[0]
+            dynamic_table_config: agate.Row = dynamic_table.rows[0]
         else:
-            dynamic_table_config = {}
+            dynamic_table_config = agate.Row(values={})
 
         config_dict = {
-            "name": dynamic_table_config.get("name"),
+            "name": dynamic_table_config["name"],
             "schema": SnowflakeSchemaConfig.parse_describe_relation_results(dynamic_table_config),
-            "query": cls._parse_query(dynamic_table_config.get("text")),
+            "query": cls._parse_query(dynamic_table_config["text"]),
             "target_lag": SnowflakeDynamicTableTargetLagConfig.parse_describe_relation_results(
-                describe_relation_results
+                dynamic_table_config
             ),
-            "warehouse": dynamic_table_config.get("warehouse"),
+            "warehouse": dynamic_table_config["warehouse"],
         }
         return config_dict
 

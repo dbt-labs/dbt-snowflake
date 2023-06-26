@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Set, Dict, Union
 
+import agate
 from dbt.adapters.relation_configs import (
     RelationConfigBase,
-    RelationResults,
     RelationConfigValidationMixin,
     RelationConfigValidationRule,
     RelationConfigChange,
@@ -81,7 +81,7 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
 
     @classmethod
     def parse_model_node(cls, model_node: ModelNode) -> dict:
-        target_lag: str = model_node.config.extra.get("target_lag")
+        target_lag: str = model_node.config.extra["target_lag"]
         try:
             duration, period = target_lag.split(" ")
         except (AttributeError, IndexError):
@@ -94,13 +94,8 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
         return config_dict
 
     @classmethod
-    def parse_describe_relation_results(cls, describe_relation_results: RelationResults) -> dict:
-        if materialized_view := describe_relation_results.get("dynamic_table"):
-            materialized_view_config = materialized_view.rows[0]
-        else:
-            materialized_view_config = {}
-
-        target_lag = materialized_view_config.get("target_lag")
+    def parse_describe_relation_results(cls, describe_relation_results: agate.Row) -> dict:
+        target_lag = describe_relation_results["target_lag"]
         try:
             duration, period = target_lag.split(" ")
         except (AttributeError, IndexError):

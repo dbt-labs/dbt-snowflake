@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Set
 
+import agate
 from dbt.adapters.relation_configs import (
-    RelationResults,
     RelationConfigValidationMixin,
     RelationConfigValidationRule,
 )
@@ -43,7 +43,7 @@ class SnowflakeDatabaseConfig(SnowflakeRelationConfigBase, RelationConfigValidat
     @classmethod
     def from_dict(cls, config_dict: dict) -> "SnowflakeDatabaseConfig":
         kwargs_dict = {
-            "name": cls._render_part(ComponentName.Database, config_dict.get("database_name", "")),
+            "name": cls._render_part(ComponentName.Database, config_dict["name"]),
         }
 
         database: "SnowflakeDatabaseConfig" = super().from_dict(kwargs_dict)  # type: ignore
@@ -57,8 +57,8 @@ class SnowflakeDatabaseConfig(SnowflakeRelationConfigBase, RelationConfigValidat
         return config_dict
 
     @classmethod
-    def parse_describe_relation_results(cls, describe_relation_results: RelationResults) -> dict:
+    def parse_describe_relation_results(cls, describe_relation_results: agate.Row) -> dict:
         config_dict = {
-            "name": describe_relation_results.get("database_name"),
+            "name": describe_relation_results["database_name"],
         }
         return config_dict

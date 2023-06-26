@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Set
 
+import agate
 from dbt.adapters.relation_configs import (
-    RelationResults,
     RelationConfigValidationMixin,
     RelationConfigValidationRule,
 )
@@ -42,7 +42,7 @@ class SnowflakeSchemaConfig(SnowflakeRelationConfigBase, RelationConfigValidatio
     def validation_rules(self) -> Set[RelationConfigValidationRule]:
         return {
             RelationConfigValidationRule(
-                validation_check=all({self.database_name, self.name}),
+                validation_check=len(self.name or "") > 0,
                 validation_error=DbtRuntimeError(
                     f"dbt-snowflake requires a name for a schema, received: {self.name}"
                 ),
@@ -52,8 +52,8 @@ class SnowflakeSchemaConfig(SnowflakeRelationConfigBase, RelationConfigValidatio
     @classmethod
     def from_dict(cls, config_dict: dict) -> "SnowflakeSchemaConfig":
         kwargs_dict = {
-            "name": cls._render_part(ComponentName.Schema, config_dict.get("name", "")),
-            "database": SnowflakeDatabaseConfig.from_dict(config_dict.get("database", {})),
+            "name": cls._render_part(ComponentName.Schema, config_dict["name"]),
+            "database": SnowflakeDatabaseConfig.from_dict(config_dict["database"]),
         }
 
         schema: "SnowflakeSchemaConfig" = super().from_dict(kwargs_dict)  # type: ignore
@@ -68,9 +68,9 @@ class SnowflakeSchemaConfig(SnowflakeRelationConfigBase, RelationConfigValidatio
         return config_dict
 
     @classmethod
-    def parse_describe_relation_results(cls, describe_relation_results: RelationResults) -> dict:
+    def parse_describe_relation_results(cls, describe_relation_results: agate.Row) -> dict:
         config_dict = {
-            "name": describe_relation_results.get("schema_name"),
+            "name": describe_relation_results["schema_name"],
             "database": SnowflakeDatabaseConfig.parse_describe_relation_results(
                 describe_relation_results
             ),
