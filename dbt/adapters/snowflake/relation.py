@@ -78,11 +78,13 @@ class SnowflakeRelation(BaseRelation):
         relation_type = SnowflakeRelationType(model_node.config.materialized)
 
         if relation_config := cls.relation_configs.get(relation_type):
-            return relation_config.from_model_node(model_node)
+            relation = relation_config.from_model_node(model_node)
+        else:
+            raise DbtRuntimeError(
+                f"from_runtime_config() is not supported for the provided relation type: {relation_type}"
+            )
 
-        raise DbtRuntimeError(
-            f"from_runtime_config() is not supported for the provided relation type: {relation_type}"
-        )
+        return relation
 
     @classmethod
     def from_describe_relation_results(
@@ -104,22 +106,24 @@ class SnowflakeRelation(BaseRelation):
         Returns: a validated Snowflake-specific RelationConfigBase instance
         """
         if relation_config := cls.relation_configs.get(relation_type):
-            return relation_config.from_describe_relation_results(describe_relation_results)
+            relation = relation_config.from_describe_relation_results(describe_relation_results)
+        else:
+            raise DbtRuntimeError(
+                f"from_relation_results() is not supported for the provided relation type: {relation_type}"
+            )
 
-        raise DbtRuntimeError(
-            f"from_relation_results() is not supported for the provided relation type: {relation_type}"
-        )
+        return relation
 
     @classmethod
     def dynamic_table_config_changeset(
         cls,
         new_dynamic_table: SnowflakeDynamicTableConfig,
-        existing_dynamic_table_describe_relation_results: RelationResults,
-    ) -> Optional[SnowflakeDynamicTableConfigChangeset]:
+        existing_dynamic_table: SnowflakeDynamicTableConfig,
+    ) -> SnowflakeDynamicTableConfigChangeset:
         """
-        Determine the changes required to update `existing_dynamic_table_relation_results` to `new_dynamic_table`
+        Determine the changes required to update `existing_dynamic_table` to `new_dynamic_table`
 
-        `new_dynamic_table` and `existing_dynamic_table_relation_results` effectively describe the same
+        `new_dynamic_table` and `existing_dynamic_table` effectively describe the same
         dynamic table at two points in time: after this run of dbt (if successful) and current state, respectively.
         This function is used to determine the changes that would need to be applied, if any, so that the
         materialization can determine what course of action to take (full refresh, apply changes, refresh data).
@@ -128,16 +132,12 @@ class SnowflakeRelation(BaseRelation):
             new_dynamic_table: reflects the user's configuration as specified in the model, schema, profile, etc.;
                 it's built from the RuntimeConfigObject that's in the jinja context, likely with
                 'cls.from_runtime_config()`
-            existing_dynamic_table_describe_relation_results: reflects the configuration of the object that currently
+            existing_dynamic_table: reflects the configuration of the object that currently
                 exists in the database; it's built from the macro `snowflake__describe_dynamic_table()`, likely
-                with `cls.from_relation_results()`
+                with `cls.from_describe_relation_results()`
 
-        Returns: a changeset if there are any changes, otherwise None
+        Returns: a changeset
         """
-        existing_dynamic_table = cls.from_describe_relation_results(
-            existing_dynamic_table_describe_relation_results, SnowflakeRelationType.DynamicTable
-        )
-
         try:
             assert isinstance(new_dynamic_table, SnowflakeDynamicTableConfig)
             assert isinstance(existing_dynamic_table, SnowflakeDynamicTableConfig)
@@ -162,4 +162,8 @@ class SnowflakeRelation(BaseRelation):
                 context=new_dynamic_table.warehouse,
             )
 
-        return config_changeset if config_changeset.has_changes else None
+        if config_changeset.is_empty and new_dynamic_table != existing_dynamic_table:
+            # we need to force a full refresh if we didn't detect any changes but the objects are not the same
+            config_changeset.force_full_refresh()
+
+        return config_changeset

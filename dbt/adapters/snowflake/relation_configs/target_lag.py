@@ -44,25 +44,24 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
     def validation_rules(self) -> Set[RelationConfigValidationRule]:
         return {
             RelationConfigValidationRule(
-                validation_check=self.duration is not None and self.period is not None,
+                validation_check=self.duration > 0
+                and self.period in SnowflakeDynamicTableTargetLagPeriod,
                 validation_error=DbtRuntimeError(
-                    "Target lag for a materialized view requires both a duration and a period."
+                    f"Target lag for a materialized view requires both a positive duration and a period. Received:\n"
+                    f"    duration: {self.duration}"
+                    f"    period: {self.period}"
                 ),
             ),
             RelationConfigValidationRule(
                 validation_check=(
-                    (
-                        self.duration >= 1
-                        and self.period != SnowflakeDynamicTableTargetLagPeriod.seconds
-                    )
-                    or (
-                        self.duration >= 60
-                        and self.period == SnowflakeDynamicTableTargetLagPeriod.seconds
-                    )
+                    self.duration >= 60
+                    if self.period == SnowflakeDynamicTableTargetLagPeriod.seconds
+                    else self.duration >= 1
                 ),
                 validation_error=DbtRuntimeError(
-                    f"The minimum for target lag for a materialized view is 1 minute. "
-                    f"The provided value is {self.duration} {self.period.value}."
+                    f"The minimum for target lag for a materialized view is 60 seconds. Received:\n"
+                    f"    duration: {self.duration}"
+                    f"    period: {self.period}"
                 ),
             ),
         }
@@ -85,7 +84,7 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
         target_lag: str = model_node.config.extra.get("target_lag")
         try:
             duration, period = target_lag.split(" ")
-        except IndexError:
+        except (AttributeError, IndexError):
             duration, period = None, None
 
         config_dict = {

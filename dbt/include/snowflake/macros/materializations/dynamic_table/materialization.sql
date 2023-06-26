@@ -1,89 +1,67 @@
 {% materialization dynamic_table, adapter='snowflake' %}
 
     -- Try to create a valid dynamic table from the config before doing anything else
-    {% set dynamic_table = this.from_runtime_config(config) %}
+    {% set new_dynamic_table = adapter.Relation.from_runtime_config(config) %}
 
+    -- We still need these because they tie into the existing process (e.g. RelationBase vs. RelationConfigBase)
     {% set existing_relation = load_cached_relation(this) %}
     {% set target_relation = this.incorporate(type=this.DynamicTable) %}
-    {% set intermediate_relation = make_intermediate_relation(target_relation) %}
-    {% set backup_relation_type = target_relation.DynamicTable if existing_relation is none else existing_relation.type %}
-    {% set backup_relation = make_backup_relation(target_relation, backup_relation_type) %}
 
-    {{ dynamic_table_setup(backup_relation, intermediate_relation, pre_hooks) }}
+    {{ run_hooks(pre_hooks) }}
 
-        {% set build_sql = dynamic_table_build_sql(dynamic_table, existing_relation, backup_relation, intermediate_relation) %}
+        {% set build_sql = dynamic_table_build_sql(new_dynamic_table, existing_relation) %}
 
         {% if build_sql == '' %}
-            {{ dynamic_table_execute_no_op(dynamic_table) }}
+            {{ dynamic_table_execute_no_op(new_dynamic_table) }}
         {% else %}
-            {{ dynamic_table_execute_build_sql(build_sql, dynamic_table, existing_relation, post_hooks) }}
+            {{ dynamic_table_execute_build_sql(build_sql, new_dynamic_table, post_hooks) }}
         {% endif %}
 
-    {{ dynamic_table_teardown(backup_relation, intermediate_relation, post_hooks) }}
+    {{ run_hooks(post_hooks) }}
 
     {{ return({'relations': [target_relation]}) }}
 
 {% endmaterialization %}
 
 
-{% macro dynamic_table_setup(backup_relation, intermediate_relation, pre_hooks) %}
-
-    -- backup_relation and intermediate_relation should not already exist in the database
-    -- it's possible these exist because of a previous run that exited unexpectedly
-    {% set preexisting_backup_relation = load_cached_relation(backup_relation) %}
-    {% set preexisting_intermediate_relation = load_cached_relation(intermediate_relation) %}
-
-    -- drop the temp relations if they exist already in the database
-    {{ drop_relation_if_exists(preexisting_backup_relation) }}
-    {{ drop_relation_if_exists(preexisting_intermediate_relation) }}
-
-    {{ run_hooks(pre_hooks) }}
-
-{% endmacro %}
-
-
-{% macro dynamic_table_teardown(backup_relation, intermediate_relation, post_hooks) %}
-
-    -- drop the temp relations if they exist to leave the database clean for the next run
-    {{ drop_relation_if_exists(backup_relation) }}
-    {{ drop_relation_if_exists(intermediate_relation) }}
-
-    {{ run_hooks(post_hooks) }}
-
-{% endmacro %}
-
-
-{% macro dynamic_table_build_sql(dynamic_table, existing_relation, backup_relation, intermediate_relation) %}
+{% macro dynamic_table_build_sql(new_dynamic_table, existing_relation) %}
 
     {% set full_refresh_mode = should_full_refresh() %}
 
-    -- determine the scenario we're in: create, full_refresh, alter, refresh data
+    -- determine the scenario we're in: create, full_refresh, alter
     {% if existing_relation is none %}
-        {% set build_sql = snowflake__create_dynamic_table_sql(dynamic_table) %}
+        {% set build_sql = snowflake__create_dynamic_table_sql(new_dynamic_table) %}
     {% elif full_refresh_mode or not existing_relation.is_dynamic_table %}
-        {% set build_sql = snowflake__replace_dynamic_table_sql(dynamic_table, existing_relation, backup_relation, intermediate_relation) %}
+        {% set build_sql = snowflake__replace_dynamic_table_sql(new_dynamic_table, existing_relation) %}
     {% else %}
+        {% set build_sql = snowflake__alter_dynamic_table_sql_with_on_configuration_change_option(new_dynamic_table) %}
+    {% endif %}
 
-        -- get config options
-        {% set on_configuration_change = config.get('on_configuration_change') %}
-        {% set configuration_changes = snowflake__dynamic_table_configuration_changes(dynamic_table) %}
+    {% do return(build_sql) %}
 
-        {% if configuration_changes is none %}
-            {% set build_sql = snowflake__refresh_dynamic_table_sql(dynamic_table) %}
+{% endmacro %}
 
-        {% elif on_configuration_change == 'apply' %}
-            {% set build_sql = snowflake__alter_dynamic_table_sql(dynamic_table, configuration_changes, existing_relation, backup_relation, intermediate_relation) %}
-        {% elif on_configuration_change == 'continue' %}
-            {% set build_sql = '' %}
-            {{ exceptions.warn("Configuration changes were identified and `on_configuration_change` was set to `continue` for `" ~ dynamic_table.path ~ "`") }}
-        {% elif on_configuration_change == 'fail' %}
-            {{ exceptions.raise_fail_fast_error("Configuration changes were identified and `on_configuration_change` was set to `fail` for `" ~ dynamic_table.path ~ "`") }}
 
-        {% else %}
-            -- this only happens if the user provides a value other than `apply`, 'continue', 'fail'
-            {{ exceptions.raise_compiler_error("Unexpected configuration scenario: `" ~ on_configuration_change ~ "`") }}
+{% macro snowflake__alter_dynamic_table_sql_with_on_configuration_change_option(new_dynamic_table) %}
 
-        {% endif %}
+    {% set describe_relation_results = snowflake__describe_dynamic_table(new_dynamic_table) %}
+    {% set existing_dynamic_table = adapter.Relation.from_describe_relation_results(describe_relation_results, adapter.Relation.DynamicTable) %}
+    {% set on_configuration_change = config.get('on_configuration_change') %}
+
+    {% if new_dynamic_table == existing_dynamic_table %}
+        {% set build_sql = snowflake__refresh_dynamic_table_sql(new_dynamic_table) %}
+
+    {% elif on_configuration_change == 'apply' %}
+        {% set build_sql = snowflake__alter_dynamic_table_sql(new_dynamic_table, existing_dynamic_table) %}
+    {% elif on_configuration_change == 'continue' %}
+        {% set build_sql = '' %}
+        {{ exceptions.warn("Configuration changes were identified and `on_configuration_change` was set to `continue` for `" ~ new_dynamic_table.fully_qualified_path ~ "`") }}
+    {% elif on_configuration_change == 'fail' %}
+        {{ exceptions.raise_fail_fast_error("Configuration changes were identified and `on_configuration_change` was set to `fail` for `" ~ new_dynamic_table.fully_qualified_path ~ "`") }}
+
+    {% else %}
+        -- this only happens if the user provides a value other than `apply`, 'continue', 'fail'
+        {{ exceptions.raise_compiler_error("Unexpected configuration scenario: `" ~ on_configuration_change ~ "`") }}
 
     {% endif %}
 
@@ -92,17 +70,17 @@
 {% endmacro %}
 
 
-{% macro dynamic_table_execute_no_op(dynamic_table) %}
+{% macro dynamic_table_execute_no_op(new_dynamic_table) %}
     {% do store_raw_result(
         name="main",
-        message="skip " ~ dynamic_table.name,
+        message="skip " ~ new_dynamic_table.fully_qualified_path,
         code="skip",
         rows_affected="-1"
     ) %}
 {% endmacro %}
 
 
-{% macro dynamic_table_execute_build_sql(build_sql, dynamic_table, existing_relation, post_hooks) %}
+{% macro dynamic_table_execute_build_sql(build_sql, new_dynamic_table, post_hooks) %}
 
     {% set grant_config = config.get('grants') %}
 
@@ -114,9 +92,9 @@
 
     {% do unset_query_tag(original_query_tag) %}
 
-    {% set should_revoke = should_revoke(existing_relation, full_refresh_mode=True) %}
-    {% do apply_grants(dynamic_table.name, grant_config, should_revoke=should_revoke) %}
+    {% set should_revoke = should_revoke(new_dynamic_table.fully_qualified_path, full_refresh_mode=True) %}
+    {% do apply_grants(new_dynamic_table.fully_qualified_path, grant_config, should_revoke=should_revoke) %}
 
-    {% do persist_docs(dynamic_table.name, model) %}
+    {% do persist_docs(new_dynamic_table.fully_qualified_path, model) %}
 
 {% endmacro %}

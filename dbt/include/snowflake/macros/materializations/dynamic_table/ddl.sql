@@ -1,25 +1,47 @@
-{% macro snowflake__alter_dynamic_table_sql(
-    dynamic_table,
-    configuration_changes,
-    existing_relation,
-    backup_relation,
-    intermediate_relation
-) -%}
-    {{- log('Applying ALTER to: ' ~ dynamic_table.path) -}}
+{#- /*
+    This file contains DDL that gets consumed in `./materialization.sql`. These macros could be used elsewhere as they
+    do not care that they are being called by `./materialization.sql`; but the original intention was to support
+    the materialization of dynamic tables. These macros represent the basic interactions
+    dbt-snowflake requires of dynamic tables in Snowflake:
+        - ALTER
+        - CREATE
+        - DESCRIBE
+        - DROP
+        - REFRESH
+        - REPLACE
+    These macros all take a SnowflakeDynamicTableConfig instance as an input. This class can be found in:
+        `dbt/adapters/snowflake/relation_configs/dynamic_table.py`
 
-    {% if configuration_changes.requires_full_refresh %}
+    Used in:
+        `dbt/include/snowflake/macros/materializations/dynamic_table/materialization.sql`
+    Uses:
+        `dbt/adapters/snowflake/relation.py`
+        `dbt/adapters/snowflake/relation_configs/`
+*/ -#}
 
-        {{ snowflake__replace_dynamic_table_sql(dynamic_table, existing_relation, backup_relation, intermediate_relation) }}
 
-    -- otherwise apply individual changes as needed
+{% macro snowflake__alter_dynamic_table_sql(new_dynamic_table, existing_dynamic_table) -%}
+    {{- log('Applying ALTER to: ' ~ new_dynamic_table.fully_qualified_path) -}}
+
+    {#- /*
+        We need to get the config changeset to determine if we require a full refresh (happens if any change
+        in the changeset requires a full refresh or if an unmonitored change was detected)
+        or if we can get away with altering the dynamic table in place.
+    */ -#}
+    {% set config_changeset = adapter.Relation.dynamic_table_config_changeset(new_dynamic_table, existing_dynamic_table) %}
+
+    {% if config_changeset.requires_full_refresh %}
+
+        {{ snowflake__replace_dynamic_table_sql(new_dynamic_table) }}
+
     {% else %}
 
-        {%- set target_lag = configuration_changes.target_lag -%}
-        {%- if target_lag -%}{{- log('Applying UPDATE TARGET_LAG to: ' ~ dynamic_table.path) -}}{%- endif -%}
-        {%- set warehouse = configuration_changes.warehouse -%}
-        {%- if warehouse -%}{{- log('Applying UPDATE WAREHOUSE to: ' ~ dynamic_table.path) -}}{%- endif -%}
+        {%- set target_lag = config_changeset.target_lag -%}
+        {%- if target_lag -%}{{- log('Applying UPDATE TARGET_LAG to: ' ~ new_dynamic_table.fully_qualified_path) -}}{%- endif -%}
+        {%- set warehouse = config_changeset.warehouse -%}
+        {%- if warehouse -%}{{- log('Applying UPDATE WAREHOUSE to: ' ~ new_dynamic_table.fully_qualified_path) -}}{%- endif -%}
 
-        alter dynamic table {{ dynamic_table.path }} set
+        alter dynamic table {{ new_dynamic_table.fully_qualified_path }} set
             {% if target_lag %}target_lag = '{{ target_lag.context }}'{% endif %}
             {% if warehouse %}warehouse = {{ warehouse.context }}{% endif %}
 
@@ -29,56 +51,27 @@
 
 
 {% macro snowflake__create_dynamic_table_sql(dynamic_table) -%}
-    {{- log('Applying CREATE to: ' ~ dynamic_table.path) -}}
+    {{- log('Applying CREATE to: ' ~ dynamic_table.fully_qualified_path) -}}
 
-    create or replace dynamic table {{ dynamic_table.path }}
+    create or replace dynamic table {{ dynamic_table.fully_qualified_path }}
         target_lag = '{{ dynamic_table.target_lag }}'
         warehouse = {{ dynamic_table.warehouse }}
-        as ({{ dynamic_table.query }})
+        as (
+            {{ dynamic_table.query }}
+        )
     ;
-    alter dynamic table {{ dynamic_table.path }} refresh
+    {{ snowflake__refresh_dynamic_table_sql(dynamic_table) }}
 
 {%- endmacro %}
-
-
-{% macro snowflake__replace_dynamic_table_sql(dynamic_table, existing_relation, backup_relation, intermediate_relation) -%}
-    {{- log('Applying REPLACE to: ' ~ dynamic_table.path) -}}
-
-    {{ snowflake__drop_relation_sql(existing_relation) }};
-    {{ snowflake__create_dynamic_table_sql(dynamic_table) }}
-{%- endmacro %}
-
-
-{% macro snowflake__refresh_dynamic_table_sql(dynamic_table) -%}
-    {{- log('Applying REFRESH to: ' ~ dynamic_table.path) -}}
-
-    alter dynamic table {{ dynamic_table.path }} refresh
-{%- endmacro %}
-
-
-{% macro snowflake__dynamic_table_configuration_changes(dynamic_table) -%}
-    {{- log('Getting CHANGES on: ' ~ dynamic_table.path) -}}
-
-    {% set existing_dynamic_table = snowflake__describe_dynamic_table(dynamic_table) %}
-    {% set _configuration_changes = this.dynamic_table_config_changeset(dynamic_table, existing_dynamic_table) %}
-    {% do return(_configuration_changes) %}
-{%- endmacro %}
-
-
-{% macro snowflake__drop_dynamic_table_sql(dynamic_table) %}
-    {{- log('Applying DROP to: ' ~ dynamic_table.path) -}}
-
-    drop dynamic table if exists {{ dynamic_table.path }}
-{% endmacro %}
 
 
 {% macro snowflake__describe_dynamic_table(dynamic_table) %}
-    {{- log('Getting DESCRIBE on: ' ~ dynamic_table.path) -}}
+    {{- log('Getting DESCRIBE on: ' ~ dynamic_table.fully_qualified_path) -}}
 
     {%- set _dynamic_table_sql -%}
         show dynamic tables
             like '{{ dynamic_table.name }}'
-            in schema {{ dynamic_table.schema_path }}
+            in schema {{ dynamic_table.schema.fully_qualified_path }}
         ;
         select
             "name",
@@ -94,3 +87,25 @@
     {% do return({'dynamic_table': _dynamic_table}) %}
 
 {% endmacro %}
+
+
+{% macro snowflake__drop_dynamic_table_sql(dynamic_table) %}
+    {{- log('Applying DROP to: ' ~ dynamic_table.fully_qualified_path) -}}
+
+    drop dynamic table if exists {{ dynamic_table.fully_qualified_path }}
+{% endmacro %}
+
+
+{% macro snowflake__refresh_dynamic_table_sql(dynamic_table) -%}
+    {{- log('Applying REFRESH to: ' ~ dynamic_table.fully_qualified_path) -}}
+
+    alter dynamic table {{ dynamic_table.fully_qualified_path }} refresh
+{%- endmacro %}
+
+
+{% macro snowflake__replace_dynamic_table_sql(new_dynamic_table, existing_relation) -%}
+    {{- log('Applying REPLACE to: ' ~ new_dynamic_table.fully_qualified_path) -}}
+
+    {{ snowflake__drop_relation_sql(existing_relation) }};
+    {{ snowflake__create_dynamic_table_sql(new_dynamic_table) }}
+{%- endmacro %}

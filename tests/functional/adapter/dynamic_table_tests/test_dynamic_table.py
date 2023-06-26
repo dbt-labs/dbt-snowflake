@@ -80,7 +80,7 @@ class TestOnConfigurationChangeApply(SnowflakeOnConfigurationChangeBase):
     # this is part of the test
 
     def test_full_refresh_takes_precedence_over_any_configuration_changes(
-        self, configuration_changes_apply, replace_message, configuration_change_message, adapter
+        self, configuration_changes_apply, replace_message, adapter
     ):
         results, logs = run_model("base_dynamic_table", full_refresh=True)
         assert_proper_scenario(
@@ -89,19 +89,16 @@ class TestOnConfigurationChangeApply(SnowflakeOnConfigurationChangeBase):
             logs,
             RunStatus.Success,
             messages_in_logs=[replace_message],
-            messages_not_in_logs=[configuration_change_message],
         )
 
-    def test_model_is_refreshed_with_no_configuration_changes(
-        self, refresh_message, configuration_change_message, adapter
-    ):
+    def test_model_is_refreshed_with_no_configuration_changes(self, refresh_message, adapter):
         results, logs = run_model("base_dynamic_table")
         assert_proper_scenario(
             OnConfigurationChangeOption.Apply,
             results,
             logs,
             RunStatus.Success,
-            messages_in_logs=[refresh_message, configuration_change_message],
+            messages_in_logs=[refresh_message],
         )
 
     def test_model_applies_changes_with_configuration_changes(
@@ -123,7 +120,7 @@ class TestOnConfigurationChangeContinue(SnowflakeOnConfigurationChangeBase):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Continue.value}}
 
     def test_full_refresh_takes_precedence_over_any_configuration_changes(
-        self, configuration_changes_apply, replace_message, configuration_change_message, adapter
+        self, configuration_changes_apply, replace_message, adapter
     ):
         results, logs = run_model("base_dynamic_table", full_refresh=True)
         assert_proper_scenario(
@@ -132,19 +129,16 @@ class TestOnConfigurationChangeContinue(SnowflakeOnConfigurationChangeBase):
             logs,
             RunStatus.Success,
             messages_in_logs=[replace_message],
-            messages_not_in_logs=[configuration_change_message],
         )
 
-    def test_model_is_refreshed_with_no_configuration_changes(
-        self, refresh_message, configuration_change_message, adapter
-    ):
+    def test_model_is_refreshed_with_no_configuration_changes(self, refresh_message, adapter):
         results, logs = run_model("base_dynamic_table")
         assert_proper_scenario(
             OnConfigurationChangeOption.Continue,
             results,
             logs,
             RunStatus.Success,
-            messages_in_logs=[refresh_message, configuration_change_message],
+            messages_in_logs=[refresh_message],
         )
 
     def test_model_is_skipped_with_configuration_changes(
@@ -166,7 +160,7 @@ class TestOnConfigurationChangeFail(SnowflakeOnConfigurationChangeBase):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Fail.value}}
 
     def test_full_refresh_takes_precedence_over_any_configuration_changes(
-        self, configuration_changes_apply, replace_message, configuration_change_message, adapter
+        self, configuration_changes_apply, replace_message, adapter
     ):
         results, logs = run_model("base_dynamic_table", full_refresh=True)
         assert_proper_scenario(
@@ -175,19 +169,16 @@ class TestOnConfigurationChangeFail(SnowflakeOnConfigurationChangeBase):
             logs,
             RunStatus.Success,
             messages_in_logs=[replace_message],
-            messages_not_in_logs=[configuration_change_message],
         )
 
-    def test_model_is_refreshed_with_no_configuration_changes(
-        self, refresh_message, configuration_change_message, adapter
-    ):
+    def test_model_is_refreshed_with_no_configuration_changes(self, refresh_message, adapter):
         results, logs = run_model("base_dynamic_table")
         assert_proper_scenario(
             OnConfigurationChangeOption.Fail,
             results,
             logs,
             RunStatus.Success,
-            messages_in_logs=[refresh_message, configuration_change_message],
+            messages_in_logs=[refresh_message],
         )
 
     def test_run_fails_with_configuration_changes(

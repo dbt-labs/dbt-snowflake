@@ -86,12 +86,6 @@ class SnowflakeOnConfigurationChangeBase(Base):
         )
 
     @pytest.fixture(scope="function")
-    def configuration_change_message(self, project):
-        return (
-            f"Getting CHANGES on: {relation_from_name(project.adapter, self.base_dynamic_table)}"
-        )
-
-    @pytest.fixture(scope="function")
     def configuration_change_continue_message(self, project):
         return (
             f"Configuration changes were identified and `on_configuration_change` "
