@@ -3,14 +3,45 @@ import pytest
 from dbt.tests.adapter.constraints.test_constraints import (
     BaseTableConstraintsColumnsEqual,
     BaseViewConstraintsColumnsEqual,
+    BaseTableContractSqlHeader,
+    BaseIncrementalContractSqlHeader,
     BaseIncrementalConstraintsColumnsEqual,
     BaseConstraintsRuntimeDdlEnforcement,
     BaseConstraintsRollback,
     BaseIncrementalConstraintsRuntimeDdlEnforcement,
     BaseIncrementalConstraintsRollback,
     BaseModelConstraintsRuntimeEnforcement,
+    BaseConstraintQuotedColumn,
 )
 
+from dbt.tests.adapter.constraints.fixtures import (
+    model_contract_header_schema_yml,
+)
+
+my_model_contract_sql_header_sql = """
+{{
+  config(
+    materialized = "table"
+  )
+}}
+{% call set_sql_header(config) %}
+SET MY_VARIABLE='test';
+{% endcall %}
+SELECT $MY_VARIABLE as column_name
+"""
+
+my_model_incremental_contract_sql_header_sql = """
+{{
+  config(
+    materialized = "incremental",
+    on_schema_change="append_new_columns"
+  )
+}}
+{% call set_sql_header(config) %}
+SET MY_VARIABLE='test';
+{% endcall %}
+SELECT $MY_VARIABLE as column_name
+"""
 
 _expected_sql_snowflake = """
 create or replace transient table <model_identifier> (
@@ -79,6 +110,24 @@ class TestSnowflakeIncrementalConstraintsColumnsEqual(
     pass
 
 
+class TestSnowflakeTableContractsSqlHeader(BaseTableContractSqlHeader):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "my_model_contract_sql_header.sql": my_model_contract_sql_header_sql,
+            "constraints_schema.yml": model_contract_header_schema_yml,
+        }
+
+
+class TestSnowflakeIncrementalContractsSqlHeader(BaseIncrementalContractSqlHeader):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "my_model_contract_sql_header.sql": my_model_incremental_contract_sql_header_sql,
+            "constraints_schema.yml": model_contract_header_schema_yml,
+        }
+
+
 class TestSnowflakeTableConstraintsDdlEnforcement(BaseConstraintsRuntimeDdlEnforcement):
     @pytest.fixture(scope="class")
     def expected_sql(self):
@@ -126,6 +175,26 @@ create or replace transient table <model_identifier> (
         'blue' as color,
         1 as id,
         '2019-01-01' as date_day
+    ) as model_subq
+);
+"""
+
+
+class TestSnowflakeConstraintQuotedColumn(BaseConstraintQuotedColumn):
+    @pytest.fixture(scope="class")
+    def expected_sql(self):
+        return """
+create or replace transient table <model_identifier> (
+    id integer not null,
+    "from" text not null,
+    date_day text
+) as (
+    select id, "from", date_day
+    from (
+        select
+          'blue' as "from",
+          1 as id,
+          '2019-01-01' as date_day
     ) as model_subq
 );
 """
