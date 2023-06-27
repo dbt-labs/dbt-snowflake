@@ -20,7 +20,7 @@
 */ -#}
 
 
-{% macro snowflake__alter_dynamic_table_sql(new_dynamic_table, existing_dynamic_table) -%}
+{% macro alter_dynamic_table_sql(new_dynamic_table, existing_dynamic_table) -%}
     {{- log('Applying ALTER to: ' ~ new_dynamic_table.fully_qualified_path) -}}
 
     {#- /*
@@ -32,7 +32,7 @@
 
     {% if config_changeset.requires_full_refresh %}
 
-        {{ snowflake__replace_dynamic_table_sql(new_dynamic_table) }}
+        {{ replace_dynamic_table_sql(new_dynamic_table) }}
 
     {% else %}
 
@@ -50,7 +50,7 @@
 {%- endmacro %}
 
 
-{% macro snowflake__create_dynamic_table_sql(dynamic_table) -%}
+{% macro create_dynamic_table_sql(dynamic_table) -%}
     {{- log('Applying CREATE to: ' ~ dynamic_table.fully_qualified_path) -}}
 
     create or replace dynamic table {{ dynamic_table.fully_qualified_path }}
@@ -60,12 +60,12 @@
             {{ dynamic_table.query }}
         )
     ;
-    {{ snowflake__refresh_dynamic_table_sql(dynamic_table) }}
+    {{ refresh_dynamic_table_sql(dynamic_table) }}
 
 {%- endmacro %}
 
 
-{% macro snowflake__describe_dynamic_table(dynamic_table) %}
+{% macro describe_dynamic_table(dynamic_table) %}
     {{- log('Getting DESCRIBE on: ' ~ dynamic_table.fully_qualified_path) -}}
 
     {%- set _dynamic_table_sql -%}
@@ -89,23 +89,23 @@
 {% endmacro %}
 
 
-{% macro snowflake__drop_dynamic_table_sql(dynamic_table) %}
+{% macro drop_dynamic_table_sql(dynamic_table) %}
     {{- log('Applying DROP to: ' ~ dynamic_table.fully_qualified_path) -}}
 
     drop dynamic table if exists {{ dynamic_table.fully_qualified_path }}
 {% endmacro %}
 
 
-{% macro snowflake__refresh_dynamic_table_sql(dynamic_table) -%}
+{% macro refresh_dynamic_table_sql(dynamic_table) -%}
     {{- log('Applying REFRESH to: ' ~ dynamic_table.fully_qualified_path) -}}
 
     alter dynamic table {{ dynamic_table.fully_qualified_path }} refresh
 {%- endmacro %}
 
 
-{% macro snowflake__replace_dynamic_table_sql(new_dynamic_table, existing_relation) -%}
+{% macro replace_dynamic_table_sql(new_dynamic_table, existing_relation) -%}
     {{- log('Applying REPLACE to: ' ~ new_dynamic_table.fully_qualified_path) -}}
 
     {{ snowflake__drop_relation_sql(existing_relation) }};
-    {{ snowflake__create_dynamic_table_sql(new_dynamic_table) }}
+    {{ create_dynamic_table_sql(new_dynamic_table) }}
 {%- endmacro %}

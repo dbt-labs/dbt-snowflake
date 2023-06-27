@@ -30,11 +30,11 @@
 
     -- determine the scenario we're in: create, full_refresh, alter
     {% if existing_relation is none %}
-        {% set build_sql = snowflake__create_dynamic_table_sql(new_dynamic_table) %}
+        {% set build_sql = create_dynamic_table_sql(new_dynamic_table) %}
     {% elif full_refresh_mode or not existing_relation.is_dynamic_table %}
-        {% set build_sql = snowflake__replace_dynamic_table_sql(new_dynamic_table, existing_relation) %}
+        {% set build_sql = replace_dynamic_table_sql(new_dynamic_table, existing_relation) %}
     {% else %}
-        {% set build_sql = snowflake__alter_dynamic_table_sql_with_on_configuration_change_option(new_dynamic_table) %}
+        {% set build_sql = alter_dynamic_table_with_on_configuration_change_option_sql(new_dynamic_table) %}
     {% endif %}
 
     {% do return(build_sql) %}
@@ -42,17 +42,17 @@
 {% endmacro %}
 
 
-{% macro snowflake__alter_dynamic_table_sql_with_on_configuration_change_option(new_dynamic_table) %}
+{% macro alter_dynamic_table_with_on_configuration_change_option_sql(new_dynamic_table) %}
 
-    {% set describe_relation_results = snowflake__describe_dynamic_table(new_dynamic_table) %}
+    {% set describe_relation_results = describe_dynamic_table(new_dynamic_table) %}
     {% set existing_dynamic_table = adapter.Relation.from_describe_relation_results(describe_relation_results, adapter.Relation.DynamicTable) %}
     {% set on_configuration_change = config.get('on_configuration_change') %}
 
     {% if new_dynamic_table == existing_dynamic_table %}
-        {% set build_sql = snowflake__refresh_dynamic_table_sql(new_dynamic_table) %}
+        {% set build_sql = refresh_dynamic_table_sql(new_dynamic_table) %}
 
     {% elif on_configuration_change == 'apply' %}
-        {% set build_sql = snowflake__alter_dynamic_table_sql(new_dynamic_table, existing_dynamic_table) %}
+        {% set build_sql = alter_dynamic_table_sql(new_dynamic_table, existing_dynamic_table) %}
     {% elif on_configuration_change == 'continue' %}
         {% set build_sql = '' %}
         {{ exceptions.warn("Configuration changes were identified and `on_configuration_change` was set to `continue` for `" ~ new_dynamic_table.fully_qualified_path ~ "`") }}
