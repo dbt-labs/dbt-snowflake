@@ -3,6 +3,8 @@ import pytest
 from dbt.tests.adapter.constraints.test_constraints import (
     BaseTableConstraintsColumnsEqual,
     BaseViewConstraintsColumnsEqual,
+    BaseTableContractSqlHeader,
+    BaseIncrementalContractSqlHeader,
     BaseIncrementalConstraintsColumnsEqual,
     BaseConstraintsRuntimeDdlEnforcement,
     BaseConstraintsRollback,
@@ -12,6 +14,34 @@ from dbt.tests.adapter.constraints.test_constraints import (
     BaseConstraintQuotedColumn,
 )
 
+from dbt.tests.adapter.constraints.fixtures import (
+    model_contract_header_schema_yml,
+)
+
+my_model_contract_sql_header_sql = """
+{{
+  config(
+    materialized = "table"
+  )
+}}
+{% call set_sql_header(config) %}
+SET MY_VARIABLE='test';
+{% endcall %}
+SELECT $MY_VARIABLE as column_name
+"""
+
+my_model_incremental_contract_sql_header_sql = """
+{{
+  config(
+    materialized = "incremental",
+    on_schema_change="append_new_columns"
+  )
+}}
+{% call set_sql_header(config) %}
+SET MY_VARIABLE='test';
+{% endcall %}
+SELECT $MY_VARIABLE as column_name
+"""
 
 _expected_sql_snowflake = """
 create or replace transient table <model_identifier> (
@@ -78,6 +108,24 @@ class TestSnowflakeIncrementalConstraintsColumnsEqual(
     SnowflakeColumnEqualSetup, BaseIncrementalConstraintsColumnsEqual
 ):
     pass
+
+
+class TestSnowflakeTableContractsSqlHeader(BaseTableContractSqlHeader):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "my_model_contract_sql_header.sql": my_model_contract_sql_header_sql,
+            "constraints_schema.yml": model_contract_header_schema_yml,
+        }
+
+
+class TestSnowflakeIncrementalContractsSqlHeader(BaseIncrementalContractSqlHeader):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "my_model_contract_sql_header.sql": my_model_incremental_contract_sql_header_sql,
+            "constraints_schema.yml": model_contract_header_schema_yml,
+        }
 
 
 class TestSnowflakeTableConstraintsDdlEnforcement(BaseConstraintsRuntimeDdlEnforcement):
