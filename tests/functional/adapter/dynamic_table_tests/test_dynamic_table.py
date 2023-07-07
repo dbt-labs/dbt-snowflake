@@ -3,8 +3,10 @@ import pytest
 from dbt.contracts.results import RunStatus
 from dbt.contracts.graph.model_config import OnConfigurationChangeOption
 from dbt.tests.adapter.materialized_view.base import (
-    run_model,
+    assert_model_exists_and_is_correct_type,
+    get_row_count,
     insert_record,
+    run_model,
 )
 from dbt.tests.adapter.materialized_view.on_configuration_change import assert_proper_scenario
 
@@ -12,9 +14,6 @@ from dbt.adapters.snowflake.relation import SnowflakeRelationType
 from tests.functional.adapter.dynamic_table_tests.fixtures import (
     SnowflakeBasicBase,
     SnowflakeOnConfigurationChangeBase,
-    assert_model_exists_and_is_correct_type,
-    refresh_dynamic_table,
-    get_row_count,
 )
 
 
@@ -62,7 +61,7 @@ class TestBasic(SnowflakeBasicBase):
         dyn_mid = get_row_count(project, "base_dynamic_table")
 
         # refresh the dynamic table
-        refresh_dynamic_table(adapter, "base_dynamic_table")
+        run_model("base_dynamic_table")
 
         # poll database
         table_end = get_row_count(project, "base_table")
@@ -87,7 +86,6 @@ class TestOnConfigurationChangeApply(SnowflakeOnConfigurationChangeBase):
     def test_full_refresh_takes_precedence_over_any_configuration_changes(
         self, configuration_changes, replace_message, configuration_change_message, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         results, logs = run_model("base_dynamic_table", full_refresh=True)
         assert_proper_scenario(
             OnConfigurationChangeOption.Apply,
@@ -101,7 +99,6 @@ class TestOnConfigurationChangeApply(SnowflakeOnConfigurationChangeBase):
     def test_model_is_refreshed_with_no_configuration_changes(
         self, refresh_message, configuration_change_message, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         results, logs = run_model("base_dynamic_table")
         assert_proper_scenario(
             OnConfigurationChangeOption.Apply,
@@ -114,7 +111,6 @@ class TestOnConfigurationChangeApply(SnowflakeOnConfigurationChangeBase):
     def test_model_applies_changes_with_configuration_changes(
         self, configuration_changes, alter_message, update_index_message, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         results, logs = run_model("base_dynamic_table")
         assert_proper_scenario(
             OnConfigurationChangeOption.Apply,
@@ -136,7 +132,6 @@ class TestOnConfigurationChangeContinue(SnowflakeOnConfigurationChangeBase):
     def test_full_refresh_takes_precedence_over_any_configuration_changes(
         self, configuration_changes, replace_message, configuration_change_message, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         results, logs = run_model("base_dynamic_table", full_refresh=True)
         assert_proper_scenario(
             OnConfigurationChangeOption.Continue,
@@ -150,7 +145,6 @@ class TestOnConfigurationChangeContinue(SnowflakeOnConfigurationChangeBase):
     def test_model_is_refreshed_with_no_configuration_changes(
         self, refresh_message, configuration_change_message, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         results, logs = run_model("base_dynamic_table")
         assert_proper_scenario(
             OnConfigurationChangeOption.Continue,
@@ -163,7 +157,6 @@ class TestOnConfigurationChangeContinue(SnowflakeOnConfigurationChangeBase):
     def test_model_is_skipped_with_configuration_changes(
         self, configuration_changes, configuration_change_skip_message, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         results, logs = run_model("base_dynamic_table")
         assert_proper_scenario(
             OnConfigurationChangeOption.Continue,
@@ -185,7 +178,6 @@ class TestOnConfigurationChangeFail(SnowflakeOnConfigurationChangeBase):
     def test_full_refresh_takes_precedence_over_any_configuration_changes(
         self, configuration_changes, replace_message, configuration_change_message, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         results, logs = run_model("base_dynamic_table", full_refresh=True)
         assert_proper_scenario(
             OnConfigurationChangeOption.Fail,
@@ -199,7 +191,6 @@ class TestOnConfigurationChangeFail(SnowflakeOnConfigurationChangeBase):
     def test_model_is_refreshed_with_no_configuration_changes(
         self, refresh_message, configuration_change_message, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         results, logs = run_model("base_dynamic_table")
         assert_proper_scenario(
             OnConfigurationChangeOption.Fail,
@@ -212,7 +203,6 @@ class TestOnConfigurationChangeFail(SnowflakeOnConfigurationChangeBase):
     def test_run_fails_with_configuration_changes(
         self, configuration_changes, configuration_change_fail_message, adapter
     ):
-        refresh_dynamic_table(adapter, "base_dynamic_table")
         results, logs = run_model("base_dynamic_table", expect_pass=False)
         assert_proper_scenario(
             OnConfigurationChangeOption.Fail,
