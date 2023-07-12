@@ -33,6 +33,11 @@
               (last_altered is not null and table_type='BASE TABLE') as "stats:last_modified:include"
 
           from {{ information_schema }}.tables
+          where (
+            {%- for schema in schemas -%}
+              upper("table_schema") = upper('{{ schema }}'){%- if not loop.last %} or {% endif -%}
+            {%- endfor -%}
+          )
 
       ),
 
@@ -49,16 +54,16 @@
               comment as "column_comment"
 
           from {{ information_schema }}.columns
+          where (
+            {%- for schema in schemas -%}
+              upper("table_schema") = upper('{{ schema }}'){%- if not loop.last %} or {% endif -%}
+            {%- endfor -%}
+          )
       )
 
       select *
       from tables
       join columns using ("table_database", "table_schema", "table_name")
-      where (
-        {%- for schema in schemas -%}
-          upper("table_schema") = upper('{{ schema }}'){%- if not loop.last %} or {% endif -%}
-        {%- endfor -%}
-      )
       order by "column_index"
     {%- endset -%}
 
