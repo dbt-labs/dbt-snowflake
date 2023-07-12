@@ -3,10 +3,10 @@ import pytest
 from dbt.contracts.results import RunStatus
 from dbt.contracts.graph.model_config import OnConfigurationChangeOption
 from dbt.tests.adapter.materialized_view.base import (
-    run_model,
-    insert_record,
     assert_model_exists_and_is_correct_type,
     get_row_count,
+    insert_record,
+    run_model,
 )
 from dbt.tests.adapter.materialized_view.on_configuration_change import assert_proper_scenario
 from dbt.adapters.snowflake.relation import SnowflakeRelationType
