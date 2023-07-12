@@ -1,17 +1,19 @@
+from copy import deepcopy
 from dataclasses import dataclass
-from typing import Set, Dict, Union
+from typing import Set
 
 import agate
-from dbt.adapters.relation_configs import (
-    RelationConfigBase,
-    RelationConfigValidationMixin,
-    RelationConfigValidationRule,
-    RelationConfigChange,
-    RelationConfigChangeAction,
+from dbt.adapters.relation.models import (
+    RelationChange,
+    RelationChangeAction,
+    RelationComponent,
 )
+from dbt.adapters.validation import ValidationMixin, ValidationRule
 from dbt.contracts.graph.nodes import ModelNode
 from dbt.dataclass_schema import StrEnum
 from dbt.exceptions import DbtRuntimeError
+
+from dbt.adapters.snowflake.relation.models.policy import SnowflakeRenderPolicy
 
 
 class SnowflakeDynamicTableTargetLagPeriod(StrEnum):
@@ -25,10 +27,10 @@ class SnowflakeDynamicTableTargetLagPeriod(StrEnum):
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
-class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigValidationMixin):
+class SnowflakeDynamicTableTargetLagRelation(RelationComponent, ValidationMixin):
     """
     This config follow the specs found here:
-    TODO: add URL once it's GA
+    https://docs.snowflake.com/en/sql-reference/sql/create-dynamic-table
 
     The following parameters are configurable by dbt:
     - duration: the numeric part of the lag
@@ -37,13 +39,20 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
     There are currently no non-configurable parameters.
     """
 
+    # attribution
     duration: int
     period: SnowflakeDynamicTableTargetLagPeriod
 
+    # configuration
+    render = SnowflakeRenderPolicy
+
+    def __str__(self) -> str:
+        return f"{self.duration} {self.period}"
+
     @property
-    def validation_rules(self) -> Set[RelationConfigValidationRule]:
+    def validation_rules(self) -> Set[ValidationRule]:
         return {
-            RelationConfigValidationRule(
+            ValidationRule(
                 validation_check=self.duration > 0
                 and self.period in SnowflakeDynamicTableTargetLagPeriod,
                 validation_error=DbtRuntimeError(
@@ -52,7 +61,7 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
                     f"    period: {self.period}"
                 ),
             ),
-            RelationConfigValidationRule(
+            ValidationRule(
                 validation_check=(
                     self.duration >= 60
                     if self.period == SnowflakeDynamicTableTargetLagPeriod.seconds
@@ -67,8 +76,8 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
         }
 
     @classmethod
-    def from_dict(cls, config_dict: dict) -> "SnowflakeDynamicTableTargetLagConfig":
-        kwargs_dict: Dict[str, Union[int, SnowflakeDynamicTableTargetLagPeriod]] = {}
+    def from_dict(cls, config_dict: dict) -> "SnowflakeDynamicTableTargetLagRelation":
+        kwargs_dict = deepcopy(config_dict)
 
         if duration := config_dict.get("duration"):
             kwargs_dict.update({"duration": int(duration)})
@@ -76,7 +85,8 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
         if period := config_dict.get("period"):
             kwargs_dict.update({"period": SnowflakeDynamicTableTargetLagPeriod(period)})
 
-        target_lag: "SnowflakeDynamicTableTargetLagConfig" = super().from_dict(kwargs_dict)  # type: ignore
+        target_lag = super().from_dict(kwargs_dict)
+        assert isinstance(target_lag, SnowflakeDynamicTableTargetLagRelation)
         return target_lag
 
     @classmethod
@@ -107,25 +117,20 @@ class SnowflakeDynamicTableTargetLagConfig(RelationConfigBase, RelationConfigVal
         }
         return config_dict
 
-    def __str__(self) -> str:
-        return f"{self.duration} {self.period}"
-
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
-class SnowflakeDynamicTableTargetLagConfigChange(
-    RelationConfigChange, RelationConfigValidationMixin
-):
-    context: SnowflakeDynamicTableTargetLagConfig
+class SnowflakeDynamicTableTargetLagRelationChange(RelationChange, ValidationMixin):
+    context: SnowflakeDynamicTableTargetLagRelation
 
     @property
     def requires_full_refresh(self) -> bool:
         return False
 
     @property
-    def validation_rules(self) -> Set[RelationConfigValidationRule]:
+    def validation_rules(self) -> Set[ValidationRule]:
         return {
-            RelationConfigValidationRule(
-                validation_check=self.action == RelationConfigChangeAction.alter,
+            ValidationRule(
+                validation_check=self.action == RelationChangeAction.alter,
                 validation_error=DbtRuntimeError(
                     f"Target lag should only be altered but {self.action} was received."
                 ),

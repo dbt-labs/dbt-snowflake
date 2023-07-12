@@ -5,6 +5,7 @@ import agate
 
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
 from dbt.adapters.base.meta import available
+from dbt.adapters.relation.factory import RelationFactory
 from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -14,6 +15,7 @@ from dbt.adapters.sql.impl import (
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
+from dbt.adapters.snowflake.relation import models as relation_models
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.graph.nodes import ConstraintType
 from dbt.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
@@ -47,6 +49,23 @@ class SnowflakeAdapter(SQLAdapter):
         ConstraintType.primary_key: ConstraintSupport.NOT_ENFORCED,
         ConstraintType.foreign_key: ConstraintSupport.NOT_ENFORCED,
     }
+
+    @property
+    def relation_factory(self):
+        return RelationFactory(
+            relation_models={
+                relation_models.SnowflakeRelationType.DynamicTable: relation_models.SnowflakeDynamicTableRelation,
+            },
+            relation_changesets={
+                relation_models.SnowflakeRelationType.DynamicTable: relation_models.SnowflakeDynamicTableRelationChangeset,
+            },
+            relation_can_be_renamed={
+                relation_models.SnowflakeRelationType.DynamicTable,
+                relation_models.SnowflakeRelationType.Table,
+                relation_models.SnowflakeRelationType.View,
+            },
+            render_policy=relation_models.SnowflakeRenderPolicy,
+        )
 
     @classmethod
     def date_function(cls):
