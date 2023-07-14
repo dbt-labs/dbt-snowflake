@@ -25,10 +25,6 @@ class SnowflakeDatabaseRelation(DatabaseRelation, ValidationMixin):
     render = SnowflakeRenderPolicy
 
     @property
-    def fully_qualified_path(self) -> str:
-        return self.name
-
-    @property
     def validation_rules(self) -> Set[ValidationRule]:
         return {
             ValidationRule(
@@ -38,9 +34,3 @@ class SnowflakeDatabaseRelation(DatabaseRelation, ValidationMixin):
                 ),
             )
         }
-
-    @classmethod
-    def from_dict(cls, config_dict) -> "SnowflakeDatabaseRelation":
-        database = super().from_dict(config_dict)
-        assert isinstance(database, SnowflakeDatabaseRelation)
-        return database

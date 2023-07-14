@@ -1,7 +1,7 @@
 {% materialization dynamic_table, adapter='snowflake' %}
 
     -- Try to create a valid dynamic table from the config before doing anything else
-    {%- set materialization = adapter.make_materialization_from_runtime_config(config, 'dynamic_table') -%}
+    {%- set materialization = adapter.make_materialization_from_node(config.model) -%}
 
     {% set build_sql = dynamic_table_build_sql(materialization) %}
 
@@ -27,20 +27,20 @@
         {%- set build_sql = '' -%}
 
     {%- elif materialization.build_strategy == 'create' -%}
-        {%- set build_sql = create_dynamic_table_template(materialization.target_relation) -%}
+        {%- set build_sql = create_template(materialization.target_relation) -%}
 
     {%- elif materialization.build_strategy == 'replace' -%}
-        {%- set build_sql = replace_dynamic_table_template(
+        {%- set build_sql = replace_template(
             materialization.existing_relation_ref, materialization.target_relation
         ) -%}
 
     {%- elif materialization.build_strategy == 'alter' -%}
 
-        {% set describe_relation_results = describe_dynamic_table_template(materialization.existing_relation_ref ) %}
+        {% set describe_relation_results = describe_template(materialization.existing_relation_ref ) %}
         {% set existing_relation = materialization.existing_relation(describe_relation_results) %}
 
         {%- if materialization.on_configuration_change == 'apply' -%}
-            {%- set build_sql = alter_dynamic_table_template(existing_relation, materialization.target_relation) -%}
+            {%- set build_sql = alter_template(existing_relation, materialization.target_relation) -%}
 
         {%- elif materialization.on_configuration_change == 'continue' -%}
             {%- set build_sql = '' -%}

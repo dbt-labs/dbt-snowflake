@@ -25,7 +25,7 @@ class SnowflakeSchemaRelation(SchemaRelation, ValidationMixin):
 
     # configuration
     render = SnowflakeRenderPolicy
-    DatabaseParser = SnowflakeDatabaseRelation  # type: ignore
+    DatabaseParser = SnowflakeDatabaseRelation
 
     @property
     def validation_rules(self) -> Set[ValidationRule]:
@@ -37,9 +37,3 @@ class SnowflakeSchemaRelation(SchemaRelation, ValidationMixin):
                 ),
             )
         }
-
-    @classmethod
-    def from_dict(cls, config_dict) -> "SnowflakeSchemaRelation":
-        schema = super().from_dict(config_dict)
-        assert isinstance(schema, SnowflakeSchemaRelation)
-        return schema

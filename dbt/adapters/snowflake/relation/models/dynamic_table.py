@@ -1,20 +1,22 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Dict, Optional, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
-import agate
 from dbt.adapters.relation.models import (
+    DescribeRelationResults,
     Relation,
     RelationChange,
     RelationChangeAction,
     RelationChangeset,
 )
 from dbt.adapters.validation import ValidationMixin, ValidationRule
-from dbt.contracts.graph.nodes import ModelNode
+from dbt.contracts.graph.nodes import ParsedNode
 from dbt.exceptions import DbtRuntimeError
 
-from dbt.adapters.snowflake.relation import SnowflakeRelationType
-from dbt.adapters.snowflake.relation.models.policy import SnowflakeRenderPolicy
+from dbt.adapters.snowflake.relation.models.policy import (
+    SnowflakeRelationType,
+    SnowflakeRenderPolicy,
+)
 from dbt.adapters.snowflake.relation.models.schema import SnowflakeSchemaRelation
 from dbt.adapters.snowflake.relation.models.target_lag import (
     SnowflakeDynamicTableTargetLagRelation,
@@ -45,9 +47,9 @@ class SnowflakeDynamicTableRelation(Relation, ValidationMixin):
     warehouse: str
 
     # configuration
-    type = SnowflakeRelationType.DynamicTable  # type: ignore
+    type = SnowflakeRelationType.DynamicTable
     can_be_renamed = False
-    SchemaParser = SnowflakeSchemaRelation  # type: ignore
+    SchemaParser = SnowflakeSchemaRelation
     render = SnowflakeRenderPolicy
 
     @property
@@ -71,7 +73,7 @@ class SnowflakeDynamicTableRelation(Relation, ValidationMixin):
         }
 
     @classmethod
-    def from_dict(cls, config_dict: dict) -> "SnowflakeDynamicTableRelation":
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "SnowflakeDynamicTableRelation":
         kwargs_dict = deepcopy(config_dict)
         kwargs_dict.update(
             {
@@ -86,36 +88,30 @@ class SnowflakeDynamicTableRelation(Relation, ValidationMixin):
         return dynamic_table
 
     @classmethod
-    def parse_model_node(cls, model_node: ModelNode) -> dict:
-        config_dict = super().parse_model_node(model_node)
+    def parse_node(cls, node: ParsedNode) -> Dict[str, Any]:
+        config_dict = super().parse_node(node)
 
-        config_dict.update(
-            {
-                "warehouse": model_node.config.extra["warehouse"],
-            }
-        )
+        config_dict.update({"warehouse": node.config.extra["snowflake_warehouse"]})
 
-        if model_node.config.extra["target_lag"]:
+        if node.config.extra["target_lag"]:
             config_dict.update(
-                {"target_lag": SnowflakeDynamicTableTargetLagRelation.parse_model_node(model_node)}
+                {"target_lag": SnowflakeDynamicTableTargetLagRelation.parse_node(node)}
             )
 
         return config_dict
 
     @classmethod
     def parse_describe_relation_results(
-        cls, describe_relation_results: Dict[str, agate.Table]
-    ) -> dict:
+        cls, describe_relation_results: DescribeRelationResults
+    ) -> Dict[str, Any]:
         config_dict = super().parse_describe_relation_results(describe_relation_results)
         config_dict.update({"query": cls._parse_query(config_dict["query"])})
 
-        dynamic_table: agate.Row = describe_relation_results["relation"].rows[0]
-
-        config_dict.update(
-            {
-                "warehouse": dynamic_table.get("warehouse"),
-            }
+        dynamic_table = cls._parse_single_record_from_describe_relation_results(
+            describe_relation_results, "relation"
         )
+
+        config_dict.update({"warehouse": dynamic_table.get("warehouse")})
 
         if dynamic_table.get("target_lag"):
             config_dict.update(
@@ -181,7 +177,9 @@ class SnowflakeDynamicTableRelationChangeset(RelationChangeset):
     _requires_full_refresh_override: bool = False
 
     @classmethod
-    def parse_relations(cls, existing_relation: Relation, target_relation: Relation) -> dict:
+    def parse_relations(
+        cls, existing_relation: Relation, target_relation: Relation
+    ) -> Dict[str, Any]:
         try:
             assert isinstance(existing_relation, SnowflakeDynamicTableRelation)
             assert isinstance(target_relation, SnowflakeDynamicTableRelation)

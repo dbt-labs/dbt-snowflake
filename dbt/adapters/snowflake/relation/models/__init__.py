@@ -12,6 +12,7 @@ from dbt.adapters.snowflake.relation.models.policy import (
 )
 from dbt.adapters.snowflake.relation.models.schema import SnowflakeSchemaRelation
 from dbt.adapters.snowflake.relation.models.target_lag import (
+    SnowflakeDynamicTableTargetLagPeriod,
     SnowflakeDynamicTableTargetLagRelation,
     SnowflakeDynamicTableTargetLagRelationChange,
 )

@@ -20,7 +20,7 @@
 */ -#}
 
 
-{% macro alter_dynamic_table_template(existing_dynamic_table, target_dynamic_table) -%}
+{% macro snowflake__alter_dynamic_table_template(existing_dynamic_table, target_dynamic_table) -%}
     {{- log('Applying ALTER to: ' ~ existing_dynamic_table.fully_qualified_path) -}}
 
     {#- /*
@@ -36,7 +36,7 @@
         {% set _changeset = adapter.make_changeset(existing_dynamic_table, target_dynamic_table) %}
 
         {% if _changeset.requires_full_refresh %}
-            {{ replace_dynamic_table_template(existing_dynamic_table, target_dynamic_table) }}
+            {{ replace_template(existing_dynamic_table, target_dynamic_table) }}
 
         {% else %}
 
@@ -55,8 +55,7 @@
 {%- endmacro %}
 
 
-{% macro create_dynamic_table_template(dynamic_table) -%}
-    {{- log('Applying CREATE to: ' ~ dynamic_table.fully_qualified_path) -}}
+{% macro snowflake__create_dynamic_table_template(dynamic_table) -%}
 
     create or replace dynamic table {{ dynamic_table.fully_qualified_path }}
         target_lag = '{{ dynamic_table.target_lag }}'
@@ -65,13 +64,12 @@
             {{ dynamic_table.query }}
         )
     ;
-    {{ refresh_dynamic_table_sql(dynamic_table) }}
+    {{ refresh_template(dynamic_table) }}
 
 {%- endmacro %}
 
 
-{% macro describe_dynamic_table_template(dynamic_table) %}
-    {{- log('Getting DESCRIBE on: ' ~ dynamic_table.fully_qualified_path) -}}
+{% macro snowflake__describe_dynamic_table_template(dynamic_table) %}
 
     {%- set _dynamic_table_sql -%}
         show dynamic tables
@@ -94,20 +92,20 @@
 {% endmacro %}
 
 
-{% macro drop_dynamic_table_template(dynamic_table) %}
+{% macro snowflake__drop_dynamic_table_template(dynamic_table) %}
     {{- log('Applying DROP to: ' ~ dynamic_table.fully_qualified_path) -}}
-    drop dynamic table if exists {{ dynamic_table.fully_qualified_path }}
+    drop dynamic table if exists {{ dynamic_table.fully_qualified_path }} cascade
 {% endmacro %}
 
 
-{% macro refresh_dynamic_table_sql(dynamic_table) -%}
+{% macro snowflake__refresh_dynamic_table_template(dynamic_table) -%}
     {{- log('Applying REFRESH to: ' ~ dynamic_table.fully_qualified_path) -}}
     alter dynamic table {{ dynamic_table.fully_qualified_path }} refresh
 {%- endmacro %}
 
 
-{% macro replace_dynamic_table_sql(existing_relation, target_relation) -%}
-    {{- log('Applying REPLACE to: ' ~ existing_relation.fully_qualified_path) -}}
-    {{ snowflake__drop_relation_sql(existing_relation) }};
-    {{ create_dynamic_table_sql(target_relation) }}
+{% macro snowflake__rename_dynamic_table_template(dynamic_table, new_name) -%}
+    {{- exceptions.raise_compiler_error(
+        "Snowflake does not support the renaming of dynamic tables. This macro was called by: " ~ dynamic_table
+    ) -}}
 {%- endmacro %}

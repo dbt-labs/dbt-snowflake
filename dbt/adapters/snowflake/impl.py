@@ -3,23 +3,35 @@ from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
-from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
+from dbt.adapters.materialization import MaterializationFactory
 from dbt.adapters.relation.factory import RelationFactory
-from dbt.adapters.sql import SQLAdapter  # type: ignore
+from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
-
-from dbt.adapters.snowflake import SnowflakeConnectionManager
-from dbt.adapters.snowflake import SnowflakeRelation
-from dbt.adapters.snowflake import SnowflakeColumn
-from dbt.adapters.snowflake.relation import models as relation_models
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.graph.nodes import ConstraintType
 from dbt.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt.utils import filter_null_values
+
+from dbt.adapters.snowflake import (
+    SnowflakeConnectionManager,
+    SnowflakeRelation,
+    SnowflakeColumn,
+)
+from dbt.adapters.snowflake.materialization import (
+    DynamicTableMaterialization,
+    SnowflakeMaterializationType,
+)
+from dbt.adapters.snowflake.relation.models import (
+    SnowflakeRelationType,
+    SnowflakeDynamicTableRelation,
+    SnowflakeDynamicTableRelationChangeset,
+    SnowflakeRenderPolicy,
+)
 
 
 @dataclass
@@ -33,6 +45,7 @@ class SnowflakeConfig(AdapterConfig):
     query_tag: Optional[str] = None
     tmp_relation_type: Optional[str] = None
     merge_update_columns: Optional[str] = None
+    target_lag: Optional[str] = None
 
 
 class SnowflakeAdapter(SQLAdapter):
@@ -53,18 +66,28 @@ class SnowflakeAdapter(SQLAdapter):
     @property
     def relation_factory(self):
         return RelationFactory(
+            relation_types=SnowflakeRelationType,
             relation_models={
-                relation_models.SnowflakeRelationType.DynamicTable: relation_models.SnowflakeDynamicTableRelation,
+                SnowflakeRelationType.DynamicTable: SnowflakeDynamicTableRelation,
             },
             relation_changesets={
-                relation_models.SnowflakeRelationType.DynamicTable: relation_models.SnowflakeDynamicTableRelationChangeset,
+                SnowflakeRelationType.DynamicTable: SnowflakeDynamicTableRelationChangeset,
             },
             relation_can_be_renamed={
-                relation_models.SnowflakeRelationType.DynamicTable,
-                relation_models.SnowflakeRelationType.Table,
-                relation_models.SnowflakeRelationType.View,
+                SnowflakeRelationType.Table,
+                SnowflakeRelationType.View,
             },
-            render_policy=relation_models.SnowflakeRenderPolicy,
+            render_policy=SnowflakeRenderPolicy,
+        )
+
+    @property
+    def materialization_factory(self) -> MaterializationFactory:
+        return MaterializationFactory(
+            relation_factory=self.relation_factory,
+            materialization_types=SnowflakeMaterializationType,
+            materialization_models={
+                SnowflakeMaterializationType.DynamicTable: DynamicTableMaterialization,
+            },
         )
 
     @classmethod

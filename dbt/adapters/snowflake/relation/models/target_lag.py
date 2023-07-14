@@ -1,15 +1,15 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Set
+from typing import Any, Dict, Set
 
-import agate
 from dbt.adapters.relation.models import (
+    DescribeRelationResults,
     RelationChange,
     RelationChangeAction,
     RelationComponent,
 )
 from dbt.adapters.validation import ValidationMixin, ValidationRule
-from dbt.contracts.graph.nodes import ModelNode
+from dbt.contracts.graph.nodes import ParsedNode
 from dbt.dataclass_schema import StrEnum
 from dbt.exceptions import DbtRuntimeError
 
@@ -17,6 +17,7 @@ from dbt.adapters.snowflake.relation.models.policy import SnowflakeRenderPolicy
 
 
 class SnowflakeDynamicTableTargetLagPeriod(StrEnum):
+    second = "second"
     seconds = "seconds"
     minutes = "minutes"
     minute = "minute"
@@ -64,7 +65,11 @@ class SnowflakeDynamicTableTargetLagRelation(RelationComponent, ValidationMixin)
             ValidationRule(
                 validation_check=(
                     self.duration >= 60
-                    if self.period == SnowflakeDynamicTableTargetLagPeriod.seconds
+                    if self.period
+                    in (
+                        SnowflakeDynamicTableTargetLagPeriod.seconds,
+                        SnowflakeDynamicTableTargetLagPeriod.second,
+                    )
                     else self.duration >= 1
                 ),
                 validation_error=DbtRuntimeError(
@@ -76,7 +81,7 @@ class SnowflakeDynamicTableTargetLagRelation(RelationComponent, ValidationMixin)
         }
 
     @classmethod
-    def from_dict(cls, config_dict: dict) -> "SnowflakeDynamicTableTargetLagRelation":
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "SnowflakeDynamicTableTargetLagRelation":
         kwargs_dict = deepcopy(config_dict)
 
         if duration := config_dict.get("duration"):
@@ -90,8 +95,8 @@ class SnowflakeDynamicTableTargetLagRelation(RelationComponent, ValidationMixin)
         return target_lag
 
     @classmethod
-    def parse_model_node(cls, model_node: ModelNode) -> dict:
-        target_lag: str = model_node.config.extra["target_lag"]
+    def parse_node(cls, node: ParsedNode) -> Dict[str, Any]:
+        target_lag: str = node.config.extra["target_lag"]
         try:
             duration, period = target_lag.split(" ")
         except (AttributeError, IndexError):
@@ -104,10 +109,15 @@ class SnowflakeDynamicTableTargetLagRelation(RelationComponent, ValidationMixin)
         return config_dict
 
     @classmethod
-    def parse_describe_relation_results(cls, describe_relation_results: agate.Row) -> dict:
-        target_lag = describe_relation_results["target_lag"]
+    def parse_describe_relation_results(
+        cls, describe_relation_results: DescribeRelationResults
+    ) -> Dict[str, Any]:
+        target_lag_entry = cls._parse_single_record_from_describe_relation_results(
+            describe_relation_results, "target_lag"
+        )
+        target_lag: str = target_lag_entry["target_lag"]
         try:
-            duration, period = target_lag.split(" ")
+            duration, period = (part for part in target_lag.split(" ") if part.strip() != "")
         except (AttributeError, IndexError):
             duration, period = None, None
 
