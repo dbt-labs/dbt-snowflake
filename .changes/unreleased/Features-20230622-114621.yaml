@@ -1,0 +1,6 @@
+kind: Features
+body: add dbt-snowflake portion of dbt_clone functionality
+time: 2023-06-22T11:46:21.399594-05:00
+custom:
+  Author: McKnight-42 aranke
+  Issue: "7256"
