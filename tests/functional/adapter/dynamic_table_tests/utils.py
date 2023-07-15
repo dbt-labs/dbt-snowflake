@@ -24,3 +24,27 @@ def query_relation_type(project, relation: SnowflakeRelation) -> Optional[str]:
         raise ValueError(f"More than one instance of {relation.name} found!")
     else:
         return results[0].lower()
+
+
+def query_target_lag(project, dynamic_table: SnowflakeRelation) -> Optional[str]:
+    sql = f"""
+        show dynamic tables
+            like '{ dynamic_table.identifier }'
+            in schema { dynamic_table.schema }
+        ;
+        select "target_lag"
+        from table(result_scan(last_query_id()))
+    """
+    return project.run_sql(sql, fetch="one")
+
+
+def query_warehouse(project, dynamic_table: SnowflakeRelation) -> Optional[str]:
+    sql = f"""
+        show dynamic tables
+            like '{ dynamic_table.identifier }'
+            in schema { dynamic_table.schema }
+        ;
+        select "warehouse"
+        from table(result_scan(last_query_id()))
+    """
+    return project.run_sql(sql, fetch="one")

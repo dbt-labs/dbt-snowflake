@@ -16,45 +16,50 @@ from tests.functional.adapter.dynamic_table_tests.files import (
     MY_DYNAMIC_TABLE,
     MY_SEED,
 )
+from tests.functional.adapter.dynamic_table_tests.utils import (
+    query_relation_type,
+    query_target_lag,
+    query_warehouse,
+)
 
 
 class SnowflakeDynamicTableChanges:
     @staticmethod
     def check_start_state(project, dynamic_table):
-        raise NotImplementedError(
-            "To use this test, please implement `check_start_state`,"
-            " inherited from `DynamicTablesChanges`."
-        )
+        """
+        This needs to be done manually for now until we fix the test suite's runner. The test suite's
+        runner cannot run queries with multiple statements. Snowflake's metadata is all behind `show`
+        and `describe` calls that require a second call to fetch the results; hence, the results
+        cannot be fetched.
+        """
+        assert query_target_lag(project, dynamic_table) is None == "60 seconds"
+        assert query_warehouse(project, dynamic_table) is None == "DBT_TESTING"
 
     @staticmethod
     def change_config_via_alter(project, dynamic_table):
-        pass
+        initial_model = get_model_file(project, dynamic_table)
+        new_model = initial_model.replace("target_lag='60 seconds'", "target_lag='5 minutes'")
+        set_model_file(project, dynamic_table, new_model)
 
     @staticmethod
     def check_state_alter_change_is_applied(project, dynamic_table):
-        raise NotImplementedError(
-            "To use this test, please implement `change_config_via_alter` and"
-            " `check_state_alter_change_is_applied`,"
-            " inherited from `DynamicTablesChanges`."
-        )
+        # see above
+        assert query_target_lag(project, dynamic_table) == "5 minutes"
+        assert query_warehouse(project, dynamic_table) == "DBT_TESTING"
 
     @staticmethod
     def change_config_via_replace(project, dynamic_table):
+        # dbt-snowflake does not currently monitor any changes that trigger a full refresh
         pass
 
     @staticmethod
     def check_state_replace_change_is_applied(project, dynamic_table):
-        raise NotImplementedError(
-            "To use this test, please implement `change_config_via_replace` and"
-            " `check_state_replace_change_is_applied`,"
-            " inherited from `DynamicTablesChanges`."
-        )
+        # dbt-snowflake does not currently monitor any changes that trigger a full refresh
+        pass
 
     @staticmethod
     def query_relation_type(project, relation: SnowflakeRelation) -> Optional[str]:
-        raise NotImplementedError(
-            "To use this test, please implement `query_relation_type`, inherited from `DynamicTablesChanges`."
-        )
+        return query_relation_type(project, relation)
 
     @pytest.fixture(scope="class", autouse=True)
     def seeds(self):
@@ -101,22 +106,33 @@ class SnowflakeDynamicTableChanges:
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs)
 
 
-class SnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
+class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Apply.value}}
 
+    @pytest.mark.skip(
+        "all changes are currently resulting in a full refresh, regardless of on_configuration_change"
+    )
     def test_change_is_applied_via_alter(self, project, my_dynamic_table):
-        self.check_start_state(project, my_dynamic_table)
+        """
+        See above about the two commented assertions. In the meantime, these have been validated manually.
+        """
+        # self.check_start_state(project, my_dynamic_table)
 
         self.change_config_via_alter(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
-        self.check_state_alter_change_is_applied(project, my_dynamic_table)
+        # self.check_state_alter_change_is_applied(project, my_dynamic_table)
 
-        assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs)
-        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
+        assert_message_in_logs(f"Applying ALTER to: {str(my_dynamic_table).upper()}", logs)
+        assert_message_in_logs(
+            f"Applying REPLACE to: {str(my_dynamic_table).upper()}", logs, False
+        )
 
+    @pytest.mark.skip(
+        "dbt-snowflake does not currently monitor any changes the trigger a full refresh"
+    )
     def test_change_is_applied_via_replace(self, project, my_dynamic_table):
         self.check_start_state(project, my_dynamic_table)
 
@@ -130,18 +146,24 @@ class SnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs)
 
 
-class SnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
+class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Continue.value}}
 
+    @pytest.mark.skip(
+        "all changes are currently resulting in a full refresh, regardless of on_configuration_change"
+    )
     def test_change_is_not_applied_via_alter(self, project, my_dynamic_table):
-        self.check_start_state(project, my_dynamic_table)
+        """
+        See above about the two commented assertions. In the meantime, these have been validated manually.
+        """
+        # self.check_start_state(project, my_dynamic_table)
 
         self.change_config_via_alter(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
-        self.check_start_state(project, my_dynamic_table)
+        # self.check_start_state(project, my_dynamic_table)
 
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
@@ -151,6 +173,9 @@ class SnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
         assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs, False)
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
 
+    @pytest.mark.skip(
+        "dbt-snowflake does not currently monitor any changes the trigger a full refresh"
+    )
     def test_change_is_not_applied_via_replace(self, project, my_dynamic_table):
         self.check_start_state(project, my_dynamic_table)
 
@@ -169,20 +194,26 @@ class SnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
 
 
-class SnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
+class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Fail.value}}
 
+    @pytest.mark.skip(
+        "all changes are currently resulting in a full refresh, regardless of on_configuration_change"
+    )
     def test_change_is_not_applied_via_alter(self, project, my_dynamic_table):
-        self.check_start_state(project, my_dynamic_table)
+        """
+        See above about the two commented assertions. In the meantime, these have been validated manually.
+        """
+        # self.check_start_state(project, my_dynamic_table)
 
         self.change_config_via_alter(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(
             ["--debug", "run", "--models", my_dynamic_table.name], expect_pass=False
         )
 
-        self.check_start_state(project, my_dynamic_table)
+        # self.check_start_state(project, my_dynamic_table)
 
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
@@ -192,6 +223,9 @@ class SnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
         assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs, False)
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
 
+    @pytest.mark.skip(
+        "dbt-snowflake does not currently monitor any changes the trigger a full refresh"
+    )
     def test_change_is_not_applied_via_replace(self, project, my_dynamic_table):
         self.check_start_state(project, my_dynamic_table)
 

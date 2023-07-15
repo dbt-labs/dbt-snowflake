@@ -3,12 +3,13 @@
 .PHONY: dev
 dev: ## Installs adapter in develop mode along with development dependencies
 	@\
-	pip install -e . -r dev-requirements.txt --ignore-installed && pre-commit install
+	pip install -e . -r dev-requirements.txt && pre-commit install
 
 .PHONY: dev-uninstall
 dev-uninstall: ## Uninstalls all packages while maintaining the virtual environment
                ## Useful when updating versions, or if you accidentally installed into the system interpreter
 	pip freeze | grep -v "^-e" | cut -d "@" -f1 | xargs pip uninstall -y
+	pip uninstall -y dbt-snowflake
 
 .PHONY: mypy
 mypy: ## Runs mypy against staged changes for static type checking.

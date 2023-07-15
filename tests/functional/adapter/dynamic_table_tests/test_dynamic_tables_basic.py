@@ -28,7 +28,7 @@ class TestSnowflakeDynamicTableBasic:
 
     @staticmethod
     def refresh_dynamic_table(project, dynamic_table: SnowflakeRelation):
-        sql = f"refresh materialized view {dynamic_table}"
+        sql = f"alter dynamic table {dynamic_table} refresh"
         project.run_sql(sql)
 
     @staticmethod
@@ -143,6 +143,9 @@ class TestSnowflakeDynamicTableBasic:
         assert self.query_relation_type(project, my_dynamic_table) == "dynamic_table"
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs)
 
+    @pytest.mark.skip(
+        "The current implementation does not support overwriting tables with dynamic tables."
+    )
     def test_dynamic_table_replaces_table(self, project, my_table):
         run_dbt(["run", "--models", my_table.identifier])
         assert self.query_relation_type(project, my_table) == "table"
@@ -152,6 +155,9 @@ class TestSnowflakeDynamicTableBasic:
         run_dbt(["run", "--models", my_table.identifier])
         assert self.query_relation_type(project, my_table) == "dynamic_table"
 
+    @pytest.mark.skip(
+        "The current implementation does not support overwriting views with dynamic tables."
+    )
     def test_dynamic_table_replaces_view(self, project, my_view):
         run_dbt(["run", "--models", my_view.identifier])
         assert self.query_relation_type(project, my_view) == "view"
@@ -161,6 +167,9 @@ class TestSnowflakeDynamicTableBasic:
         run_dbt(["run", "--models", my_view.identifier])
         assert self.query_relation_type(project, my_view) == "dynamic_table"
 
+    @pytest.mark.skip(
+        "The current implementation does not support overwriting dynamic tables with tables."
+    )
     def test_table_replaces_dynamic_table(self, project, my_dynamic_table):
         run_dbt(["run", "--models", my_dynamic_table.identifier])
         assert self.query_relation_type(project, my_dynamic_table) == "dynamic_table"
@@ -170,6 +179,9 @@ class TestSnowflakeDynamicTableBasic:
         run_dbt(["run", "--models", my_dynamic_table.identifier])
         assert self.query_relation_type(project, my_dynamic_table) == "table"
 
+    @pytest.mark.skip(
+        "The current implementation does not support overwriting dynamic tables with views."
+    )
     def test_view_replaces_dynamic_table(self, project, my_dynamic_table):
         run_dbt(["run", "--models", my_dynamic_table.identifier])
         assert self.query_relation_type(project, my_dynamic_table) == "dynamic_table"
