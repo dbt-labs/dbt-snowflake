@@ -31,6 +31,7 @@ class SnowflakeConfig(AdapterConfig):
     query_tag: Optional[str] = None
     tmp_relation_type: Optional[str] = None
     merge_update_columns: Optional[str] = None
+    target_lag: Optional[str] = None
 
 
 class SnowflakeAdapter(SQLAdapter):
