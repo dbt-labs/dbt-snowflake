@@ -1,6 +1,0 @@
-kind: Features
-body: Enumerate supported features for dynamic tables in 1.6.0rc1
-time: 2023-07-14T22:40:33.694348-04:00
-custom:
-  Author: mikealfare
-  Issue: dbt-labs/dbt-core#6911
