@@ -5,6 +5,7 @@ git+https://github.com/dbt-labs/dbt-core.git@1.4.latest#egg=dbt-tests-adapter&su
 
 black==22.8.0
 click~=8.1.3
+ddtrace~=1.16
 bumpversion
 flake8
 flaky
