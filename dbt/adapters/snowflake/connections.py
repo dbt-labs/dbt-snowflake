@@ -1,46 +1,46 @@
 import base64
-import datetime
-import pytz
-import re
 from contextlib import contextmanager
 from dataclasses import dataclass
+import datetime
 from io import StringIO
+import pytz
+import re
 from time import sleep
-from typing import Optional, Tuple, Union, Any, List
+from typing import Any, List, Optional, Tuple, Union
 
 import agate
-import dbt.clients.agate_helper
-
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import requests
 import snowflake.connector
 import snowflake.connector.constants
-import snowflake.connector.errors
 from snowflake.connector.errors import (
-    Error,
+    BadGatewayError,
+    BindUploadError,
     DatabaseError,
+    Error,
+    GatewayTimeoutError,
     InternalError,
     InternalServerError,
-    ServiceUnavailableError,
-    GatewayTimeoutError,
-    RequestTimeoutError,
-    BadGatewayError,
     OtherHTTPRetryableError,
-    BindUploadError,
+    ProgrammingError,
+    RequestTimeoutError,
+    ServiceUnavailableError,
 )
 
+import dbt.clients.agate_helper
 from dbt.exceptions import (
+    DbtDatabaseError,
     DbtInternalError,
+    DbtProfileError,
     DbtRuntimeError,
     FailedToConnectError,
-    DbtDatabaseError,
-    DbtProfileError,
 )
-from dbt.adapters.base import Credentials  # type: ignore
+
+from dbt.adapters.base import Credentials
+from dbt.adapters.sql import SQLConnectionManager
 from dbt.contracts.connection import AdapterResponse, Connection
-from dbt.adapters.sql import SQLConnectionManager  # type: ignore
-from dbt.events import AdapterLogger  # type: ignore
+from dbt.events import AdapterLogger
 from dbt.events.functions import warn_or_error
 from dbt.events.types import AdapterEventWarning
 from dbt.ui import line_wrap_message, warning_tag
@@ -270,7 +270,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
     def exception_handler(self, sql):
         try:
             yield
-        except snowflake.connector.errors.ProgrammingError as e:
+        except ProgrammingError as e:
             unscrubbed_msg = str(e)
 
             # A class of Snowflake errors -- such as a failure from attempting to merge
@@ -296,7 +296,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             else:
                 raise DbtDatabaseError(msg)
         except Exception as e:
-            if isinstance(e, snowflake.connector.errors.Error):
+            if isinstance(e, Error):
                 logger.debug("Snowflake query id: {}".format(e.sfqid))
 
             logger.debug("Error running SQL: {}", sql)

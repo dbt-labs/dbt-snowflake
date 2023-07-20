@@ -3,21 +3,16 @@ from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
-from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
-from dbt.adapters.sql import SQLAdapter  # type: ignore
-from dbt.adapters.sql.impl import (
-    LIST_SCHEMAS_MACRO_NAME,
-    LIST_RELATIONS_MACRO_NAME,
-)
-
-from dbt.adapters.snowflake import SnowflakeConnectionManager
-from dbt.adapters.snowflake import SnowflakeRelation
-from dbt.adapters.snowflake import SnowflakeColumn
+from dbt.adapters.sql import SQLAdapter
+from dbt.adapters.sql.impl import LIST_SCHEMAS_MACRO_NAME, LIST_RELATIONS_MACRO_NAME
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.graph.nodes import ConstraintType
 from dbt.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt.utils import filter_null_values
+
+from dbt.adapters.snowflake import SnowflakeColumn, SnowflakeConnectionManager, SnowflakeRelation
 
 
 @dataclass
