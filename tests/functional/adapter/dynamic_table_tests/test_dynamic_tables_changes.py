@@ -91,8 +91,6 @@ class SnowflakeDynamicTableChanges:
 
         # and then reset them after the test runs
         set_model_file(project, my_dynamic_table, initial_model)
-
-        # ensure clean slate each method
         project.run_sql(f"drop schema if exists {project.test_schema} cascade")
 
     def test_full_refresh_occurs_with_changes(self, project, my_dynamic_table):

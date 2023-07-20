@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from dbt.adapters.base.relation import BaseRelation, Policy
+from dbt.adapters.base.relation import BaseRelation
 from dbt.dataclass_schema import StrEnum
 from dbt.utils import classproperty
+
+from dbt.adapters.snowflake.relation.models import SnowflakeQuotePolicy
 
 
 class SnowflakeRelationType(StrEnum):
@@ -12,13 +14,6 @@ class SnowflakeRelationType(StrEnum):
     CTE = "cte"
     External = "external"
     DynamicTable = "dynamic_table"
-
-
-@dataclass
-class SnowflakeQuotePolicy(Policy):
-    database: bool = False
-    schema: bool = False
-    identifier: bool = False
 
 
 @dataclass(frozen=True, eq=False, repr=False)
