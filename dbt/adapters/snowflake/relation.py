@@ -1,24 +1,19 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from dbt.adapters.base.relation import BaseRelation, Policy
-from dbt.dataclass_schema import StrEnum
+from dbt.adapters.base.relation import BaseRelation
+from dbt.adapters.relation_configs import RelationConfigChangeAction, RelationResults
+from dbt.context.providers import RuntimeConfigObject
 from dbt.utils import classproperty
 
-
-class SnowflakeRelationType(StrEnum):
-    Table = "table"
-    View = "view"
-    CTE = "cte"
-    External = "external"
-    DynamicTable = "dynamic_table"
-
-
-@dataclass
-class SnowflakeQuotePolicy(Policy):
-    database: bool = False
-    schema: bool = False
-    identifier: bool = False
+from dbt.adapters.snowflake.relation_configs import (
+    SnowflakeDynamicTableConfig,
+    SnowflakeDynamicTableConfigChangeset,
+    SnowflakeDynamicTableTargetLagConfigChange,
+    SnowflakeDynamicTableWarehouseConfigChange,
+    SnowflakeQuotePolicy,
+    SnowflakeRelationType,
+)
 
 
 @dataclass(frozen=True, eq=False, repr=False)
@@ -33,3 +28,32 @@ class SnowflakeRelation(BaseRelation):
     @classproperty
     def DynamicTable(cls) -> str:
         return str(SnowflakeRelationType.DynamicTable)
+
+    @classmethod
+    def dynamic_table_config_changeset(
+        cls, relation_results: RelationResults, runtime_config: RuntimeConfigObject
+    ) -> Optional[SnowflakeDynamicTableConfigChangeset]:
+        config_change_collection = SnowflakeDynamicTableConfigChangeset()
+
+        existing_dynamic_table = SnowflakeDynamicTableConfig.from_relation_results(
+            relation_results
+        )
+        new_dynamic_table = SnowflakeDynamicTableConfig.from_model_node(runtime_config.model)
+        assert isinstance(existing_dynamic_table, SnowflakeDynamicTableConfig)
+        assert isinstance(new_dynamic_table, SnowflakeDynamicTableConfig)
+
+        if new_dynamic_table.target_lag != existing_dynamic_table.target_lag:
+            config_change_collection.target_lag = SnowflakeDynamicTableTargetLagConfigChange(
+                action=RelationConfigChangeAction.alter,
+                context=new_dynamic_table.target_lag,
+            )
+
+        if new_dynamic_table.warehouse != existing_dynamic_table.warehouse:
+            config_change_collection.warehouse = SnowflakeDynamicTableWarehouseConfigChange(
+                action=RelationConfigChangeAction.alter,
+                context=new_dynamic_table.warehouse,
+            )
+
+        if config_change_collection.has_changes:
+            return config_change_collection
+        return None
