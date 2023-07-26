@@ -1,15 +1,15 @@
 {% macro snowflake__get_alter_dynamic_table_as_sql(
-    relation,
+    target_relation,
     configuration_changes,
     sql,
     existing_relation,
     backup_relation,
     intermediate_relation
 ) -%}
-    {{- log('Applying ALTER to: ' ~ relation) -}}
+    {{- log('Applying ALTER to: ' ~ target_relation) -}}
 
-    {% if _changeset.requires_full_refresh %}
-        {{- snowflake__get_replace_dynamic_table_as_sql(relation, sql, existing_relation, backup_relation, intermediate_relation) -}}
+    {% if configuration_changes.requires_full_refresh %}
+        {{- snowflake__get_replace_dynamic_table_as_sql(target_relation, sql, existing_relation, backup_relation, intermediate_relation) -}}
 
     {% else %}
 
@@ -32,7 +32,7 @@
 
     create or replace dynamic table {{ relation }}
         lag = '{{ config.get("target_lag") }}'
-        warehouse = {{ config.get("warehouse") }}
+        warehouse = {{ config.get("snowflake_warehouse") }}
         as (
             {{ sql }}
         )
@@ -52,7 +52,7 @@
             "name",
             "schema_name",
             "database_name",
-            "text" as "query",
+            "text",
             "target_lag",
             "warehouse"
         from table(result_scan(last_query_id()))
@@ -63,10 +63,10 @@
 {% endmacro %}
 
 
-{% macro snowflake__get_replace_dynamic_table_as_sql(relation, sql, existing_relation, backup_relation, intermediate_relation) -%}
-    {{- log('Applying REPLACE to: ' ~ relation) -}}
+{% macro snowflake__get_replace_dynamic_table_as_sql(target_relation, sql, existing_relation, backup_relation, intermediate_relation) -%}
+    {{- log('Applying REPLACE to: ' ~ target_relation) -}}
     {{ snowflake__get_drop_dynamic_table_sql(existing_relation) }};
-    {{ snowflake__get_create_dynamic_table_as_sql(relation, sql) }}
+    {{ snowflake__get_create_dynamic_table_as_sql(target_relation, sql) }}
 {%- endmacro %}
 
 

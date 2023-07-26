@@ -36,6 +36,9 @@ class SnowflakeDynamicTableTargetLagConfig(SnowflakeRelationConfigBase):
     duration: int
     period: SnowflakeDynamicTableTargetLagPeriod
 
+    def __str__(self) -> str:
+        return f"{self.duration} {self.period}"
+
     @classmethod
     def from_dict(cls, config_dict) -> "SnowflakeDynamicTableTargetLagConfig":
         kwargs_dict: Dict[str, Union[int, SnowflakeDynamicTableTargetLagPeriod]] = {}

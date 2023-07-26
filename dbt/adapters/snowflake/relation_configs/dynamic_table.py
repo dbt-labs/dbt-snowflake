@@ -77,10 +77,10 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
         dynamic_table: agate.Row = relation_results["dynamic_table"].rows[0]
 
         config_dict = {
-            "name": dynamic_table.get("table"),
-            "schema_name": dynamic_table.get("schema"),
-            "database_name": dynamic_table.get("database"),
-            "query": dynamic_table.get("definition"),
+            "name": dynamic_table.get("name"),
+            "schema_name": dynamic_table.get("schema_name"),
+            "database_name": dynamic_table.get("database_name"),
+            "query": dynamic_table.get("text"),
             "warehouse": dynamic_table.get("warehouse"),
         }
 
