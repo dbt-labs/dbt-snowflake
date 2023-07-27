@@ -113,17 +113,12 @@ class SnowflakeDynamicTableConfigChangeset:
     @property
     def requires_full_refresh(self) -> bool:
         return any(
-            {
+            [
                 self.target_lag.requires_full_refresh if self.target_lag else False,
                 self.warehouse.requires_full_refresh if self.warehouse else False,
-            }
+            ]
         )
 
     @property
     def has_changes(self) -> bool:
-        return any(
-            {
-                self.target_lag if self.target_lag else False,
-                self.warehouse if self.warehouse else False,
-            }
-        )
+        return any([self.target_lag, self.warehouse])
