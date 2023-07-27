@@ -25,15 +25,15 @@ from tests.functional.adapter.dynamic_table_tests.utils import (
 
 class SnowflakeDynamicTableChanges:
     @staticmethod
-    def check_start_state(project, dynamic_table):
+    def check_start_state(adapter, dynamic_table):
         """
         This needs to be done manually for now until we fix the test suite's runner. The test suite's
         runner cannot run queries with multiple statements. Snowflake's metadata is all behind `show`
         and `describe` calls that require a second call to fetch the results; hence, the results
         cannot be fetched.
         """
-        assert query_target_lag(project, dynamic_table) is None == "60 seconds"
-        assert query_warehouse(project, dynamic_table) is None == "DBT_TESTING"
+        assert query_target_lag(adapter, dynamic_table) is None == "60 seconds"
+        assert query_warehouse(adapter, dynamic_table) is None == "DBT_TESTING"
 
     @staticmethod
     def change_config_via_alter(project, dynamic_table):
@@ -42,10 +42,10 @@ class SnowflakeDynamicTableChanges:
         set_model_file(project, dynamic_table, new_model)
 
     @staticmethod
-    def check_state_alter_change_is_applied(project, dynamic_table):
+    def check_state_alter_change_is_applied(adapter, dynamic_table):
         # see above
-        assert query_target_lag(project, dynamic_table) == "5 minutes"
-        assert query_warehouse(project, dynamic_table) == "DBT_TESTING"
+        assert query_target_lag(adapter, dynamic_table) == "5 minutes"
+        assert query_warehouse(adapter, dynamic_table) == "DBT_TESTING"
 
     @staticmethod
     def change_config_via_replace(project, dynamic_table):
@@ -111,16 +111,16 @@ class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
     def project_config_update(self):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Apply.value}}
 
-    def test_change_is_applied_via_alter(self, project, my_dynamic_table):
+    def test_change_is_applied_via_alter(self, project, adapter, my_dynamic_table):
         """
         See above about the two commented assertions. In the meantime, these have been validated manually.
         """
-        # self.check_start_state(project, my_dynamic_table)
+        # self.check_start_state(adapter, my_dynamic_table)
 
         self.change_config_via_alter(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
-        # self.check_state_alter_change_is_applied(project, my_dynamic_table)
+        # self.check_state_alter_change_is_applied(adapter, my_dynamic_table)
 
         assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs)
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
@@ -128,15 +128,15 @@ class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
     @pytest.mark.skip(
         "dbt-snowflake does not currently monitor any changes the trigger a full refresh"
     )
-    def test_change_is_applied_via_replace(self, project, my_dynamic_table):
-        # self.check_start_state(project, my_dynamic_table)
+    def test_change_is_applied_via_replace(self, project, adapter, my_dynamic_table):
+        # self.check_start_state(adapter, my_dynamic_table)
 
         self.change_config_via_alter(project, my_dynamic_table)
         self.change_config_via_replace(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
-        # self.check_state_alter_change_is_applied(project, my_dynamic_table)
-        # self.check_state_replace_change_is_applied(project, my_dynamic_table)
+        # self.check_state_alter_change_is_applied(adapter, my_dynamic_table)
+        # self.check_state_replace_change_is_applied(adapter, my_dynamic_table)
 
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs)
 
@@ -146,16 +146,16 @@ class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
     def project_config_update(self):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Continue.value}}
 
-    def test_change_is_not_applied_via_alter(self, project, my_dynamic_table):
+    def test_change_is_not_applied_via_alter(self, project, adapter, my_dynamic_table):
         """
         See above about the two commented assertions. In the meantime, these have been validated manually.
         """
-        # self.check_start_state(project, my_dynamic_table)
+        # self.check_start_state(adapter, my_dynamic_table)
 
         self.change_config_via_alter(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
-        # self.check_start_state(project, my_dynamic_table)
+        # self.check_start_state(adapter, my_dynamic_table)
 
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
@@ -165,14 +165,14 @@ class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
         assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs, False)
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
 
-    def test_change_is_not_applied_via_replace(self, project, my_dynamic_table):
-        # self.check_start_state(project, my_dynamic_table)
+    def test_change_is_not_applied_via_replace(self, project, adapter, my_dynamic_table):
+        # self.check_start_state(adapter, my_dynamic_table)
 
         self.change_config_via_alter(project, my_dynamic_table)
         self.change_config_via_replace(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
-        # self.check_start_state(project, my_dynamic_table)
+        # self.check_start_state(adapter, my_dynamic_table)
 
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
@@ -188,18 +188,18 @@ class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
     def project_config_update(self):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Fail.value}}
 
-    def test_change_is_not_applied_via_alter(self, project, my_dynamic_table):
+    def test_change_is_not_applied_via_alter(self, project, adapter, my_dynamic_table):
         """
         See above about the two commented assertions. In the meantime, these have been validated manually.
         """
-        # self.check_start_state(project, my_dynamic_table)
+        # self.check_start_state(adapter, my_dynamic_table)
 
         self.change_config_via_alter(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(
             ["--debug", "run", "--models", my_dynamic_table.name], expect_pass=False
         )
 
-        # self.check_start_state(project, my_dynamic_table)
+        # self.check_start_state(adapter, my_dynamic_table)
 
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
@@ -209,8 +209,8 @@ class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
         assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs, False)
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
 
-    def test_change_is_not_applied_via_replace(self, project, my_dynamic_table):
-        # self.check_start_state(project, my_dynamic_table)
+    def test_change_is_not_applied_via_replace(self, project, adapter, my_dynamic_table):
+        # self.check_start_state(adapter, my_dynamic_table)
 
         self.change_config_via_alter(project, my_dynamic_table)
         self.change_config_via_replace(project, my_dynamic_table)
@@ -218,7 +218,7 @@ class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
             ["--debug", "run", "--models", my_dynamic_table.name], expect_pass=False
         )
 
-        # self.check_start_state(project, my_dynamic_table)
+        # self.check_start_state(adapter, my_dynamic_table)
 
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
