@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import agate
 from dbt.adapters.relation_configs import RelationConfigChange
@@ -10,14 +10,10 @@ from dbt.adapters.snowflake.relation_configs.base import SnowflakeRelationConfig
 
 
 class SnowflakeDynamicTableTargetLagPeriod(StrEnum):
-    second = "second"
     seconds = "seconds"
     minutes = "minutes"
-    minute = "minute"
     hours = "hours"
-    hour = "hour"
     days = "days"
-    day = "day"
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
@@ -53,7 +49,7 @@ class SnowflakeDynamicTableTargetLagConfig(SnowflakeRelationConfigBase):
         return target_lag
 
     @classmethod
-    def parse_model_node(cls, model_node: ModelNode) -> dict:
+    def parse_model_node(cls, model_node: ModelNode) -> Dict[str, Any]:
         """
         Translate ModelNode objects from the user-provided config into a standard dictionary.
 
@@ -61,25 +57,16 @@ class SnowflakeDynamicTableTargetLagConfig(SnowflakeRelationConfigBase):
             model_node: the description of the target lag from the user in this format:
 
                 {
-                    "target_lag": "int any("second(s)", "minute(s)", "hour(s)", "day(s)")"
+                    "target_lag": "int any("seconds", "minutes", "hours", "days")"
                 }
 
         Returns: a standard dictionary describing this `SnowflakeDynamicTableTargetLagConfig` instance
         """
         target_lag: str = model_node.config.extra["target_lag"]
-        try:
-            duration, period = target_lag.split(" ")
-        except (AttributeError, IndexError):
-            duration, period = None, None
-
-        config_dict = {
-            "duration": duration,
-            "period": period,
-        }
-        return config_dict
+        return cls._parse_target_lag_string(target_lag)
 
     @classmethod
-    def parse_relation_results(cls, relation_results_entry: agate.Row) -> dict:
+    def parse_relation_results(cls, relation_results_entry: agate.Row) -> Dict[str, Any]:
         """
         Translate agate objects from the database into a standard dictionary.
 
@@ -87,14 +74,20 @@ class SnowflakeDynamicTableTargetLagConfig(SnowflakeRelationConfigBase):
             relation_results_entry: the description of the target lag from the database in this format:
 
                 agate.Row({
-                    "target_lag": "int any("second(s)", "minute(s)", "hour(s)", "day(s)")"
+                    "target_lag": "int any("seconds", "minutes", "hours", "days")"
                 })
 
         Returns: a standard dictionary describing this `SnowflakeDynamicTableTargetLagConfig` instance
         """
         target_lag: str = relation_results_entry["target_lag"]
+        return cls._parse_target_lag_string(target_lag)
+
+    @staticmethod
+    def _parse_target_lag_string(target_lag: str) -> Dict[str, Union[Optional[Union[int, str]]]]:
         try:
-            duration, period = (part for part in target_lag.split(" ") if part.strip() != "")
+            # Snowflake supports strings like `1     \n    minutes` despite the docs not suggesting that
+            duration_str, *_, period = target_lag.split(" ")
+            duration = int(duration_str)
         except (AttributeError, IndexError):
             duration, period = None, None
 
