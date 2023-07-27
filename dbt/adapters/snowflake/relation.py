@@ -37,14 +37,12 @@ class SnowflakeRelation(BaseRelation):
     def dynamic_table_config_changeset(
         cls, relation_results: RelationResults, runtime_config: RuntimeConfigObject
     ) -> Optional[SnowflakeDynamicTableConfigChangeset]:
-        config_change_collection = SnowflakeDynamicTableConfigChangeset()
-
         existing_dynamic_table = SnowflakeDynamicTableConfig.from_relation_results(
             relation_results
         )
         new_dynamic_table = SnowflakeDynamicTableConfig.from_model_node(runtime_config.model)
-        assert isinstance(existing_dynamic_table, SnowflakeDynamicTableConfig)
-        assert isinstance(new_dynamic_table, SnowflakeDynamicTableConfig)
+
+        config_change_collection = SnowflakeDynamicTableConfigChangeset()
 
         if new_dynamic_table.target_lag != existing_dynamic_table.target_lag:
             config_change_collection.target_lag = SnowflakeDynamicTableTargetLagConfigChange(

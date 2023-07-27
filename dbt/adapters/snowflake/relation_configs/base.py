@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import agate
 from dbt.adapters.base.relation import Policy
@@ -31,25 +31,25 @@ class SnowflakeRelationConfigBase(RelationConfigBase):
         return SnowflakeQuotePolicy()
 
     @classmethod
-    def from_model_node(cls, model_node: ModelNode) -> "RelationConfigBase":
+    def from_model_node(cls, model_node: ModelNode):
         relation_config = cls.parse_model_node(model_node)
         relation = cls.from_dict(relation_config)
         return relation
 
     @classmethod
-    def parse_model_node(cls, model_node: ModelNode) -> dict:
+    def parse_model_node(cls, model_node: ModelNode) -> Dict[str, Any]:
         raise NotImplementedError(
             "`parse_model_node()` needs to be implemented on this RelationConfigBase instance"
         )
 
     @classmethod
-    def from_relation_results(cls, relation_results: RelationResults) -> "RelationConfigBase":
+    def from_relation_results(cls, relation_results: RelationResults):
         relation_config = cls.parse_relation_results(relation_results)
         relation = cls.from_dict(relation_config)
         return relation
 
     @classmethod
-    def parse_relation_results(cls, relation_results: RelationResults) -> dict:
+    def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:
         raise NotImplementedError(
             "`parse_relation_results()` needs to be implemented on this RelationConfigBase instance"
         )
