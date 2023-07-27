@@ -31,7 +31,7 @@
     {{- log('Applying CREATE to: ' ~ relation) -}}
 
     create or replace dynamic table {{ relation }}
-        lag = '{{ config.get("target_lag") }}'
+        target_lag = '{{ config.get("target_lag") }}'
         warehouse = {{ config.get("snowflake_warehouse") }}
         as (
             {{ sql }}
