@@ -70,7 +70,8 @@
         {% set configuration_changes = snowflake__get_dynamic_table_configuration_changes(existing_relation, config) %}
 
         {% if configuration_changes is none %}
-            {% set build_sql = snowflake__refresh_dynamic_table(target_relation) %}
+            {% set build_sql = '' %}
+            {{ exceptions.warn("No configuration changes were identified on: `" ~ target_relation ~ "`. Continuing.") }}
 
         {% elif on_configuration_change == 'apply' %}
             {% set build_sql = snowflake__get_alter_dynamic_table_as_sql(target_relation, configuration_changes, sql, existing_relation, backup_relation, intermediate_relation) %}
