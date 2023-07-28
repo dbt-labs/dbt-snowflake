@@ -14,6 +14,10 @@ class SnowflakeDynamicTableTargetLagPeriod(StrEnum):
     minutes = "minutes"
     hours = "hours"
     days = "days"
+    second = "second"
+    minute = "minute"
+    hour = "hour"
+    day = "day"
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)

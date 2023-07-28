@@ -32,13 +32,15 @@ class SnowflakeDynamicTableChanges:
         and `describe` calls that require a second call to fetch the results; hence, the results
         cannot be fetched.
         """
-        assert query_target_lag(adapter, dynamic_table) is None == "60 seconds"
+        assert query_target_lag(adapter, dynamic_table) is None == "120 seconds"
         assert query_warehouse(adapter, dynamic_table) is None == "DBT_TESTING"
 
     @staticmethod
     def change_config_via_alter(project, dynamic_table):
         initial_model = get_model_file(project, dynamic_table)
-        new_model = initial_model.replace("target_lag='60 seconds'", "target_lag='5 minutes'")
+        new_model = initial_model.replace(
+            "target_lag='120        seconds'", "target_lag='5   minutes'"
+        )
         set_model_file(project, dynamic_table, new_model)
 
     @staticmethod
