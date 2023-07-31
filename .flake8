@@ -12,3 +12,5 @@ ignore =
     E741,
     E501,
 exclude = test
+per-file-ignores =
+    */__init__.py: F401
