@@ -1,6 +1,0 @@
-kind: Fixes
-body: Implement the new refresh method, remove the flaky workaround
-time: 2023-07-06T16:38:38.453968-04:00
-custom:
-  Author: mikealfare
-  Issue: "603"
