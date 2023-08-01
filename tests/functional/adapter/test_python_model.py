@@ -126,6 +126,15 @@ class TestCustomSchemaWorks:
     def models(self):
         return {"custom_target_model.py": models__custom_target_model}
 
+    @pytest.fixture(scope="function", autouse=True)
+    def teardown_method(self, project):
+        yield
+        with project.adapter.connection_named("__test"):
+            relation = project.adapter.Relation.create(
+                database=project.database, schema=f"{project.test_schema}_MY_CUSTOM_SCHEMA"
+            )
+            project.adapter.drop_schema(relation)
+
     def test_custom_target(self, project):
         results = run_dbt()
         assert results[0].node.schema == f"{project.test_schema}_MY_CUSTOM_SCHEMA"
