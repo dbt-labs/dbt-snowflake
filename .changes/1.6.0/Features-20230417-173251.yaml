@@ -1,6 +1,0 @@
-kind: Features
-body: enable showing more than 10K objects in a schema
-time: 2023-04-17T17:32:51.159541-06:00
-custom:
-  Author: matt-winkler
-  Issue: "571"
