@@ -1,5 +1,9 @@
 from typing import Optional
 
+import agate
+from dbt.adapters.base import BaseAdapter
+from dbt.tests.util import get_connection
+
 from dbt.adapters.snowflake.relation import SnowflakeRelation
 
 
@@ -26,25 +30,20 @@ def query_relation_type(project, relation: SnowflakeRelation) -> Optional[str]:
         return results[0].lower()
 
 
-def query_target_lag(project, dynamic_table: SnowflakeRelation) -> Optional[str]:
-    sql = f"""
-        show dynamic tables
-            like '{ dynamic_table.identifier }'
-            in schema { dynamic_table.schema }
-        ;
-        select "target_lag"
-        from table(result_scan(last_query_id()))
-    """
-    return project.run_sql(sql, fetch="one")
+def query_target_lag(adapter, dynamic_table: SnowflakeRelation) -> Optional[str]:
+    config = describe_dynamic_table(adapter, dynamic_table)
+    return config.get("target_lag")
 
 
-def query_warehouse(project, dynamic_table: SnowflakeRelation) -> Optional[str]:
-    sql = f"""
-        show dynamic tables
-            like '{ dynamic_table.identifier }'
-            in schema { dynamic_table.schema }
-        ;
-        select "warehouse"
-        from table(result_scan(last_query_id()))
-    """
-    return project.run_sql(sql, fetch="one")
+def query_warehouse(adapter, dynamic_table: SnowflakeRelation) -> Optional[str]:
+    config = describe_dynamic_table(adapter, dynamic_table)
+    return config.get("warehouse")
+
+
+def describe_dynamic_table(adapter: BaseAdapter, dynamic_table: SnowflakeRelation) -> agate.Row:
+    with get_connection(adapter):
+        macro_results = adapter.execute_macro(
+            "snowflake__describe_dynamic_table", kwargs={"relation": dynamic_table}
+        )
+    config = macro_results["dynamic_table"]
+    return config.rows[0]
