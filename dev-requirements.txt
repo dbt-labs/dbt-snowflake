@@ -5,10 +5,10 @@ git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=
 
 # if version 1.x or greater -> pin to major version
 # if version 0.x -> pin to minor
-black~=23.3
+black~=23.7
 bumpversion~=0.6.0
 click~=8.1
-ddtrace~=1.16
+ddtrace~=1.17
 flake8~=6.1
 flaky~=3.7
 freezegun~=1.2
