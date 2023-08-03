@@ -42,3 +42,9 @@
     {% set dml = default__snapshot_merge_sql(target, source, insert_cols) %}
     {% do return(snowflake_dml_explicit_transaction(dml)) %}
 {% endmacro %}
+
+
+{% macro snowflake__get_incremental_append_sql(get_incremental_append_sql) %}
+    {% set dml = default__get_incremental_append_sql(get_incremental_append_sql) %}
+    {% do return(snowflake_dml_explicit_transaction(dml)) %}
+{% endmacro %}
