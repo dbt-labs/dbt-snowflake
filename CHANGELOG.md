@@ -32,10 +32,10 @@
 - Update `snowflake-connector-python` to 3.0 to address CVE-2022-42965 ([#476](https://github.com/dbt-labs/dbt-snowflake/pull/476))
 
 ### Contributors
-- [@dataders](https://github.com/dataders) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331))
+- [@dataders](https://github.com/dataders) ([#331](https://github.com/dbt-labs/dbt-snowflake/issues/331))
 - [@dbeatty10](https://github.com/dbeatty10) ([#476](https://github.com/dbt-labs/dbt-snowflake/pull/476))
-- [@joshuataylor](https://github.com/joshuataylor) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331))
-- [@mikealfare](https://github.com/mikealfare) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331), [#476](https://github.com/dbt-labs/dbt-snowflake/pull/476), [#476](https://github.com/dbt-labs/dbt-snowflake/pull/476))
+- [@joshuataylor](https://github.com/joshuataylor) ([#331](https://github.com/dbt-labs/dbt-snowflake/issues/331))
+- [@mikealfare](https://github.com/mikealfare) ([#331](https://github.com/dbt-labs/dbt-snowflake/issues/331), [#476](https://github.com/dbt-labs/dbt-snowflake/pull/476), [#476](https://github.com/dbt-labs/dbt-snowflake/pull/476))
 
 ## dbt-snowflake 1.4.1 - February 08, 2023
 
@@ -44,7 +44,7 @@
 - enable snowpark product team to attribute usage to dbt ([#374](https://github.com/dbt-labs/dbt-snowflake/issues/374))
 
 ### Contributors
-- [@dataders](https://github.com/dataders) ([#374](https://github.com/dbt-labs/dbt-spark/issues/374))
+- [@dataders](https://github.com/dataders) ([#374](https://github.com/dbt-labs/dbt-snowflake/issues/374))
 
 ## dbt-snowflake 1.4.0 - January 25, 2023
 ### Features
