@@ -1,7 +1,0 @@
-kind: Features
-body: Optimize catalog.sql to query only needed tables and columns from information_schema
-time: 2022-08-16T08:13:18.719922452-05:00
-custom:
-  Author: mauricioobgo
-  Issue: "216"
-  PR: "236"
