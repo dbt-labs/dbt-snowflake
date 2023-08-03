@@ -56,4 +56,4 @@ jobs:
         message_format: ':x: ${{ matrix.workflow_name }} CI on branch "${{ matrix.branch }}" ${{ steps.trigger-step.outputs.workflow-conclusion }}'
         footer: 'Linked failed CI run ${{ steps.trigger-step.outputs.workflow-url }}'
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_CORE_ALERTS }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_ADAPTER_ALERTS }}
