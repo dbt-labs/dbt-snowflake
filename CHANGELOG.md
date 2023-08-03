@@ -11,8 +11,6 @@
 
 - Address some issues regarding gustom schema overrides. ([#393](https://github.com/dbt-labs/dbt-snowflake/issues/393))
 
-
-
 ## dbt-snowflake 1.4.2 - March 16, 2023
 
 ### Features
@@ -32,19 +30,13 @@
 - Update `snowflake-connector-python` to 3.0 to address CVE-2022-42965 ([#476](https://github.com/dbt-labs/dbt-snowflake/pull/476))
 
 ### Contributors
-- [@dataders](https://github.com/dataders) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331))
-- [@dbeatty10](https://github.com/dbeatty10) ([#476](https://github.com/dbt-labs/dbt-snowflake/pull/476))
-- [@joshuataylor](https://github.com/joshuataylor) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331))
-- [@mikealfare](https://github.com/mikealfare) ([#331](https://github.com/dbt-labs/dbt-spark/issues/331), [#476](https://github.com/dbt-labs/dbt-snowflake/pull/476), [#476](https://github.com/dbt-labs/dbt-snowflake/pull/476))
+- [@joshuataylor](https://github.com/joshuataylor) ([#331](https://github.com/dbt-labs/dbt-snowflake/issues/331))
 
 ## dbt-snowflake 1.4.1 - February 08, 2023
 
 ### Under the Hood
 
 - enable snowpark product team to attribute usage to dbt ([#374](https://github.com/dbt-labs/dbt-snowflake/issues/374))
-
-### Contributors
-- [@dataders](https://github.com/dataders) ([#374](https://github.com/dbt-labs/dbt-spark/issues/374))
 
 ## dbt-snowflake 1.4.0 - January 25, 2023
 ### Features
@@ -72,8 +64,6 @@
 
 ### Contributors
 - [@b-per](https://github.com/b-per) ([#349](https://github.com/dbt-labs/dbt-snowflake/pull/349))
-- [@dave-connors-3](https://github.com/dave-connors-3) ([#310](https://github.com/dbt-labs/dbt-snowflake/pull/310))
-- [@dbeatty10](https://github.com/dbeatty10) ([#389](https://github.com/dbt-labs/dbt-snowflake/pull/389), [#364](https://github.com/dbt-labs/dbt-snowflake/pull/364), [#359](https://github.com/dbt-labs/dbt-snowflake/pull/359), [#368](https://github.com/dbt-labs/dbt-snowflake/pull/368), [#403](https://github.com/dbt-labs/dbt-snowflake/pull/403))
 - [@joshuataylor](https://github.com/joshuataylor) ([#294](https://github.com/dbt-labs/dbt-snowflake/pull/294))
 - [@verhey](https://github.com/verhey) ([#271](https://github.com/dbt-labs/dbt-snowflake/pull/271))
 

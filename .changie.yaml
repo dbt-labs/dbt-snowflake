@@ -80,7 +80,7 @@ custom:
 footerFormat: |
   {{- $contributorDict := dict }}
   {{- /* any names added to this list should be all lowercase for later matching purposes */}}
-  {{- $core_team := list "michelleark" "peterallenwebb" "emmyoop" "nathaniel-may" "gshank" "leahwicz" "chenyulinx" "stu-k" "iknox-fa" "versusfacit" "mcknight-42" "jtcohen6" "aranke" "dependabot[bot]" "snyk-bot" "colin-rogers-dbt" }}
+  {{- $core_team := list "michelleark" "peterallenwebb" "emmyoop" "nathaniel-may" "gshank" "leahwicz" "chenyulinx" "stu-k" "iknox-fa" "versusfacit" "mcknight-42" "jtcohen6" "aranke" "dependabot[bot]" "snyk-bot" "colin-rogers-dbt" "mikealfare" "dbeatty10" "dataders"}}
   {{- range $change := .Changes }}
     {{- $authorList := splitList " " $change.Custom.Author }}
     {{- /* loop through all authors for a single changelog */}}
@@ -100,7 +100,7 @@ footerFormat: |
           {{- else }}
             {{- $changes := splitList " " $change.Custom.Issue }}
             {{- range $issueNbr := $changes }}
-              {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-spark/issues/nbr)" | replace "nbr" $issueNbr }}
+              {{- $changeLink := "[#nbr](https://github.com/dbt-labs/dbt-snowflake/issues/nbr)" | replace "nbr" $issueNbr }}
               {{- $IssueList = append $IssueList $changeLink  }}
             {{- end -}}
           {{- end }}
