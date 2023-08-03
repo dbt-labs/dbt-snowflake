@@ -11,8 +11,6 @@
 
 - Address some issues regarding gustom schema overrides. ([#393](https://github.com/dbt-labs/dbt-snowflake/issues/393))
 
-
-
 ## dbt-snowflake 1.4.2 - March 16, 2023
 
 ### Features
