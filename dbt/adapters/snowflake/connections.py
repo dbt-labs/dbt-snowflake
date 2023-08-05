@@ -375,7 +375,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
         connection_name = connection.name
 
-        sql = "select system$abort_session({})".format(sid)
+        sql = "select system$cancel_all_queries({})".format(sid)
 
         logger.debug("Cancelling query '{}' ({})".format(connection_name, sid))
 
