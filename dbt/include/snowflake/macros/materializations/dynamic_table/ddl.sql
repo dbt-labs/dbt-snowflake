@@ -15,12 +15,12 @@
 
         {%- set target_lag = configuration_changes.target_lag -%}
         {%- if target_lag -%}{{- log('Applying UPDATE TARGET_LAG to: ' ~ existing_relation) -}}{%- endif -%}
-        {%- set warehouse = configuration_changes.warehouse -%}
-        {%- if warehouse -%}{{- log('Applying UPDATE WAREHOUSE to: ' ~ existing_relation) -}}{%- endif -%}
+        {%- set snowflake_warehouse = configuration_changes.snowflake_warehouse -%}
+        {%- if snowflake_warehouse -%}{{- log('Applying UPDATE WAREHOUSE to: ' ~ existing_relation) -}}{%- endif -%}
 
         alter dynamic table {{ existing_relation }} set
             {% if target_lag %}target_lag = '{{ target_lag.context }}'{% endif %}
-            {% if warehouse %}warehouse = {{ warehouse.context }}{% endif %}
+            {% if snowflake_warehouse %}snowflake_warehouse = {{ snowflake_warehouse.context }}{% endif %}
 
     {%- endif -%}
 
@@ -32,7 +32,7 @@
 
     create or replace dynamic table {{ relation }}
         target_lag = '{{ config.get("target_lag") }}'
-        warehouse = {{ config.get("snowflake_warehouse") }}
+        snowflake_warehouse = {{ config.get("snowflake_warehouse") }}
         as (
             {{ sql }}
         )
@@ -54,7 +54,7 @@
             "database_name",
             "text",
             "target_lag",
-            "warehouse"
+            "snowflake_warehouse"
         from table(result_scan(last_query_id()))
     {%- endset %}
     {% set _dynamic_table = run_query(_dynamic_table_sql) %}
