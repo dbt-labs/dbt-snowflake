@@ -81,13 +81,22 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "schema_name": dynamic_table.get("schema_name"),
             "database_name": dynamic_table.get("database_name"),
             "query": dynamic_table.get("text"),
-            "snowflake_warehouse": dynamic_table.get("snowflake_warehouse"),
+            "snowflake_warehouse": dynamic_table.get("warehouse"),
         }
 
         if dynamic_table.get("target_lag"):
             config_dict.update(
                 {
                     "target_lag": SnowflakeDynamicTableTargetLagConfig.parse_relation_results(
+                        dynamic_table
+                    )
+                }
+            )
+
+        if dynamic_table.get("snowflake_warehouse"):
+            config_dict.update(
+                {
+                    "snowflake_warehouse": SnowflakeDynamicTableTargetLagConfig.parse_relation_results(
                         dynamic_table
                     )
                 }

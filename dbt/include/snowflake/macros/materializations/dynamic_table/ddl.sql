@@ -54,7 +54,7 @@
             "database_name",
             "text",
             "target_lag",
-            "warehouse" as "snowflake_warehouse"
+            "warehouse"
         from table(result_scan(last_query_id()))
     {%- endset %}
     {% set _dynamic_table = run_query(_dynamic_table_sql) %}
