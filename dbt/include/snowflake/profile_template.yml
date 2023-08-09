@@ -2,33 +2,33 @@ fixed:
   type: snowflake
 prompts:
   account:
-    hint: 'https://<this_value>.snowflakecomputing.com'
+    hint: 'What is your account id for Snowflake? [https://<this_value>.snowflakecomputing.com]'
   user:
-    hint: 'dev username'
+    hint: 'What is your personal user login for Snowflake?'
   _choose_authentication_type:
     password:
       password:
-        hint: 'dev password'
+        hint: 'What is your password for Snowflake?'
         hide_input: true
     keypair:
       private_key_path:
-        hint: 'path/to/private.key'
+        hint: 'What is the path/to/private.key for Snowflake authentication?'
       private_key_passphrase:
-        hint: 'passphrase for the private key, if key is encrypted'
+        hint: 'What is the passphrase for the private key, if the key is encrypted?'
         hide_input: true
     sso:
       authenticator:
-        hint: "'externalbrowser' or a valid Okta URL"
+        hint: "Please input one of 'externalbrowser' or a valid Okta URL"
         default: 'externalbrowser'
   role:
-    hint: 'dev role'
+    hint: 'What is the developer role you want dbt to use by default?'
   warehouse:
-    hint: 'warehouse name'
+    hint: 'What is the developer warehouse you want dbt to use by default?'
   database:
-    hint: 'default database that dbt will build objects in'
+    hint: 'What is the default database you want dbt to build objects into?'
   schema:
-    hint: 'default schema that dbt will build objects in'
+    hint: 'What is the default schema in that database that you want dbt to build objects into?'
   threads:
-    hint: '1 or more'
+    hint: 'How many threads do you want dbt use by default? Input an integer of 1 or more'
     type: 'int'
     default: 1
