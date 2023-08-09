@@ -93,15 +93,6 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
                 }
             )
 
-        if dynamic_table.get("snowflake_warehouse"):
-            config_dict.update(
-                {
-                    "snowflake_warehouse": SnowflakeDynamicTableTargetLagConfig.parse_relation_results(
-                        dynamic_table
-                    )
-                }
-            )
-
         return config_dict
 
 
