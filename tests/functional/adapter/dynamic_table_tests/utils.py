@@ -37,7 +37,7 @@ def query_target_lag(adapter, dynamic_table: SnowflakeRelation) -> Optional[str]
 
 def query_warehouse(adapter, dynamic_table: SnowflakeRelation) -> Optional[str]:
     config = describe_dynamic_table(adapter, dynamic_table)
-    return config.get("snowflake_warehouse")
+    return config.get("warehouse")
 
 
 def describe_dynamic_table(adapter: BaseAdapter, dynamic_table: SnowflakeRelation) -> agate.Row:
