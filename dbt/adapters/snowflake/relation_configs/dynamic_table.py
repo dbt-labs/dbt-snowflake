@@ -77,6 +77,15 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
+class SnowflakeDynamicTableTargetLagConfigChange(RelationConfigChange):
+    context: Optional[str] = None
+
+    @property
+    def requires_full_refresh(self) -> bool:
+        return False
+
+
+@dataclass(frozen=True, eq=True, unsafe_hash=True)
 class SnowflakeDynamicTableWarehouseConfigChange(RelationConfigChange):
     context: Optional[str] = None
 
@@ -87,7 +96,7 @@ class SnowflakeDynamicTableWarehouseConfigChange(RelationConfigChange):
 
 @dataclass
 class SnowflakeDynamicTableConfigChangeset:
-    target_lag: Optional[SnowflakeDynamicTableWarehouseConfigChange] = None
+    target_lag: Optional[SnowflakeDynamicTableTargetLagConfigChange] = None
     warehouse: Optional[SnowflakeDynamicTableWarehouseConfigChange] = None
 
     @property

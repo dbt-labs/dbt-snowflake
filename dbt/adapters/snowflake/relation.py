@@ -9,6 +9,7 @@ from dbt.utils import classproperty
 from dbt.adapters.snowflake.relation_configs import (
     SnowflakeDynamicTableConfig,
     SnowflakeDynamicTableConfigChangeset,
+    SnowflakeDynamicTableTargetLagConfigChange,
     SnowflakeDynamicTableWarehouseConfigChange,
     SnowflakeQuotePolicy,
     SnowflakeRelationType,
@@ -44,7 +45,10 @@ class SnowflakeRelation(BaseRelation):
         config_change_collection = SnowflakeDynamicTableConfigChangeset()
 
         if new_dynamic_table.target_lag != existing_dynamic_table.target_lag:
-            config_change_collection.target_lag = new_dynamic_table.target_lag
+            config_change_collection.target_lag = SnowflakeDynamicTableTargetLagConfigChange(
+                action=RelationConfigChangeAction.alter,
+                context=new_dynamic_table.target_lag,
+            )
 
         if new_dynamic_table.warehouse != existing_dynamic_table.warehouse:
             config_change_collection.warehouse = SnowflakeDynamicTableWarehouseConfigChange(
