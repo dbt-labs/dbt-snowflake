@@ -8,8 +8,3 @@ from dbt.adapters.snowflake.relation_configs.policies import (
     SnowflakeQuotePolicy,
     SnowflakeRelationType,
 )
-from dbt.adapters.snowflake.relation_configs.target_lag import (
-    SnowflakeDynamicTableTargetLagConfig,
-    SnowflakeDynamicTableTargetLagConfigChange,
-    SnowflakeDynamicTableTargetLagPeriod,
-)

@@ -7,10 +7,6 @@ from dbt.contracts.graph.nodes import ModelNode
 from dbt.contracts.relation import ComponentName
 
 from dbt.adapters.snowflake.relation_configs.base import SnowflakeRelationConfigBase
-from dbt.adapters.snowflake.relation_configs.target_lag import (
-    SnowflakeDynamicTableTargetLagConfig,
-    SnowflakeDynamicTableTargetLagConfigChange,
-)
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
@@ -32,7 +28,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     schema_name: str
     database_name: str
     query: str
-    target_lag: SnowflakeDynamicTableTargetLagConfig
+    target_lag: str
     warehouse: str
 
     @classmethod
@@ -45,12 +41,8 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             ),
             "query": config_dict.get("query"),
             "warehouse": config_dict.get("warehouse"),
+            "target_lag": config_dict.get("target_lag"),
         }
-
-        if target_lag := config_dict.get("target_lag"):
-            kwargs_dict.update(
-                {"target_lag": SnowflakeDynamicTableTargetLagConfig.from_dict(target_lag)}
-            )
 
         dynamic_table: "SnowflakeDynamicTableConfig" = super().from_dict(kwargs_dict)  # type: ignore
         return dynamic_table
@@ -63,12 +55,8 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "database_name": model_node.database,
             "query": model_node.compiled_code,
             "warehouse": model_node.config.extra.get("snowflake_warehouse"),
+            "target_lag": model_node.config.extra.get("target_lag"),
         }
-
-        if model_node.config.extra.get("target_lag"):
-            config_dict.update(
-                {"target_lag": SnowflakeDynamicTableTargetLagConfig.parse_model_node(model_node)}
-            )
 
         return config_dict
 
@@ -82,16 +70,8 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "database_name": dynamic_table.get("database_name"),
             "query": dynamic_table.get("text"),
             "warehouse": dynamic_table.get("warehouse"),
+            "target_lag": dynamic_table.get("target_lag"),
         }
-
-        if dynamic_table.get("target_lag"):
-            config_dict.update(
-                {
-                    "target_lag": SnowflakeDynamicTableTargetLagConfig.parse_relation_results(
-                        dynamic_table
-                    )
-                }
-            )
 
         return config_dict
 
@@ -107,7 +87,7 @@ class SnowflakeDynamicTableWarehouseConfigChange(RelationConfigChange):
 
 @dataclass
 class SnowflakeDynamicTableConfigChangeset:
-    target_lag: Optional[SnowflakeDynamicTableTargetLagConfigChange] = None
+    target_lag: Optional[SnowflakeDynamicTableWarehouseConfigChange] = None
     warehouse: Optional[SnowflakeDynamicTableWarehouseConfigChange] = None
 
     @property
