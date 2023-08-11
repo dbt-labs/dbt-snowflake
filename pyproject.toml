@@ -30,7 +30,7 @@ urls.Homepage = "https://github.com/dbt-labs/dbt-snowflake"
 urls."Bug Reports" = "https://github.com/dbt-labs/dbt-snowflake/issues"
 urls.Docs = "https://docs.getdbt.com/docs/core/connect-data-platform/snowflake-setup"
 dependencies = [
-    "dbt-core~=1.7",
+    "dbt-core~=1.7.0a1",
     "snowflake-connector-python[secure-local-storage]~=3.0",
     # installed via dbt-core but referenced directly; don't pin to avoid version conflicts with dbt-core
     "agate",
