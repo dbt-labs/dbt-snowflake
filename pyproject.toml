@@ -52,6 +52,8 @@ optional-dependencies.dev = [
     "types-requests",
 ]
 optional-dependencies.test = [
+    "dbt-core@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core",
+    "dbt-tests-adapter@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=tests/adapter",
     "ddtrace",
     "freezegun",
     "pytest",
