@@ -26,7 +26,7 @@ defaults:
     shell: bash
 
 env:
-  RELEASE_BRANCH: "1.5.latest"
+  RELEASE_BRANCH: "1.6.latest"
 
 jobs:
   aggregate-release-data:
@@ -38,52 +38,52 @@ jobs:
       release_branch: ${{ steps.release-branch.outputs.name }}
 
     steps:
-      - name: "Checkout ${{ github.repository }} Branch ${{ env.RELEASE_BRANCH }}"
+      - name: "Checkout ${{ github.repository }} @ ${{ env.RELEASE_BRANCH }}"
         uses: actions/checkout@v3
         with:
           ref: ${{ env.RELEASE_BRANCH }}
 
-      - name: "Resolve Commit To Release"
+      - name: Resolve commit to release
         id: resolve-commit-sha
         run: |
           commit_sha=$(git rev-parse HEAD)
           echo "release_commit=$commit_sha" >> $GITHUB_OUTPUT
 
-      - name: "Get Current Version Number"
+      - name: Get current version
         id: version-number-sources
         run: |
           current_version=`awk -F"current_version = " '{print $2}' .bumpversion.cfg | tr '\n' ' '`
           echo "current_version=$current_version" >> $GITHUB_OUTPUT
 
-      - name: "Audit Version And Parse Into Parts"
+      - name: Audit version and parse into parts
         id: semver
         uses: dbt-labs/actions/parse-semver@v1.1.0
         with:
           version: ${{ steps.version-number-sources.outputs.current_version }}
 
-      - name: "Get Current Date"
+      - name: Get current date
         id: current-date
         run: echo "date=$(date +'%m%d%Y')" >> $GITHUB_OUTPUT
 
       # Bump to the next patch because when this is a previously released patch, the changelog
       # markdown will already exist and cause a failure in another step
-      - name: "Bump Patch Number"
+      - name: Bump patch number
         id: bump_patch
         run: |
           echo "patch=$((${{ steps.semver.outputs.patch }}+1))" >> $GITHUB_OUTPUT
 
-      - name: "Generate Nightly Release Version Number"
+      - name: Generate nightly release version number
         id: nightly-release-version
         run: |
           number="${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.bump_patch.outputs.patch }}.dev${{ steps.current-date.outputs.date }}"
           echo "number=$number" >> $GITHUB_OUTPUT
 
-      - name: "Audit Nightly Release Version And Parse Into Parts"
+      - name: Audit nightly release version and parse into parts
         uses: dbt-labs/actions/parse-semver@v1.1.0
         with:
           version: ${{ steps.nightly-release-version.outputs.number }}
 
-      - name: "Set Release Branch"
+      - name: Set release branch
         id: release-branch
         run: |
           echo "name=${{ env.RELEASE_BRANCH }}" >> $GITHUB_OUTPUT
@@ -93,7 +93,7 @@ jobs:
     needs: [aggregate-release-data]
 
     steps:
-      - name: "[DEBUG] Log Outputs"
+      - name: "[DEBUG] log outputs"
         run: |
           echo commit_sha    : ${{ needs.aggregate-release-data.outputs.commit_sha }}
           echo version_number: ${{ needs.aggregate-release-data.outputs.version_number }}
@@ -101,7 +101,6 @@ jobs:
 
   release-github-pypi:
     needs: [aggregate-release-data]
-
     uses: ./.github/workflows/release.yml
     with:
       sha: ${{ needs.aggregate-release-data.outputs.commit_sha }}

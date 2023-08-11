@@ -131,9 +131,7 @@ jobs:
 
   bump-version-generate-changelog:
     name: Bump package version, Generate changelog
-
     uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@main
-
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
@@ -141,15 +139,12 @@ jobs:
       env_setup_script_path: ${{ inputs.env_setup_script_path }}
       test_run: ${{ inputs.test_run }}
       nightly_release: ${{ inputs.nightly_release }}
-
     secrets: inherit
 
   log-outputs-bump-version-generate-changelog:
     name: "[Log output] Bump package version, Generate changelog"
     if: ${{ !failure() && !cancelled() }}
-
     needs: [bump-version-generate-changelog]
-
     runs-on: ubuntu-latest
 
     steps:
@@ -162,9 +157,7 @@ jobs:
     name: Build, Test, Package
     if: ${{ !failure() && !cancelled() }}
     needs: [bump-version-generate-changelog]
-
     uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
-
     with:
       sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
       version_number: ${{ inputs.version_number }}
@@ -174,7 +167,6 @@ jobs:
       package_test_command: ${{ inputs.package_test_command }}
       test_run: ${{ inputs.test_run }}
       nightly_release: ${{ inputs.nightly_release }}
-
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -182,11 +174,8 @@ jobs:
   github-release:
     name: GitHub Release
     if: ${{ !failure() && !cancelled() }}
-
     needs: [bump-version-generate-changelog, build-test-package]
-
     uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
-
     with:
       sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
       version_number: ${{ inputs.version_number }}
@@ -195,15 +184,11 @@ jobs:
 
   pypi-release:
     name: PyPI Release
-
     needs: [github-release]
-
     uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@main
-
     with:
       version_number: ${{ inputs.version_number }}
       test_run: ${{ inputs.test_run }}
-
     secrets:
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
       TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
@@ -211,7 +196,6 @@ jobs:
   slack-notification:
     name: Slack Notification
     if: ${{ failure() && (!inputs.test_run || inputs.nightly_release) }}
-
     needs:
       [
         bump-version-generate-changelog,
@@ -219,10 +203,8 @@ jobs:
         github-release,
         pypi-release,
       ]
-
     uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@main
     with:
       status: "failure"
-
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_ADAPTER_ALERTS }}

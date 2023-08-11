@@ -37,8 +37,7 @@ defaults:
 
 jobs:
   code-quality:
-    name: code-quality
-
+    name: Code Quality
     runs-on: ubuntu-latest
 
     steps:
@@ -47,7 +46,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
+      - name: Set up python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
@@ -55,7 +54,7 @@ jobs:
       - name: Install python dependencies
         run: |
           python -m pip install --user --upgrade pip
-          python -m pip install -r dev-requirements.txt
+          python -m pip install ".[dev]"
           python -m pip --version
           pre-commit --version
           mypy --version
@@ -65,8 +64,7 @@ jobs:
         run: pre-commit run --all-files --show-diff-on-failure
 
   unit:
-    name: unit test / python ${{ matrix.python-version }}
-
+    name: Unit test / python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -76,7 +74,7 @@ jobs:
 
     env:
       TOXENV: "unit"
-      PYTEST_ADDOPTS: "-v --color=yes --csv unit_results.csv"
+      PYTEST_ADDOPTS: "--csv unit_results.csv"
 
     steps:
       - name: Check out the repository
@@ -84,7 +82,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -92,7 +90,7 @@ jobs:
       - name: Install python dependencies
         run: |
           python -m pip install --user --upgrade pip
-          python -m pip install tox
+          python -m pip install ".[text]"
           python -m pip --version
           tox --version
 
@@ -104,15 +102,15 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT #no colons allowed for artifacts
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: unit_results_${{ matrix.python-version }}-${{ steps.date.outputs.date }}.csv
           path: unit_results.csv
 
   build:
-    name: build packages
-
+    name: Build packages
     runs-on: ubuntu-latest
 
     outputs:
@@ -124,7 +122,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
+      - name: Set up python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
@@ -156,18 +154,16 @@ jobs:
           if [[ "$(ls -lh dist/)" == *"a1"* ]]; then export is_alpha=1; fi
           echo "is_alpha=$is_alpha" >> $GITHUB_OUTPUT
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: dist
           path: dist/
 
   test-build:
-    name: verify packages / python ${{ matrix.python-version }} / ${{ matrix.os }}
-
+    name: Verify packages / python ${{ matrix.python-version }} / ${{ matrix.os }}
     if: needs.build.outputs.is_alpha == 0
-
     needs: build
-
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -177,7 +173,7 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -188,7 +184,8 @@ jobs:
           python -m pip install --upgrade wheel
           python -m pip --version
 
-      - uses: actions/download-artifact@v3
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
         with:
           name: dist
           path: dist/

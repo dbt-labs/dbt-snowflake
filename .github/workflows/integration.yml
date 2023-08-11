@@ -89,7 +89,6 @@ jobs:
             snowflake:
               - 'dbt/**'
               - 'tests/**'
-              - 'dev-requirements.txt'
       - name: Generate integration test matrix
         id: generate-matrix
         uses: actions/github-script@v6
@@ -123,7 +122,7 @@ jobs:
 
     env:
       TOXENV: integration-${{ matrix.adapter }}
-      PYTEST_ADDOPTS: "-v --color=yes -n4 --csv integration_results.csv"
+      PYTEST_ADDOPTS: "--csv integration_results.csv"
       DBT_INVOCATION_ENV: github-actions
       DD_CIVISIBILITY_AGENTLESS_ENABLED: true
       DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
@@ -147,20 +146,19 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install python dependencies
         run: |
-          python -m pip install  --user --upgrade pip
-          python -m pip install tox
+          python -m pip install --user --upgrade pip
+          python -m pip install ".[test]"
           python -m pip --version
           tox --version
 
       - name: Run tox (snowflake)
-        if: matrix.adapter == 'snowflake'
         env:
           SNOWFLAKE_TEST_ACCOUNT: ${{ secrets.SNOWFLAKE_TEST_ACCOUNT }}
           SNOWFLAKE_TEST_PASSWORD: ${{ secrets.SNOWFLAKE_TEST_PASSWORD }}
@@ -179,7 +177,8 @@ jobs:
           DBT_TEST_USER_3: dbt_test_role_3
         run: tox -- --ddtrace
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload log artifacts
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: logs
@@ -190,7 +189,8 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT #no colons allowed for artifacts
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: integration_results_${{ matrix.python-version }}_${{ matrix.os }}_${{ matrix.adapter }}-${{ steps.date.outputs.date }}.csv
@@ -198,9 +198,7 @@ jobs:
 
   require-label-comment:
     runs-on: ubuntu-latest
-
     needs: test
-
     permissions:
       pull-requests: write
 

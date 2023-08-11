@@ -1,0 +1,85 @@
+[build-system]
+requires = [
+    "check-wheel-contents",
+    "setuptools",
+    "twine",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dbt-snowflake"
+version = "1.7.0a1"
+description = "The Snowflake adapter plugin for dbt"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE.md"}
+authors = [{name = "dbt Labs", email = "info@dbtlabs.com" }]
+classifiers = [  # Optional
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+urls.Homepage = "https://github.com/dbt-labs/dbt-snowflake"
+urls."Bug Reports" = "https://github.com/dbt-labs/dbt-snowflake/issues"
+urls.Docs = "https://docs.getdbt.com/docs/core/connect-data-platform/snowflake-setup"
+dependencies = [
+    "dbt-core~=1.7",
+    "snowflake-connector-python[secure-local-storage]~=3.0",
+    # installed via dbt-core but referenced directly; don't pin to avoid version conflicts with dbt-core
+    "agate",
+]
+optional-dependencies.dev = [
+    "git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core",
+    "git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=tests/adapter",
+    "black~=23.1.0",
+    "click",
+    "flake8",
+    "flaky",
+    "ipdb",
+    "mypy~=1.0",
+    "pip-tools",
+    "pre-commit",
+    "pre-commit-hooks",
+    "pytz",
+    "types-pytz",
+    "types-requests",
+]
+optional-dependencies.test = [
+    "ddtrace",
+    "freezegun",
+    "pytest",
+    "pytest-csv",
+    "pytest-dotenv",
+    "pytest-logbook",
+    "pytest-xdist",
+    "tox~=4.0",
+]
+
+[tool.black]
+line-length = 99
+target-version = ["py38"]
+
+[tool.mypy]
+explicit_package_bases = true
+ignore_missing_imports = true
+pretty = true
+show_error_codes = true
+
+[tool.pytest]
+filterwarnings = [
+    "ignore:.*'soft_unicode' has been renamed to 'soft_str'*:DeprecationWarning",
+    "ignore:unclosed file .*:ResourceWarning",
+]
+env_files = "test.env"
+testpaths = ["tests/unit", "tests/functional"]
+addopts = "-v -n4 --color=yes"
+
+[tool.setuptools.packages.find]
+include = ["dbt", "dbt.*"]
