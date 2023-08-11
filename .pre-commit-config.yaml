@@ -15,7 +15,7 @@ repos:
     rev: 23.7.0
     hooks:
     -   id: black
-        args: [--line-length=99, --target-version=py38]
+        args: [--line-length=99, --target-version=py38, -v]
 -   repo: https://github.com/pycqa/flake8
     rev: 6.1.0
     hooks:
@@ -24,7 +24,7 @@ repos:
     rev: v1.4.1
     hooks:
     -   id: mypy
-        args: [--show-error-codes, --ignore-missing-imports, --explicit-package-bases]
+        args: [--show-error-codes, --ignore-missing-imports, --explicit-package-bases, --pretty]
         # By using `language: system` we run this hook in the local
         # environment instead of a pre-commit isolated one.
         # This is needed to ensure mypy correctly parses the project.
