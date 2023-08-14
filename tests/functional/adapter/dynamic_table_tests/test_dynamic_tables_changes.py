@@ -44,9 +44,23 @@ class SnowflakeDynamicTableChanges:
         set_model_file(project, dynamic_table, new_model)
 
     @staticmethod
+    def change_config_via_alter_downstream(project, dynamic_table):
+        initial_model = get_model_file(project, dynamic_table)
+        new_model = initial_model.replace(
+            "target_lag='120        seconds'", "target_lag='downstream'"
+        )
+        set_model_file(project, dynamic_table, new_model)
+
+    @staticmethod
     def check_state_alter_change_is_applied(adapter, dynamic_table):
         # see above
         assert query_target_lag(adapter, dynamic_table) == "5 minutes"
+        assert query_warehouse(adapter, dynamic_table) == "DBT_TESTING"
+
+    @staticmethod
+    def check_state_alter_change_is_applied_downstream(adapter, dynamic_table):
+        # see above
+        assert query_target_lag(adapter, dynamic_table) == "downstream"
         assert query_warehouse(adapter, dynamic_table) == "DBT_TESTING"
 
     @staticmethod
@@ -123,6 +137,20 @@ class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
         # self.check_state_alter_change_is_applied(adapter, my_dynamic_table)
+
+        assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs)
+        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
+
+    def test_change_is_applied_via_alter_downstream(self, project, adapter, my_dynamic_table):
+        """
+        See above about the two commented assertions. In the meantime, these have been validated manually.
+        """
+        # self.check_start_state(adapter, my_dynamic_table)
+
+        self.change_config_via_alter_downstream(project, my_dynamic_table)
+        _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
+
+        # self.check_state_alter_change_is_applied_downstream(adapter, my_dynamic_table)
 
         assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs)
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
