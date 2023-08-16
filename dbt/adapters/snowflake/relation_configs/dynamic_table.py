@@ -19,7 +19,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     - name: name of the dynamic table
     - query: the query behind the table
     - target_lag: the maximum amount of time that the dynamic table’s content should lag behind updates to the base tables
-    - warehouse: the name of the warehouse that provides the compute resources for refreshing the dynamic table
+    - snowflake_warehouse: the name of the warehouse that provides the compute resources for refreshing the dynamic table
 
     There are currently no non-configurable parameters.
     """
@@ -97,17 +97,19 @@ class SnowflakeDynamicTableWarehouseConfigChange(RelationConfigChange):
 @dataclass
 class SnowflakeDynamicTableConfigChangeset:
     target_lag: Optional[SnowflakeDynamicTableTargetLagConfigChange] = None
-    warehouse: Optional[SnowflakeDynamicTableWarehouseConfigChange] = None
+    snowflake_warehouse: Optional[SnowflakeDynamicTableWarehouseConfigChange] = None
 
     @property
     def requires_full_refresh(self) -> bool:
         return any(
             [
                 self.target_lag.requires_full_refresh if self.target_lag else False,
-                self.warehouse.requires_full_refresh if self.warehouse else False,
+                self.snowflake_warehouse.requires_full_refresh
+                if self.snowflake_warehouse
+                else False,
             ]
         )
 
     @property
     def has_changes(self) -> bool:
-        return any([self.target_lag, self.warehouse])
+        return any([self.target_lag, self.snowflake_warehouse])
