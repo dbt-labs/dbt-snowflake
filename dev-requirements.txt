@@ -8,7 +8,7 @@ git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=
 black~=23.7
 bumpversion~=0.6.0
 click~=8.1
-ddtrace~=1.17
+ddtrace~=1.18
 flake8~=6.1
 flaky~=3.7
 freezegun~=1.2
