@@ -1,58 +1,3 @@
-{% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
-  {%- if language == 'sql' -%}
-    {%- set transient = config.get('transient', default=true) -%}
-    {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
-    {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
-    {%- set copy_grants = config.get('copy_grants', default=false) -%}
-
-    {%- if cluster_by_keys is not none and cluster_by_keys is string -%}
-      {%- set cluster_by_keys = [cluster_by_keys] -%}
-    {%- endif -%}
-    {%- if cluster_by_keys is not none -%}
-      {%- set cluster_by_string = cluster_by_keys|join(", ")-%}
-    {% else %}
-      {%- set cluster_by_string = none -%}
-    {%- endif -%}
-    {%- set sql_header = config.get('sql_header', none) -%}
-
-    {{ sql_header if sql_header is not none }}
-
-        create or replace {% if temporary -%}
-          temporary
-        {%- elif transient -%}
-          transient
-        {%- endif %} table {{ relation }}
-        {%- set contract_config = config.get('contract') -%}
-        {%- if contract_config.enforced -%}
-          {{ get_assert_columns_equivalent(sql) }}
-          {{ get_table_columns_and_constraints() }}
-          {% set compiled_code = get_select_subquery(compiled_code) %}
-        {% endif %}
-        {% if copy_grants and not temporary -%} copy grants {%- endif %} as
-        (
-          {%- if cluster_by_string is not none -%}
-            select * from (
-              {{ compiled_code }}
-              ) order by ({{ cluster_by_string }})
-          {%- else -%}
-            {{ compiled_code }}
-          {%- endif %}
-        );
-      {% if cluster_by_string is not none and not temporary -%}
-        alter table {{relation}} cluster by ({{cluster_by_string}});
-      {%- endif -%}
-      {% if enable_automatic_clustering and cluster_by_string is not none and not temporary  -%}
-        alter table {{relation}} resume recluster;
-      {%- endif -%}
-
-  {%- elif language == 'python' -%}
-    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, temporary=temporary) }}
-  {%- else -%}
-      {% do exceptions.raise_compiler_error("snowflake__create_table_as macro didn't get supported language, it got %s" % language) %}
-  {%- endif -%}
-
-{% endmacro %}
-
 {% macro get_column_comment_sql(column_name, column_dict) -%}
   {% if (column_name|upper in column_dict) -%}
     {% set matched_column = column_name|upper -%}
@@ -79,35 +24,6 @@
 )
 {% endmacro %}
 
-{% macro snowflake__create_view_as_with_temp_flag(relation, sql, is_temporary=False) -%}
-  {%- set secure = config.get('secure', default=false) -%}
-  {%- set copy_grants = config.get('copy_grants', default=false) -%}
-  {%- set sql_header = config.get('sql_header', none) -%}
-
-  {{ sql_header if sql_header is not none }}
-  create or replace {% if secure -%}
-    secure
-  {%- endif %} {% if is_temporary -%}
-    temporary
-  {%- endif %} view {{ relation }}
-  {% if config.persist_column_docs() -%}
-    {% set model_columns = model.columns %}
-    {% set query_columns = get_columns_in_query(sql) %}
-    {{ get_persist_docs_column_list(model_columns, query_columns) }}
-
-  {%- endif %}
-  {%- set contract_config = config.get('contract') -%}
-  {%- if contract_config.enforced -%}
-    {{ get_assert_columns_equivalent(sql) }}
-  {%- endif %}
-  {% if copy_grants -%} copy grants {%- endif %} as (
-    {{ sql }}
-  );
-{% endmacro %}
-
-{% macro snowflake__create_view_as(relation, sql) -%}
-  {{ snowflake__create_view_as_with_temp_flag(relation, sql) }}
-{% endmacro %}
 
 {% macro snowflake__get_columns_in_relation(relation) -%}
   {%- set sql -%}
@@ -248,13 +164,6 @@
 {%- endmacro %}
 
 
-{% macro snowflake__rename_relation(from_relation, to_relation) -%}
-  {% call statement('rename_relation') -%}
-    alter table {{ from_relation }} rename to {{ to_relation }}
-  {%- endcall %}
-{% endmacro %}
-
-
 {% macro snowflake__alter_column_type(relation, column_name, new_column_type) -%}
   {% call statement('alter_column_type') %}
     alter table {{ relation }} alter {{ adapter.quote(column_name) }} set data type {{ new_column_type }};
@@ -371,15 +280,4 @@
   {% call statement('truncate_relation') -%}
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
   {%- endcall %}
-{% endmacro %}
-
-
-{% macro snowflake__drop_relation(relation) -%}
-    {%- if relation.is_dynamic_table -%}
-        {% call statement('drop_relation', auto_begin=False) -%}
-            drop dynamic table if exists {{ relation }}
-        {%- endcall %}
-    {%- else -%}
-        {{- default__drop_relation(relation) -}}
-    {%- endif -%}
 {% endmacro %}
