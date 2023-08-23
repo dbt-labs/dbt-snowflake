@@ -1,15 +1,16 @@
 {% macro snowflake__get_alter_dynamic_table_as_sql(
-    target_relation,
-    configuration_changes,
-    sql,
     existing_relation,
-    backup_relation,
-    intermediate_relation
+    configuration_changes,
+    target_relation,
+    sql
 ) -%}
-    {{- log('Applying ALTER to: ' ~ target_relation) -}}
+    {#-
+    -- log because there is no generic alter
+    -#}
+    {{- log('Applying ALTER to: ' ~ existing_relation) -}}
 
     {% if configuration_changes.requires_full_refresh %}
-        {{- snowflake__get_replace_dynamic_table_as_sql(target_relation, sql, existing_relation, backup_relation, intermediate_relation) -}}
+        {{- get_replace_sql(existing_relation, target_relation, sql) -}}
 
     {% else %}
 

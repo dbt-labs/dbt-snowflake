@@ -1,3 +1,13 @@
+{% macro snowflake__get_create_view_as_sql(relation, sql) -%}
+  {{ return(snowflake__create_view_as(relation, sql)) }}
+{% endmacro %}
+
+
+{% macro snowflake__create_view_as(relation, sql) -%}
+  {{ snowflake__create_view_as_with_temp_flag(relation, sql) }}
+{% endmacro %}
+
+
 {% macro snowflake__create_view_as_with_temp_flag(relation, sql, is_temporary=False) -%}
   {%- set secure = config.get('secure', default=false) -%}
   {%- set copy_grants = config.get('copy_grants', default=false) -%}
@@ -22,9 +32,4 @@
   {% if copy_grants -%} copy grants {%- endif %} as (
     {{ sql }}
   );
-{% endmacro %}
-
-
-{% macro snowflake__create_view_as(relation, sql) -%}
-  {{ snowflake__create_view_as_with_temp_flag(relation, sql) }}
 {% endmacro %}

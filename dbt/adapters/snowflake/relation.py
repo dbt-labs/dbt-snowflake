@@ -20,6 +20,7 @@ from dbt.adapters.snowflake.relation_configs import (
 class SnowflakeRelation(BaseRelation):
     type: Optional[SnowflakeRelationType] = None  # type: ignore
     quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
+    relations_that_can_be_renamed = [SnowflakeRelationType.Table, SnowflakeRelationType.View]
 
     @property
     def is_dynamic_table(self) -> bool:

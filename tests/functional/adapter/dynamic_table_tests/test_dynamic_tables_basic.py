@@ -3,7 +3,6 @@ from typing import Optional, Tuple
 import pytest
 
 from dbt.tests.util import (
-    assert_message_in_logs,
     get_model_file,
     run_dbt,
     run_dbt_and_capture,
@@ -89,41 +88,26 @@ class TestSnowflakeDynamicTableBasic:
         )
 
     @staticmethod
-    def swap_table_to_dynamic_table(project, table):
-        initial_model = get_model_file(project, table)
-        new_model = initial_model.replace("materialized='table'", "materialized='dynamic_table'")
-        set_model_file(project, table, new_model)
-
-    @staticmethod
-    def swap_view_to_dynamic_table(project, view):
-        initial_model = get_model_file(project, view)
-        new_model = initial_model.replace("materialized='view'", "materialized='dynamic_table'")
-        set_model_file(project, view, new_model)
-
-    @staticmethod
-    def swap_dynamic_table_to_table(project, dynamic_table):
-        initial_model = get_model_file(project, dynamic_table)
-        new_model = initial_model.replace("materialized='dynamic_table'", "materialized='table'")
-        set_model_file(project, dynamic_table, new_model)
-
-    @staticmethod
-    def swap_dynamic_table_to_view(project, dynamic_table):
-        initial_model = get_model_file(project, dynamic_table)
-        new_model = initial_model.replace("materialized='dynamic_table'", "materialized='view'")
-        set_model_file(project, dynamic_table, new_model)
+    def load_model(project, current_model, new_model):
+        model_to_load = get_model_file(project, new_model)
+        set_model_file(project, current_model, model_to_load)
 
     @pytest.fixture(scope="function", autouse=True)
-    def setup(self, project, my_dynamic_table):
+    def setup(self, project, my_dynamic_table, my_view, my_table):
         run_dbt(["seed"])
         run_dbt(["run", "--models", my_dynamic_table.identifier, "--full-refresh"])
 
         # the tests touch these files, store their contents in memory
-        initial_model = get_model_file(project, my_dynamic_table)
+        my_dynamic_table_config = get_model_file(project, my_dynamic_table)
+        my_view_config = get_model_file(project, my_view)
+        my_table_config = get_model_file(project, my_table)
 
         yield
 
         # and then reset them after the test runs
-        set_model_file(project, my_dynamic_table, initial_model)
+        set_model_file(project, my_dynamic_table, my_dynamic_table_config)
+        set_model_file(project, my_view, my_view_config)
+        set_model_file(project, my_table, my_table_config)
         project.run_sql(f"drop schema if exists {project.test_schema} cascade")
 
     def test_dynamic_table_create(self, project, my_dynamic_table):
@@ -141,40 +125,30 @@ class TestSnowflakeDynamicTableBasic:
             ["--debug", "run", "--models", my_dynamic_table.identifier, "--full-refresh"]
         )
         assert self.query_relation_type(project, my_dynamic_table) == "dynamic_table"
-        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs)
 
-    @pytest.mark.skip(
-        "The current implementation does not support overwriting tables with dynamic tables."
-    )
-    def test_dynamic_table_replaces_table(self, project, my_table):
+    def test_dynamic_table_replaces_table(self, project, my_table, my_dynamic_table):
         run_dbt(["run", "--models", my_table.identifier])
         assert self.query_relation_type(project, my_table) == "table"
 
-        self.swap_table_to_dynamic_table(project, my_table)
+        self.load_model(project, my_table, my_dynamic_table)
 
         run_dbt(["run", "--models", my_table.identifier])
         assert self.query_relation_type(project, my_table) == "dynamic_table"
 
-    @pytest.mark.skip(
-        "The current implementation does not support overwriting views with dynamic tables."
-    )
-    def test_dynamic_table_replaces_view(self, project, my_view):
+    def test_dynamic_table_replaces_view(self, project, my_view, my_dynamic_table):
         run_dbt(["run", "--models", my_view.identifier])
         assert self.query_relation_type(project, my_view) == "view"
 
-        self.swap_view_to_dynamic_table(project, my_view)
+        self.load_model(project, my_view, my_dynamic_table)
 
         run_dbt(["run", "--models", my_view.identifier])
         assert self.query_relation_type(project, my_view) == "dynamic_table"
 
-    @pytest.mark.skip(
-        "The current implementation does not support overwriting dynamic tables with tables."
-    )
-    def test_table_replaces_dynamic_table(self, project, my_dynamic_table):
+    def test_table_replaces_dynamic_table(self, project, my_dynamic_table, my_table):
         run_dbt(["run", "--models", my_dynamic_table.identifier])
         assert self.query_relation_type(project, my_dynamic_table) == "dynamic_table"
 
-        self.swap_dynamic_table_to_table(project, my_dynamic_table)
+        self.load_model(project, my_dynamic_table, my_table)
 
         run_dbt(["run", "--models", my_dynamic_table.identifier])
         assert self.query_relation_type(project, my_dynamic_table) == "table"
@@ -182,11 +156,11 @@ class TestSnowflakeDynamicTableBasic:
     @pytest.mark.skip(
         "The current implementation does not support overwriting dynamic tables with views."
     )
-    def test_view_replaces_dynamic_table(self, project, my_dynamic_table):
+    def test_view_replaces_dynamic_table(self, project, my_dynamic_table, my_view):
         run_dbt(["run", "--models", my_dynamic_table.identifier])
         assert self.query_relation_type(project, my_dynamic_table) == "dynamic_table"
 
-        self.swap_dynamic_table_to_view(project, my_dynamic_table)
+        self.load_model(project, my_dynamic_table, my_view)
 
         run_dbt(["run", "--models", my_dynamic_table.identifier])
         assert self.query_relation_type(project, my_dynamic_table) == "view"
