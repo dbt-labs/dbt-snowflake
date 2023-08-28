@@ -1,8 +1,3 @@
-{% macro snowflake__get_create_table_as_sql(temporary, relation, sql) -%}
-    {{ return(snowflake__create_table_as(temporary, relation, sql)) }}
-{% endmacro %}
-
-
 {% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
   {%- if language == 'sql' -%}
     {%- set transient = config.get('transient', default=true) -%}

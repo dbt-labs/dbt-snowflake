@@ -1,9 +1,4 @@
 {% macro snowflake__describe_dynamic_table(relation) %}
-    {#-
-    -- log because there is no generic describe
-    -#}
-    {{- log('Applying DESCRIBE to: ' ~ relation) -}}
-
     {%- set _dynamic_table_sql -%}
         show dynamic tables
             like '{{ relation.identifier }}'

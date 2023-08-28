@@ -1,13 +1,3 @@
-{% macro snowflake__get_create_view_as_sql(relation, sql) -%}
-  {{ return(snowflake__create_view_as(relation, sql)) }}
-{% endmacro %}
-
-
-{% macro snowflake__create_view_as(relation, sql) -%}
-  {{ snowflake__create_view_as_with_temp_flag(relation, sql) }}
-{% endmacro %}
-
-
 {% macro snowflake__create_view_as_with_temp_flag(relation, sql, is_temporary=False) -%}
   {%- set secure = config.get('secure', default=false) -%}
   {%- set copy_grants = config.get('copy_grants', default=false) -%}
@@ -37,7 +27,10 @@
 
 /* {#
 Vendored from dbt-core for the purpose of overwriting small pieces to support dynamics tables. This should
-eventually be retired in favor of a standardized approach.
+eventually be retired in favor of a standardized approach. Changed line:
+
+{%- if old_relation is not none and old_relation.is_table -%}  ->
+{%- if old_relation is not none and not old_relation.is_view -%}
 #} */
 
 {% macro snowflake__create_or_replace_view() %}

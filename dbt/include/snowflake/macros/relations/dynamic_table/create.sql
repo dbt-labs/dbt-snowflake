@@ -1,4 +1,4 @@
-{% macro snowflake__get_create_dynamic_table_as_sql(relation, sql) %}
+{% macro snowflake__get_create_dynamic_table_as_sql(relation, sql) -%}
 
     create or replace dynamic table {{ relation }}
         target_lag = '{{ config.get("target_lag") }}'
@@ -9,4 +9,4 @@
     ;
     {{ snowflake__refresh_dynamic_table(relation) }}
 
-{% endmacro %}
+{%- endmacro %}
