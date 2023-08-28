@@ -9,11 +9,11 @@
 
     {% set build_sql = dynamic_table_get_build_sql(existing_relation, target_relation) %}
 
-        {% if build_sql == '' %}
-            {{ dynamic_table_execute_no_op(target_relation) }}
-        {% else %}
-            {{ dynamic_table_execute_build_sql(build_sql, existing_relation, target_relation) }}
-        {% endif %}
+    {% if build_sql == '' %}
+        {{ dynamic_table_execute_no_op(target_relation) }}
+    {% else %}
+        {{ dynamic_table_execute_build_sql(build_sql, existing_relation, target_relation) }}
+    {% endif %}
 
     {{ run_hooks(post_hooks) }}
 
