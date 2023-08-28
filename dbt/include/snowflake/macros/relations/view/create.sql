@@ -25,6 +25,11 @@
 {% endmacro %}
 
 
+{% macro snowflake__create_view_as(relation, sql) -%}
+  {{ snowflake__create_view_as_with_temp_flag(relation, sql) }}
+{% endmacro %}
+
+
 /* {#
 Vendored from dbt-core for the purpose of overwriting small pieces to support dynamics tables. This should
 eventually be retired in favor of a standardized approach. Changed line:

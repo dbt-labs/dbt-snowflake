@@ -4,9 +4,6 @@
     target_relation,
     sql
 ) -%}
-    {#-
-    -- log because there is no generic alter
-    -#}
     {{- log('Applying ALTER to: ' ~ existing_relation) -}}
 
     {% if configuration_changes.requires_full_refresh %}
