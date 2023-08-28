@@ -1,0 +1,7 @@
+kind: Under the Hood
+body: Restructure macros files - move relation ddl statements into separate files
+  and directories
+time: 2023-08-21T23:09:21.317975-04:00
+custom:
+  Author: mikealfare
+  Issue: "750"
