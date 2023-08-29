@@ -53,10 +53,10 @@
           {{ snowflake__get_catalog_where_clause(schemas, relations) }}
       )
 
-        select *
-        from tables
-        join columns using ("table_database", "table_schema", "table_name")
-        order by "column_index"
+      select *
+      from tables
+      join columns using ("table_database", "table_schema", "table_name")
+      order by "column_index"
     {%- endset -%}
 
   {{ return(run_query(query)) }}
