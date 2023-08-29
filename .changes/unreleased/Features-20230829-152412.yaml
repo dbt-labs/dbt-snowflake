@@ -1,0 +1,6 @@
+kind: Features
+body: Support limiting get_catalog by object name
+time: 2023-08-29T15:24:12.649104-04:00
+custom:
+  Author: mikealfare
+  Issue: "4997"
