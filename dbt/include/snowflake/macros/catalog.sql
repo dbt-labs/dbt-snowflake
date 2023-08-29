@@ -64,7 +64,7 @@
 {%- endmacro %}
 
 
-{% snowflake__get_catalog_where_clause(schemas, relations) %}
+{% macro snowflake__get_catalog_where_clause(schemas, relations) %}
 
     {% if schemas is not none %}
         where (
