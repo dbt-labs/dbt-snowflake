@@ -1,8 +1,6 @@
 {% macro snowflake__get_catalog(information_schema, schemas, relations) -%}
   {% set query %}
-    {% set query %}
       with tables as (
-        with tables as (
 
           select
               table_catalog as "table_database",
