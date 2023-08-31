@@ -1,6 +1,6 @@
-{% macro default__get_replace_sql(existing_relation, target_relation, sql) %}
+{% macro snowflake__get_replace_sql(existing_relation, target_relation, sql) %}
 
-    {% if is_replaceable = existing_relation.is_dynamic_table and target_relation.is_dynamic_table %}
+    {% if existing_relation.is_dynamic_table and target_relation.is_dynamic_table %}
         {{ snowflake__get_replace_dynamic_table_sql(target_relation, sql) }}
 
     {% else %}
