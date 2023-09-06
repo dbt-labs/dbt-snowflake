@@ -103,6 +103,8 @@ class SnowflakeCredentials(Credentials):
     def unique_field(self):
         return self.account
 
+    # the results show up in the output of dbt debug runs, for more see..
+    # https://docs.getdbt.com/guides/dbt-ecosystem/adapter-development/3-building-a-new-adapter#editing-the-connection-manager
     def _connection_keys(self):
         return (
             "account",
@@ -112,9 +114,7 @@ class SnowflakeCredentials(Credentials):
             "role",
             "schema",
             "authenticator",
-            "private_key",
             "private_key_path",
-            "private_key_passphrase",
             "token",
             "oauth_client_id",
             "query_tag",
