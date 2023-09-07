@@ -1,4 +1,4 @@
-from dbt.tests.util import AnyString, AnyFloat
+from dbt.tests.util import AnyString, AnyInteger
 
 
 def snowflake_stats():
@@ -13,7 +13,7 @@ def snowflake_stats():
         "bytes": {
             "id": "bytes",
             "label": "Approximate Size",
-            "value": AnyFloat(),
+            "value": AnyInteger(),
             "description": "Approximate size of the table as reported by Snowflake",
             "include": True,
         },
