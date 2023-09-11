@@ -51,7 +51,7 @@ from dbt.ui import line_wrap_message, warning_tag
 logger = AdapterLogger("Snowflake")
 
 if os.getenv("DBT_SNOWFLAKE_CONNECTOR_DEBUG_LOGGING"):
-    logger.set_adapter_dependency_log_level("snowflake.connector", "debug")
+    logger.set_adapter_dependency_log_level("snowflake.connector", "DEBUG")
 
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
 ROW_VALUE_REGEX = re.compile(r"Row Values: \[(.|\n)*\]")
