@@ -52,6 +52,7 @@ logger = AdapterLogger("Snowflake")
 
 if os.getenv("DBT_SNOWFLAKE_CONNECTOR_DEBUG_LOGGING"):
     for logger_name in ['snowflake.connector', 'botocore', 'boto3']:
+        logger.debug(f"Setting {logger_name} to DEBUG")
         logger.set_adapter_dependency_log_level(logger_name, "DEBUG")
 
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
