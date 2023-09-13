@@ -1,4 +1,7 @@
 {% macro snowflake__get_catalog(information_schema, schemas, relations) -%}
+{#-
+--  `relations` is a dictionary with schema names as keys and an iterable (likely list) of relation identifiers as values
+-#}
   {% set query %}
       with tables as (
 
@@ -65,6 +68,9 @@
 
 
 {% macro snowflake__get_catalog_where_clause(schemas, relations) %}
+{#-
+--  `relations` is a dictionary with schema names as keys and an iterable (likely list) of relation identifiers as values
+-#}
 
     {% if schemas is not none %}
         where (
@@ -76,12 +82,14 @@
 
     {% elif relations is not none %}
         where (
-            {%- for relation in relations -%}
+            {%- for schema_name, relations in relations.items() -%}
                 (
-                    upper("table_schema") = upper('{{ relation.schema }}')
-                    {% if relation.identifier is not none %}
-                        and upper("table_name") = upper('{{ relation.identifier }}')
-                    {% endif %}
+                    upper("table_schema") = upper('{{ schema_name }}')
+                    and upper("table_name") in (
+                        {%- for relation_name in relations -%}
+                            upper('{{ relation_name }}')
+                            {%- if not loop.last -%}, {% endif -%}
+                        {%- endfor -%}
                 )
                 {%- if not loop.last %} or {% endif -%}
             {%- endfor -%}
@@ -89,7 +97,7 @@
 
     {% else %}
         {% do exceptions.raise_compiler_error(
-            '`get_catalog` requires a list of schemas or a list of relations.'
+            '`get_catalog` requires a list of schema names or a dict of relation names by schema name.'
         ) %}
 
     {% endif %}
