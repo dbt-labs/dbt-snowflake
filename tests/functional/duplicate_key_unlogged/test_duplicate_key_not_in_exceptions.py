@@ -24,7 +24,7 @@ from dupes
 class TestRowValuesNotInExceptions:
     @pytest.fixture(scope="class")
     def models(self):
-        return {"model.sql": _MODELS__incremental_model}
+        return {"model.sql": _MODELS__view}
 
     def test_row_values_were_scrubbed_from_duplicate_merge_exception(self, project):
         result = run_dbt(["run", "-s", "model"])
