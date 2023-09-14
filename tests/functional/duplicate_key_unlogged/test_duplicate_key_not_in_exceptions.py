@@ -16,7 +16,7 @@ with dupes as (
 )
 
 select
-    object_agg(key, value)
+    object_agg(key, value) as agg
 from dupes
 """
 
