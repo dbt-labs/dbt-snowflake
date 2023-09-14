@@ -27,6 +27,6 @@ class TestRowValuesNotInExceptions:
         return {"model.sql": _MODELS__view}
 
     def test_row_values_were_scrubbed_from_duplicate_merge_exception(self, project):
-        result = run_dbt(["run", "-s", "model"])
+        result = run_dbt(["run", "-s", "model"], expect_pass=False)
         assert len(result) == 1
         assert "Duplicate field key '[redacted]'" in result[0].message

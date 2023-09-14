@@ -51,7 +51,7 @@ _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
 
 ERROR_REDACTION_PATTERNS = {
     "Row Values: [redacted]": re.compile(r"Row Values: \[(.|\n)*\]"),
-    "Duplicate field key '[redacted]'": re.compile(r"Duplicate field key '(.|\n)*'")
+    "Duplicate field key '[redacted]'": re.compile(r"Duplicate field key '(.|\n)*'"),
 }
 
 
