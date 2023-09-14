@@ -21,7 +21,7 @@ from dupes
 """
 
 
-class TestRowValuesNotInExceptions:
+class DuplicateKeyValuesNotInExceptions:
     @pytest.fixture(scope="class")
     def models(self):
         return {"model.sql": _MODELS__view}
