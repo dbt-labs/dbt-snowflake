@@ -171,9 +171,10 @@
 {% endmacro %}
 
 {% macro snowflake__alter_relation_comment(relation, relation_comment) -%}
-    {%- set relation_type = relation.type -%}
-    {%- if relation_type == 'dynamic_table' -%}
+    {%- if relation.is_dynamic_table -%}
         {%- set relation_type = 'dynamic table' -%}
+    {%- else -%}
+        {%- set relation_type = relation.type -%}
     {%- endif -%}
     comment on {{ relation_type }} {{ relation }} IS $${{ relation_comment | replace('$', '[$]') }}$$;
 {% endmacro %}
