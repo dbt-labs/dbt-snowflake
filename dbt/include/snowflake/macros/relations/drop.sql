@@ -1,9 +1,11 @@
-{% macro snowflake__drop_relation(relation) -%}
-    {%- if relation.is_dynamic_table -%}
-        {% call statement('drop_relation', auto_begin=False) -%}
-            drop dynamic table if exists {{ relation }}
-        {%- endcall %}
-    {%- else -%}
-        {{- default__drop_relation(relation) -}}
-    {%- endif -%}
+{% macro snowflake__get_drop_sql(relation) %}
+
+    {% if relation.is_dynamic_table %}
+        {{ snowflake__get_drop_dynamic_table_sql(relation) }}
+
+    {% else %}
+        {{ default__get_drop_sql(relation) }}
+
+    {% endif %}
+
 {% endmacro %}
