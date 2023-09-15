@@ -6,7 +6,7 @@ from dbt.tests.util import (
 
 _MODELS__view = """
 {{ config(
-    materialized='view',
+    materialized='table',
 ) }}
 
 with dupes as (
