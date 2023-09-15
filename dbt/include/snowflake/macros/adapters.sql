@@ -262,13 +262,23 @@
 {% endmacro %}
 
 {% macro snowflake__alter_relation_comment(relation, relation_comment) -%}
-  comment on {{ relation.type }} {{ relation }} IS $${{ relation_comment | replace('$', '[$]') }}$$;
+    {%- if relation.is_dynamic_table -%}
+        {%- set relation_type = 'dynamic table' -%}
+    {%- else -%}
+        {%- set relation_type = relation.type -%}
+    {%- endif -%}
+    comment on {{ relation_type }} {{ relation }} IS $${{ relation_comment | replace('$', '[$]') }}$$;
 {% endmacro %}
 
 
 {% macro snowflake__alter_column_comment(relation, column_dict) -%}
     {% set existing_columns = adapter.get_columns_in_relation(relation) | map(attribute="name") | list %}
-    alter {{ relation.type }} {{ relation }} alter
+    {% if relation.is_dynamic_table -%}
+        {% set relation_type = "dynamic table" %}
+    {% else -%}
+        {% set relation_type = relation.type %}
+    {% endif %}
+    alter {{ relation_type }} {{ relation }} alter
     {% for column_name in existing_columns if (column_name in existing_columns) or (column_name|lower in existing_columns) %}
         {{ get_column_comment_sql(column_name, column_dict) }} {{- ',' if not loop.last else ';' }}
     {% endfor %}
@@ -318,10 +328,16 @@
 
 {% macro snowflake__alter_relation_add_remove_columns(relation, add_columns, remove_columns) %}
 
-  {% if add_columns %}
+    {% if relation.is_dynamic_table -%}
+        {% set relation_type = "dynamic table" %}
+    {% else -%}
+        {% set relation_type = relation.type %}
+    {% endif %}
+
+    {% if add_columns %}
 
     {% set sql -%}
-       alter {{ relation.type }} {{ relation }} add column
+       alter {{ relation_type }} {{ relation }} add column
           {% for column in add_columns %}
             {{ column.name }} {{ column.data_type }}{{ ',' if not loop.last }}
           {% endfor %}
@@ -329,12 +345,12 @@
 
     {% do run_query(sql) %}
 
-  {% endif %}
+    {% endif %}
 
-  {% if remove_columns %}
+    {% if remove_columns %}
 
     {% set sql -%}
-        alter {{ relation.type }} {{ relation }} drop column
+        alter {{ relation_type }} {{ relation }} drop column
             {% for column in remove_columns %}
                 {{ column.name }}{{ ',' if not loop.last }}
             {% endfor %}
@@ -342,9 +358,10 @@
 
     {% do run_query(sql) %}
 
-  {% endif %}
+    {% endif %}
 
 {% endmacro %}
+
 
 
 {% macro snowflake_dml_explicit_transaction(dml) %}
