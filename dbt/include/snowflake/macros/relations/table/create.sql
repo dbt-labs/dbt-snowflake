@@ -1,6 +1,6 @@
 {% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
+  {%- set transient = config.get('transient', default=true) -%}
   {%- if language == 'sql' -%}
-    {%- set transient = config.get('transient', default=true) -%}
     {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
     {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
     {%- set copy_grants = config.get('copy_grants', default=false) -%}
@@ -46,7 +46,8 @@
       {%- endif -%}
 
   {%- elif language == 'python' -%}
-    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, temporary=temporary) }}
+    {%- set table_type = 'transient' if transient else '' -%}
+    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, temporary=temporary, table_type=table_type) }}
   {%- else -%}
       {% do exceptions.raise_compiler_error("snowflake__create_table_as macro didn't get supported language, it got %s" % language) %}
   {%- endif -%}

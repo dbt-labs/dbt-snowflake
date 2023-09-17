@@ -38,7 +38,7 @@
 
 {% endmaterialization %}
 
-{% macro py_write_table(compiled_code, target_relation, temporary=False) %}
+{% macro py_write_table(compiled_code, target_relation, temporary=False, table_type='transient') %}
 {{ compiled_code }}
 def materialize(session, df, target_relation):
     # make sure pandas exists
@@ -52,7 +52,7 @@ def materialize(session, df, target_relation):
           # session.write_pandas does not have overwrite function
           df = session.createDataFrame(df)
     {% set target_relation_name = resolve_model_name(target_relation) %}
-    df.write.mode("overwrite").save_as_table('{{ target_relation_name }}', create_temp_table={{temporary}})
+    df.write.mode("overwrite").save_as_table('{{ target_relation_name }}', create_temp_table={{temporary}}, table_type='{{table_type}}')
 
 def main(session):
     dbt = dbtObj(session.table)
