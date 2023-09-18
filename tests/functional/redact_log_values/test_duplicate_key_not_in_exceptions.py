@@ -30,3 +30,4 @@ class TestDuplicateKeyNotInExceptions:
         result = run_dbt(["run", "-s", "model"], expect_pass=False)
         assert len(result) == 1
         assert "Duplicate field key '[redacted]'" in result[0].message
+        assert "'foo'" not in result[0].message

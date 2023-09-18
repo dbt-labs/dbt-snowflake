@@ -31,3 +31,4 @@ class TestRowValuesNotInExceptions:
         result = run_dbt(["run", "-s", "model"], expect_pass=False)
         assert len(result) == 1
         assert "Row Values: [redacted]" in result[0].message
+        assert "'one'" not in result[0].message

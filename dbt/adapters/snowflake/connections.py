@@ -50,8 +50,8 @@ logger = AdapterLogger("Snowflake")
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
 
 ERROR_REDACTION_PATTERNS = {
-    "Row Values: [redacted]": re.compile(r"Row Values: \[(.|\n)*\]"),
-    "Duplicate field key '[redacted]'": re.compile(r"Duplicate field key '(.|\n)*'"),
+    re.compile(r"Row Values: \[(.|\n)*\]"): "Row Values: [redacted]",
+    re.compile(r"Duplicate field key '(.|\n)*'"): "Duplicate field key '[redacted]'",
 }
 
 
@@ -290,7 +290,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             # duplicate rows -- includes row values in the error message, i.e.
             # [12345, "col_a_value", "col_b_value", etc...]. We don't want to log potentially
             # sensitive user data.
-            for replacement_message, regex_pattern in ERROR_REDACTION_PATTERNS.items():
+            for regex_pattern, replacement_message in ERROR_REDACTION_PATTERNS.items():
                 msg = re.sub(regex_pattern, replacement_message, msg)
 
             logger.debug("Snowflake query id: {}".format(e.sfqid))
