@@ -22,11 +22,11 @@
     {% set query %}
         with tables as (
             {{ snowflake__get_catalog_tables_sql(information_schema) }}
-            {{ snowflake__get_catalog_relations_dict_where_clause_sql(relations) }}
+            {{ snowflake__get_catalog_relations_where_clause_sql(relations) }}
         ),
         columns as (
             {{ snowflake__get_catalog_columns_sql(information_schema) }}
-            {{ snowflake__get_catalog_relations_dict_where_clause_sql(relations) }}
+            {{ snowflake__get_catalog_relations_where_clause_sql(relations) }}
         )
         {{ snowflake__get_catalog_results_sql() }}
     {%- endset -%}
@@ -115,28 +115,6 @@
                 {% do exceptions.raise_compiler_error(
                     '`get_catalog_relations` requires a list of relations, each with a schema'
                 ) %}
-            {% endif %}
-
-            {%- if not loop.last %} or {% endif -%}
-        {%- endfor -%}
-    )
-{%- endmacro %}
-
-
-{% macro snowflake__get_catalog_relations_dict_where_clause_sql(relations_by_schema) -%}
-    where (
-        {%- for schema, relations in relations_by_schema.items() -%}
-            {% if relations %}
-                {% for relation in relations %}
-                    (
-                        upper("table_schema") = upper('{{ schema }}')
-                        and upper("table_name") = upper('{{ relation.identifier }}')
-                    )
-                {% endfor %}
-            {% else %}
-                (
-                    upper("table_schema") = upper('{{ schema }}')
-                )
             {% endif %}
 
             {%- if not loop.last %} or {% endif -%}
