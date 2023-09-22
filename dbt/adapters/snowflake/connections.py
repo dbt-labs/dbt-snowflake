@@ -42,16 +42,16 @@ from dbt.exceptions import (
 from dbt.adapters.base import Credentials  # type: ignore
 from dbt.contracts.connection import AdapterResponse, Connection
 from dbt.adapters.sql import SQLConnectionManager  # type: ignore
-from dbt.events import AdapterLogger  # type: ignore
-from dbt.events.functions import warn_or_error
-from dbt.events.types import AdapterEventWarning
+from dbt.common.events import AdapterLogger  # type: ignore
+from dbt.common.events.functions import warn_or_error
+from dbt.common.events.types import AdapterEventWarning
 from dbt.ui import line_wrap_message, warning_tag
 
 
 logger = AdapterLogger("Snowflake")
 
 if os.getenv("DBT_SNOWFLAKE_CONNECTOR_DEBUG_LOGGING"):
-    for logger_name in ['snowflake.connector', 'botocore', 'boto3']:
+    for logger_name in ["snowflake.connector", "botocore", "boto3"]:
         logger.debug(f"Setting {logger_name} to DEBUG")
         logger.set_adapter_dependency_log_level(logger_name, "DEBUG")
 
