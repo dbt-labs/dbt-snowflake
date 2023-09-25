@@ -28,3 +28,46 @@
 {% macro snowflake__create_view_as(relation, sql) -%}
   {{ snowflake__create_view_as_with_temp_flag(relation, sql) }}
 {% endmacro %}
+
+
+/* {#
+Vendored from dbt-core for the purpose of overwriting small pieces to support dynamics tables. This should
+eventually be retired in favor of a standardized approach. Changed line:
+
+{%- if old_relation is not none and old_relation.is_table -%}  ->
+{%- if old_relation is not none and not old_relation.is_view -%}
+#} */
+
+{% macro snowflake__create_or_replace_view() %}
+  {%- set identifier = model['alias'] -%}
+
+  {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
+  {%- set exists_as_view = (old_relation is not none and old_relation.is_view) -%}
+
+  {%- set target_relation = api.Relation.create(
+      identifier=identifier, schema=schema, database=database,
+      type='view') -%}
+  {% set grant_config = config.get('grants') %}
+
+  {{ run_hooks(pre_hooks) }}
+
+  -- If there's a table with the same name and we weren't told to full refresh,
+  -- that's an error. If we were told to full refresh, drop it. This behavior differs
+  -- for Snowflake and BigQuery, so multiple dispatch is used.
+  {%- if old_relation is not none and not old_relation.is_view -%}
+    {{ handle_existing_table(should_full_refresh(), old_relation) }}
+  {%- endif -%}
+
+  -- build model
+  {% call statement('main') -%}
+    {{ get_create_view_as_sql(target_relation, sql) }}
+  {%- endcall %}
+
+  {% set should_revoke = should_revoke(exists_as_view, full_refresh_mode=True) %}
+  {% do apply_grants(target_relation, grant_config, should_revoke=should_revoke) %}
+
+  {{ run_hooks(post_hooks) }}
+
+  {{ return({'relations': [target_relation]}) }}
+
+{% endmacro %}

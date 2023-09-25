@@ -56,7 +56,11 @@ if os.getenv("DBT_SNOWFLAKE_CONNECTOR_DEBUG_LOGGING"):
         logger.set_adapter_dependency_log_level(logger_name, "DEBUG")
 
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
-ROW_VALUE_REGEX = re.compile(r"Row Values: \[(.|\n)*\]")
+
+ERROR_REDACTION_PATTERNS = {
+    re.compile(r"Row Values: \[(.|\n)*\]"): "Row Values: [redacted]",
+    re.compile(r"Duplicate field key '(.|\n)*'"): "Duplicate field key '[redacted]'",
+}
 
 
 @dataclass
@@ -288,13 +292,14 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         try:
             yield
         except snowflake.connector.errors.ProgrammingError as e:
-            unscrubbed_msg = str(e)
+            msg = str(e)
 
             # A class of Snowflake errors -- such as a failure from attempting to merge
             # duplicate rows -- includes row values in the error message, i.e.
             # [12345, "col_a_value", "col_b_value", etc...]. We don't want to log potentially
             # sensitive user data.
-            msg = re.sub(ROW_VALUE_REGEX, "Row Values: [redacted]", unscrubbed_msg)
+            for regex_pattern, replacement_message in ERROR_REDACTION_PATTERNS.items():
+                msg = re.sub(regex_pattern, replacement_message, msg)
 
             logger.debug("Snowflake query id: {}".format(e.sfqid))
             logger.debug("Snowflake error: {}".format(msg))
