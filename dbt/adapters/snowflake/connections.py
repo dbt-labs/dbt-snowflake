@@ -43,8 +43,8 @@ from dbt.adapters.base import Credentials  # type: ignore
 from dbt.contracts.connection import AdapterResponse, Connection
 from dbt.adapters.sql import SQLConnectionManager  # type: ignore
 from dbt.common.events import AdapterLogger  # type: ignore
-from dbt.common.events.functions import warn_or_error
-from dbt.common.events.types import AdapterEventWarning
+from dbt.events.functions import warn_or_error
+from dbt.events.types import AdapterEventWarning
 from dbt.ui import line_wrap_message, warning_tag
 
 
