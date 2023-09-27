@@ -1,0 +1,6 @@
+kind: Fixes
+body: Fixing comment on syntax for dynamic tables
+time: 2023-09-14T11:08:00.250684+12:00
+custom:
+  Author: kaarthik108
+  Issue: '769'
