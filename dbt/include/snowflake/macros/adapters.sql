@@ -172,7 +172,7 @@
 
 {% macro snowflake__alter_relation_comment(relation, relation_comment) -%}
     {%- if relation.is_dynamic_table -%}
-        {%- set relation_type = 'table' -%}
+        {%- set relation_type = 'dynamic table' -%}
     {%- else -%}
         {%- set relation_type = relation.type -%}
     {%- endif -%}
