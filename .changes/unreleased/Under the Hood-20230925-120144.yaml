@@ -1,0 +1,6 @@
+kind: Under the Hood
+body: allow for adding snowflake-python-collector logs to dbt output
+time: 2023-09-25T12:01:44.778426-07:00
+custom:
+  Author: colin-rogers-dbt
+  Issue: "768"
