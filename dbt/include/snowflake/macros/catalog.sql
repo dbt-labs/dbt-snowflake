@@ -92,7 +92,7 @@
 {%- endmacro %}
 
 
-{% macro snowflake__get_catalog_schemas_where_clause_sql(schema) -%}
+{% macro snowflake__get_catalog_schemas_where_clause_sql(schemas) -%}
     where ({%- for schema in schemas -%}
         upper("table_schema") = upper('{{ schema }}'){%- if not loop.last %} or {% endif -%}
     {%- endfor -%})
