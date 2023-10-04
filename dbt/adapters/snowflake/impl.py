@@ -3,7 +3,7 @@ from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
-from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
+from dbt.adapters.base.impl import AdapterConfig, AdapterFeature, ConstraintSupport  # type: ignore
 from dbt.adapters.base.meta import available
 from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
@@ -255,6 +255,10 @@ CALL {proc_name}();
 
     def valid_incremental_strategies(self):
         return ["append", "merge", "delete+insert"]
+
+    @classmethod
+    def has_feature(cls, feature: AdapterFeature) -> bool:
+        return feature in [AdapterFeature.CatalogByRelations]
 
     def debug_query(self):
         """Override for DebugTask method"""
