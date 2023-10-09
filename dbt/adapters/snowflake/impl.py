@@ -3,7 +3,13 @@ from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
-from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
+from dbt.adapters.base.impl import (
+    AdapterConfig,
+    Capability,
+    CapabilitySupport,
+    ConstraintSupport,
+    Support,
+)  # type: ignore
 from dbt.adapters.base.meta import available
 from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
@@ -47,6 +53,17 @@ class SnowflakeAdapter(SQLAdapter):
         ConstraintType.unique: ConstraintSupport.NOT_ENFORCED,
         ConstraintType.primary_key: ConstraintSupport.NOT_ENFORCED,
         ConstraintType.foreign_key: ConstraintSupport.NOT_ENFORCED,
+    }
+
+    _capabilities: Dict[Capability, CapabilitySupport] = {
+        Capability.TableLastModifiedMetadata: CapabilitySupport(
+            capability=Capability.TableLastModifiedMetadata,
+            support=Support.Full,
+        ),
+        Capability.SchemaMetadataByRelations: CapabilitySupport(
+            capability=Capability.SchemaMetadataByRelations,
+            support=Support.NotImplemented,
+        ),
     }
 
     @classmethod
@@ -259,3 +276,15 @@ CALL {proc_name}();
     def debug_query(self):
         """Override for DebugTask method"""
         self.execute("select 1 as id")
+
+    def capabilities(self) -> List[CapabilitySupport]:
+        return [c for c in self._capabilities.values()]
+
+    def capability_support(self, capability: Capability) -> CapabilitySupport:
+        if capability in self._capabilities:
+            return self._capabilities[capability]
+        else:
+            return CapabilitySupport(
+                capability=capability,
+                support=Support.Unknown,
+            )
