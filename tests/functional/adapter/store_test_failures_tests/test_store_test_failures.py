@@ -1,9 +1,4 @@
-from dbt.tests.adapter.store_test_failures_tests.basic import (
-    StoreTestFailuresAsGeneric,
-    StoreTestFailuresAsInteractions,
-    StoreTestFailuresAsProjectLevelOff,
-    StoreTestFailuresAsProjectLevelView,
-)
+from dbt.tests.adapter.store_test_failures_tests import basic
 from dbt.tests.adapter.store_test_failures_tests.test_store_test_failures import (
     TestStoreTestFailures,
 )
@@ -13,17 +8,25 @@ class TestSnowflakeStoreTestFailures(TestStoreTestFailures):
     pass
 
 
-class TestSnowflakeStoreTestFailuresAsInteractions(StoreTestFailuresAsInteractions):
+class TestStoreTestFailuresAsInteractions(basic.StoreTestFailuresAsInteractions):
     pass
 
 
-class TestSnowflakeStoreTestFailuresAsProjectLevelOff(StoreTestFailuresAsProjectLevelOff):
+class TestStoreTestFailuresAsProjectLevelOff(basic.StoreTestFailuresAsProjectLevelOff):
     pass
 
 
-class TestSnowflakeStoreTestFailuresAsProjectLevelView(StoreTestFailuresAsProjectLevelView):
+class TestStoreTestFailuresAsProjectLevelView(basic.StoreTestFailuresAsProjectLevelView):
     pass
 
 
-class TestSnowflakeStoreTestFailuresAsGeneric(StoreTestFailuresAsGeneric):
+class TestStoreTestFailuresAsGeneric(basic.StoreTestFailuresAsGeneric):
+    pass
+
+
+class TestStoreTestFailuresAsProjectLevelEphemeral(basic.StoreTestFailuresAsProjectLevelEphemeral):
+    pass
+
+
+class TestStoreTestFailuresAsExceptions(basic.StoreTestFailuresAsExceptions):
     pass
