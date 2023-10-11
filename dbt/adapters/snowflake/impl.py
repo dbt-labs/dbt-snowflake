@@ -6,12 +6,11 @@ import agate
 from dbt.adapters.base.impl import (
     AdapterConfig,
     Capability,
-    CapabilitySupport,
     ConstraintSupport,
-    Support,
     CapabilityDict,
 )  # type: ignore
 from dbt.adapters.base.meta import available
+from dbt.adapters.capability import CapabilitySupport, Support
 from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -58,13 +57,9 @@ class SnowflakeAdapter(SQLAdapter):
 
     _capabilities: CapabilityDict = CapabilityDict(
         {
-            Capability.TableLastModifiedMetadata: CapabilitySupport(
-                capability=Capability.TableLastModifiedMetadata,
-                support=Support.Full,
-            ),
+            Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
             Capability.SchemaMetadataByRelations: CapabilitySupport(
-                capability=Capability.SchemaMetadataByRelations,
-                support=Support.NotImplemented,
+                support=Support.NotImplemented
             ),
         }
     )
@@ -279,6 +274,3 @@ CALL {proc_name}();
     def debug_query(self):
         """Override for DebugTask method"""
         self.execute("select 1 as id")
-
-    def capabilities(self) -> CapabilityDict:
-        return self._capabilities
