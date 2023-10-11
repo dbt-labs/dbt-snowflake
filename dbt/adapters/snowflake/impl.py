@@ -3,14 +3,9 @@ from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
-from dbt.adapters.base.impl import (
-    AdapterConfig,
-    Capability,
-    ConstraintSupport,
-    CapabilityDict,
-)  # type: ignore
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
 from dbt.adapters.base.meta import available
-from dbt.adapters.capability import CapabilitySupport, Support
+from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
 from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -58,9 +53,7 @@ class SnowflakeAdapter(SQLAdapter):
     _capabilities: CapabilityDict = CapabilityDict(
         {
             Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
-            Capability.SchemaMetadataByRelations: CapabilitySupport(
-                support=Support.NotImplemented
-            ),
+            Capability.SchemaMetadataByRelations: CapabilitySupport(support=Support.Full),
         }
     )
 
