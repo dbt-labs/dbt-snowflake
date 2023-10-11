@@ -3,8 +3,9 @@ from typing import Mapping, Any, Optional, List, Union, Dict
 
 import agate
 
-from dbt.adapters.base.impl import AdapterConfig, AdapterFeature, ConstraintSupport  # type: ignore
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
 from dbt.adapters.base.meta import available
+from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
 from dbt.adapters.sql import SQLAdapter  # type: ignore
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -48,6 +49,10 @@ class SnowflakeAdapter(SQLAdapter):
         ConstraintType.primary_key: ConstraintSupport.NOT_ENFORCED,
         ConstraintType.foreign_key: ConstraintSupport.NOT_ENFORCED,
     }
+
+    _capabilities = CapabilityDict(
+        {Capability.SchemaMetadataByRelations: CapabilitySupport(support=Support.Full)}
+    )
 
     @classmethod
     def date_function(cls):
@@ -255,10 +260,6 @@ CALL {proc_name}();
 
     def valid_incremental_strategies(self):
         return ["append", "merge", "delete+insert"]
-
-    @classmethod
-    def has_feature(cls, feature: AdapterFeature) -> bool:
-        return feature in [AdapterFeature.CatalogByRelations]
 
     def debug_query(self):
         """Override for DebugTask method"""
