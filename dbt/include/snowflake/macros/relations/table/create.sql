@@ -2,11 +2,11 @@
   {%- set transient = config.get('transient', default=true) -%}
 
   {% if temporary -%}
-    {%- set table_type = "temporary"
+    {%- set table_type = "temporary" -%}
   {%- elif transient -%}
-    {%- set table_type = "transient"
+    {%- set table_type = "transient" -%}
   {%- else -%}
-    {%- set table_type = ""
+    {%- set table_type = "" -%}
   {%- endif %}
 
   {%- if language == 'sql' -%}
