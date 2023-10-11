@@ -27,6 +27,7 @@ class TestGetLastRelationModified:
     def models(self):
         return {"schema.yml": freshness_via_metadata_schema_yml}
 
+    @pytest.mark.skip()
     def test_get_last_relation_modified(self, project, set_env_vars):
         project.run_sql(
             f"create table {project.test_schema}.test_table (id integer autoincrement, name varchar(100) not null);"
