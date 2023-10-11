@@ -1,0 +1,6 @@
+kind: Fixes
+body: Fix the alter syntax on column for dynamic table
+time: 2023-10-02T14:46:48.980242+13:00
+custom:
+  Author: kaarthik108
+  Issue: "769"
