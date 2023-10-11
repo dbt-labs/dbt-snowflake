@@ -10,7 +10,7 @@ sources:
     freshness:
       warn_after: {count: 10, period: hour}
       error_after: {count: 1, period: day}
-    schema: "{{ env_var('DBT_TEST_SCHEMA_NAME_VARIABLE') }}"
+    schema: "{{ env_var('DBT_GET_LAST_RELATION_TEST_SCHEMA') }}"
     tables:
       - name: test_table
 """
@@ -23,7 +23,7 @@ class TestGetLastRelationModified:
             project.test_schema + "_get_last_relation_modified"
         )
         yield
-        del os.environ["DBT_TEST_SCHEMA_NAME_VARIABLE"]
+        del os.environ["DBT_GET_LAST_RELATION_TEST_SCHEMA"]
 
     @pytest.fixture(scope="class")
     def models(self):
@@ -33,7 +33,7 @@ class TestGetLastRelationModified:
     def custom_schema(self, project, set_env_vars):
         with project.adapter.connection_named("__test"):
             relation = project.adapter.Relation.create(
-                database=project.database, schema=os.environ["DBT_TEST_SCHEMA_NAME_VARIABLE"]
+                database=project.database, schema=os.environ["DBT_GET_LAST_RELATION_TEST_SCHEMA"]
             )
             project.adapter.drop_schema(relation)
             project.adapter.create_schema(relation)
@@ -45,7 +45,7 @@ class TestGetLastRelationModified:
 
     def test_get_last_relation_modified(self, project, set_env_vars, custom_schema):
         project.run_sql(
-            f"create table {os.environ['DBT_TEST_SCHEMA_NAME_VARIABLE']}.test_table (id integer autoincrement, name varchar(100) not null);"
+            f"create table {os.environ['DBT_GET_LAST_RELATION_TEST_SCHEMA']}.test_table (id integer autoincrement, name varchar(100) not null);"
         )
 
         warning_or_error = False
