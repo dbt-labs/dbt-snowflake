@@ -19,9 +19,7 @@ sources:
 class TestGetLastRelationModified:
     @pytest.fixture(scope="class", autouse=True)
     def set_env_vars(self, project):
-        os.environ["DBT_GET_LAST_RELATION_TEST_SCHEMA"] = (
-            project.test_schema + "_get_last_relation_modified"
-        )
+        os.environ["DBT_GET_LAST_RELATION_TEST_SCHEMA"] = project.test_schema
         yield
         del os.environ["DBT_GET_LAST_RELATION_TEST_SCHEMA"]
 
@@ -45,7 +43,7 @@ class TestGetLastRelationModified:
 
     def test_get_last_relation_modified(self, project, set_env_vars, custom_schema):
         project.run_sql(
-            f"create table {os.environ['DBT_GET_LAST_RELATION_TEST_SCHEMA']}.test_table (id integer autoincrement, name varchar(100) not null);"
+            f"create table {custom_schema}.test_table (id integer autoincrement, name varchar(100) not null);"
         )
 
         warning_or_error = False
