@@ -1,6 +1,0 @@
-kind: Fixes
-body: Fix `on_configuration_change` setting to properly recognize `continue` and `fail`
-time: 2023-07-26T16:47:29.471437-04:00
-custom:
-  Author: mikealfare
-  Issue: "708"
