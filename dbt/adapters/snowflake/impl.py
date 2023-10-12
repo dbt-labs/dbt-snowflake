@@ -52,7 +52,6 @@ class SnowflakeAdapter(SQLAdapter):
 
     _capabilities: CapabilityDict = CapabilityDict(
         {
-            Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
             Capability.SchemaMetadataByRelations: CapabilitySupport(support=Support.Full),
         }
     )
