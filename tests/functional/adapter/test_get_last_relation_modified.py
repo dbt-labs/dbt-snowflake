@@ -19,7 +19,7 @@ sources:
 class TestGetLastRelationModified:
     @pytest.fixture(scope="class", autouse=True)
     def set_env_vars(self, project):
-        os.environ["DBT_TEST_SCHEMA_NAME_VARIABLE"] = (
+        os.environ["DBT_GET_LAST_RELATION_TEST_SCHEMA"] = (
             project.test_schema + "_get_last_relation_modified"
         )
         yield
