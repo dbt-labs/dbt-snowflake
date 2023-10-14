@@ -1,0 +1,6 @@
+kind: Features
+body: Optimize refreshing dynamic tables when autorefreshed
+time: 2023-10-14T15:52:46.484-04:00
+custom:
+  Author: mikealfare
+  Issue: "806"
