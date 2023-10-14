@@ -30,3 +30,16 @@ MY_DYNAMIC_TABLE = """
 ) }}
 select * from {{ ref('my_seed') }}
 """
+
+
+MACRO__LAST_REFRESH = """
+{% macro snowflake__test__last_refresh(schema, identifier) %}
+    {% set _sql %}
+    select max(refresh_start_time) as last_refresh
+    from table(information_schema.dynamic_table_refresh_history())
+    where schema_name = '{{ schema }}'
+    and name = '{{ identifier }}'
+    {% endset %}
+    {{ return(run_query(_sql)) }}
+{% endmacro %}
+"""
