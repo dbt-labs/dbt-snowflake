@@ -132,25 +132,6 @@
 
 {% endmacro %}
 
-{# macro snowflake__list_schemas(database) -#}
-  {# 10k limit from here: https://docs.snowflake.net/manuals/sql-reference/sql/show-schemas.html#usage-notes #}
-  {# set maximum = 10000 #}
-  {# set sql -#}
-    show terse schemas in database {{ database }}
-    limit {{ maximum }}
-  {#- endset %}
-  {# set result = run_query(sql) #}
-  {# if (result | length) >= maximum #}
-    {# set msg %}
-      Too many schemas in database {{ database }}! dbt can only get
-      information about databases with fewer than {{ maximum }} schemas.
-    {# endset %}
-    {# do exceptions.raise_compiler_error(msg) #}
-  {# endif #}
-  {{ return(result) }}
-{# endmacro #}
-
-
 {% macro snowflake__get_paginated_relations_array(max_iter, max_results_per_iter, max_total_results, schema_relation, watermark) %}
 
   {% set paginated_relations = [] %}
