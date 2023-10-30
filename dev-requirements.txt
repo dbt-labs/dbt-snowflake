@@ -1,7 +1,9 @@
 # install latest changes in dbt-core
 # TODO: how to automate switching from develop to version branches?
-git+https://github.com/dbt-labs/dbt-core.git@4122f6c308c88be4a24c1ea490802239a4c1abb8#egg=dbt-core&subdirectory=core
-git+https://github.com/dbt-labs/dbt-core.git@4122f6c308c88be4a24c1ea490802239a4c1abb8#egg=dbt-tests-adapter&subdirectory=tests/adapter
+# git+https://github.com/dbt-labs/dbt-core.git@4122f6c308c88be4a24c1ea490802239a4c1abb8#egg=dbt-core&subdirectory=core
+# git+https://github.com/dbt-labs/dbt-core.git@4122f6c308c88be4a24c1ea490802239a4c1abb8#egg=dbt-tests-adapter&subdirectory=tests/adapter
+git+https://github.com/dbt-labs/dbt-core.git@paw/filtered-catalog-casefold#egg=dbt-core&subdirectory=core
+git+https://github.com/dbt-labs/dbt-core.git@paw/filtered-catalog-casefold#egg=dbt-tests-adapter&subdirectory=tests/adapter
 
 # if version 1.x or greater -> pin to major version
 # if version 0.x -> pin to minor
