@@ -1,6 +1,0 @@
-kind: Features
-body: Redact cases where raw data can be leaked logs
-time: 2023-09-15T09:15:07.430443+10:00
-custom:
-  Author: jaypeedevlin
-  Issue: "772"

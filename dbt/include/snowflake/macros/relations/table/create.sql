@@ -1,6 +1,15 @@
 {% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
+  {%- set transient = config.get('transient', default=true) -%}
+
+  {% if temporary -%}
+    {%- set table_type = "temporary" -%}
+  {%- elif transient -%}
+    {%- set table_type = "transient" -%}
+  {%- else -%}
+    {%- set table_type = "" -%}
+  {%- endif %}
+
   {%- if language == 'sql' -%}
-    {%- set transient = config.get('transient', default=true) -%}
     {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
     {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
     {%- set copy_grants = config.get('copy_grants', default=false) -%}
@@ -17,11 +26,7 @@
 
     {{ sql_header if sql_header is not none }}
 
-        create or replace {% if temporary -%}
-          temporary
-        {%- elif transient -%}
-          transient
-        {%- endif %} table {{ relation }}
+        create or replace {{ table_type }} table {{ relation }}
         {%- set contract_config = config.get('contract') -%}
         {%- if contract_config.enforced -%}
           {{ get_assert_columns_equivalent(sql) }}
@@ -46,7 +51,7 @@
       {%- endif -%}
 
   {%- elif language == 'python' -%}
-    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, temporary=temporary) }}
+    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, table_type=table_type) }}
   {%- else -%}
       {% do exceptions.raise_compiler_error("snowflake__create_table_as macro didn't get supported language, it got %s" % language) %}
   {%- endif -%}

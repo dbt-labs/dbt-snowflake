@@ -7,6 +7,5 @@
             {{ sql }}
         )
     ;
-    {{ snowflake__refresh_dynamic_table(relation) }}
 
 {%- endmacro %}
