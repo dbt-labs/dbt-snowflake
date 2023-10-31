@@ -1,0 +1,6 @@
+kind: "Dependencies"
+body: "Update ddtrace requirement from ~=1.19 to ~=2.1"
+time: 2023-10-31T12:10:03.00000Z
+custom:
+  Author: dependabot[bot]
+  PR: 822
