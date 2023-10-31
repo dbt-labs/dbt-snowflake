@@ -1,7 +1,0 @@
-kind: Fixes
-body: Incremental materialization with "append" strategy does not wrap dml with explicit
-  transaction
-time: 2023-06-26T13:26:31.575359809Z
-custom:
-  Author: danielefrigo
-  Issue: "656"
