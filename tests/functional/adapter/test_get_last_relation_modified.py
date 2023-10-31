@@ -41,7 +41,6 @@ class TestGetLastRelationModified:
         with project.adapter.connection_named("__test"):
             project.adapter.drop_schema(relation)
 
-    @pytest.mark.skip()
     def test_get_last_relation_modified(self, project, set_env_vars, custom_schema):
         project.run_sql(
             f"create table {custom_schema}.test_table (id integer autoincrement, name varchar(100) not null);"
