@@ -2,7 +2,7 @@ from dbt.contracts.results import CatalogArtifact
 from dbt.tests.util import run_dbt
 import pytest
 
-from tests.functional.adapter.dynamic_table_tests import files
+from tests.functional.adapter.catalog_tests import files
 
 
 class TestCatalogRelationTypes:
