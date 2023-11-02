@@ -1,6 +1,0 @@
-kind: Features
-body: Add support for checking table-last-modified by metadata
-time: 2023-10-08T19:54:10.503476-04:00
-custom:
-  Author: peterallenwebb
-  Issue: "785"
