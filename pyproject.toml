@@ -14,7 +14,7 @@ description = "The Snowflake adapter plugin for dbt"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.8"
-authors = [{name = "dbt Labs", email = "info@dbtlabs.com" }]
+authors = ["dbt Labs <info@dbtlabs.com>"]
 classifiers = [  # Optional
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: Apache Software License",
