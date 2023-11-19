@@ -13,7 +13,6 @@ version = "1.8.0a1"
 description = "The Snowflake adapter plugin for dbt"
 readme = "README.md"
 requires-python = ">=3.8"
-license-files = ["LICENSE.md"]
 authors = [{name = "dbt Labs", email = "info@dbtlabs.com" }]
 classifiers = [  # Optional
     "Development Status :: 5 - Production/Stable",
