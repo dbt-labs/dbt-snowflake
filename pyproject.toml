@@ -30,13 +30,12 @@ urls.Homepage = "https://github.com/dbt-labs/dbt-snowflake"
 urls."Bug Reports" = "https://github.com/dbt-labs/dbt-snowflake/issues"
 urls.Docs = "https://docs.getdbt.com/docs/core/connect-data-platform/snowflake-setup"
 dependencies = [
-    "dbt-core~=1.8.0a1",
+    "dbt-core@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core",
     "snowflake-connector-python[secure-local-storage]~=3.0",
     # installed via dbt-core but referenced directly; don't pin to avoid version conflicts with dbt-core
     "agate",
 ]
 optional-dependencies.dev = [
-    "dbt-core@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core",
     "dbt-tests-adapter@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=tests/adapter",
     "black~=23.0",
     "flake8",
@@ -56,7 +55,6 @@ optional-dependencies.dev = [
     "types-requests",
 ]
 optional-dependencies.test = [
-    "dbt-core@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core",
     "dbt-tests-adapter@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=tests/adapter",
     "black~=23.0",
     "ddtrace",
