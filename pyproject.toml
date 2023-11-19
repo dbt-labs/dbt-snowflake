@@ -49,6 +49,7 @@ optional-dependencies.dev = [
     "pytest",
     "pytest-csv",
     "pytest-dotenv",
+    "pytest-xdist",
     "pytz",
     "tox~=4.0",
     "types-pytz",
