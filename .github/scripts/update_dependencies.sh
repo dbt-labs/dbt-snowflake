@@ -2,7 +2,7 @@
 set -e
 
 git_branch=$1
-target_req_file="dev-requirements.txt"
+target_req_file="pyproject.toml"
 core_req_sed_pattern="s|dbt-core.git.*#egg=dbt-core|dbt-core.git@${git_branch}#egg=dbt-core|g"
 tests_req_sed_pattern="s|dbt-core.git.*#egg=dbt-tests|dbt-core.git@${git_branch}#egg=dbt-tests|g"
 if [[ "$OSTYPE" == darwin* ]]; then
