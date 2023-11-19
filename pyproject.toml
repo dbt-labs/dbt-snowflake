@@ -13,7 +13,7 @@ version = "1.8.0a1"
 description = "The Snowflake adapter plugin for dbt"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {file = "LICENSE.md"}
+license-files = ["LICENSE.md"]
 authors = [{name = "dbt Labs", email = "info@dbtlabs.com" }]
 classifiers = [  # Optional
     "Development Status :: 5 - Production/Stable",
@@ -92,5 +92,11 @@ env_files = "test.env"
 testpaths = ["tests/unit", "tests/functional"]
 addopts = "-v -n4 --color=yes"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
-include = ["dbt", "dbt.*"]
+where = ["dbt"]
+
+[tool.setuptools.package-data]
+include = ["*.sql", "*.yml", "*.md"]
