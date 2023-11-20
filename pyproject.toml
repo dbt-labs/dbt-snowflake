@@ -97,7 +97,4 @@ addopts = "-v -n4 --color=yes"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["dbt"]
-
-[tool.setuptools.package-data]
-include = ["*.sql", "*.yml", "*.md"]
+include = ["dbt", "dbt.*"]
