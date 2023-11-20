@@ -2,7 +2,7 @@
 
 .PHONY: dev
 dev: ## Installs adapter in develop mode along with development dependencies
-	pip install -e .[dev] && pre-commit install
+	pip install -e .[dev,test] && pre-commit install
 
 .PHONY: dev-uninstall
 dev-uninstall: ## Uninstalls all packages while maintaining the virtual environment

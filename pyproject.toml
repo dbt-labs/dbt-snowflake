@@ -37,40 +37,29 @@ dependencies = [
     "agate",
 ]
 optional-dependencies.dev = [
-    "dbt-tests-adapter@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=tests/adapter",
     "black~=23.0",
     "flake8",
     "flaky",
-    "freezegun",
     "ipdb",
     "mypy~=1.0",
     "pip-tools",
     "pre-commit",
     "pre-commit-hooks",
-    "pytest",
-    "pytest-csv",
-    "pytest-dotenv",
-    "pytest-xdist",
-    "pytz",
     "tox~=4.0",
     "types-pytz",
     "types-requests",
 ]
 optional-dependencies.test = [
     "dbt-tests-adapter@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=tests/adapter",
-    "black~=23.0",
     "ddtrace",
-    "flake8",
-    "flaky",
     "freezegun",
     "pytest",
     "pytest-csv",
     "pytest-dotenv",
     "pytest-logbook",
     "pytest-xdist",
+    "pytz",
     "tox~=4.0",
-    "types-pytz",
-    "types-requests",
 ]
 
 [tool.black]
