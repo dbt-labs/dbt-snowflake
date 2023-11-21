@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Dict, ClassVar
 
 from dbt.adapters.base.column import Column
 from dbt.exceptions import DbtRuntimeError
@@ -6,6 +7,10 @@ from dbt.exceptions import DbtRuntimeError
 
 @dataclass
 class SnowflakeColumn(Column):
+    TYPE_LABELS: ClassVar[Dict[str, str]] = {
+        "FIXED": "NUMERIC",
+    }
+
     def is_integer(self) -> bool:
         # everything that smells like an int is actually a NUMBER(38, 0)
         return False
