@@ -45,7 +45,6 @@ optional-dependencies.dev = [
     "pip-tools",
     "pre-commit",
     "pre-commit-hooks",
-    "tox~=4.0",
     "types-pytz",
     "types-requests",
 ]
@@ -59,7 +58,6 @@ optional-dependencies.test = [
     "pytest-logbook",
     "pytest-xdist",
     "pytz",
-    "tox~=4.0",
 ]
 
 [tool.black]
@@ -80,7 +78,7 @@ filterwarnings = [
 ]
 env_files = "test.env"
 testpaths = ["tests/unit", "tests/functional"]
-addopts = "-v -n4 --color=yes"
+addopts = "-v -n4 --color=yes --csv test_results.csv"
 
 [tool.setuptools]
 include-package-data = true

@@ -35,7 +35,7 @@ on:
   workflow_dispatch:
     inputs:
       dbt-core-branch:
-        description: "branch of dbt-core to use in dev-requirements.txt"
+        description: "branch of dbt-core to use in dev requirements"
         required: false
         type: string
 
@@ -60,7 +60,9 @@ jobs:
       github.event_name != 'pull_request_target' ||
       github.event.pull_request.head.repo.full_name == github.repository ||
       contains(github.event.pull_request.labels.*.name, 'ok to test')
+
     runs-on: ubuntu-latest
+
     outputs:
       matrix: ${{ steps.generate-matrix.outputs.result }}
 
@@ -94,6 +96,8 @@ jobs:
             snowflake:
               - 'dbt/**'
               - 'tests/**'
+              - 'pyproject.toml'
+
       - name: Generate integration test matrix
         id: generate-matrix
         uses: actions/github-script@v6
@@ -105,8 +109,9 @@ jobs:
             const matrix = script({ context })
             console.log(matrix)
             return matrix
+
   test:
-    name: ${{ matrix.adapter }} / python ${{ matrix.python-version }} / ${{ matrix.os }}
+    name: Integration Tests / Python ${{ matrix.python-version }} / ${{ matrix.os }}
 
     # run if not a PR from a forked repository or has a label to mark as safe to test
     # also checks that the matrix generated is not empty
@@ -118,7 +123,9 @@ jobs:
         github.event.pull_request.head.repo.full_name == github.repository ||
         contains(github.event.pull_request.labels.*.name, 'ok to test')
       )
+
     runs-on: ${{ matrix.os }}
+
     needs: test-metadata
 
     strategy:
@@ -126,8 +133,6 @@ jobs:
       matrix: ${{ fromJSON(needs.test-metadata.outputs.matrix) }}
 
     env:
-      TOXENV: integration-${{ matrix.adapter }}
-      PYTEST_ADDOPTS: "-v --color=yes -n4 --csv integration_results.csv"
       DBT_INVOCATION_ENV: github-actions
       DD_CIVISIBILITY_AGENTLESS_ENABLED: true
       DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
@@ -142,7 +147,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # explicity checkout the branch for the PR,
+      # explicitly checkout the branch for the PR,
       # this is necessary for the `pull_request_target` event
       - name: Check out the repository (PR)
         if: github.event_name == 'pull_request_target'
@@ -156,18 +161,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install python dependencies
+      - name: Install dependencies
         run: |
-          python -m pip install  --user --upgrade pip
-          python -m pip install tox
-          python -m pip --version
-          tox --version
+          python -m pip install --user --upgrade pip
+          python -m pip install .[test]
 
-      - name: Update dev_requirements.txt
+      - name: Update pyproject.toml
         if: inputs.dbt-core-branch != ''
         run: |
-          pip install bumpversion
+          python -m pip install bumpversion
           ./.github/scripts/update_dbt_core_branch.sh ${{ inputs.dbt-core-branch }}
+          python -m pip install .[test]
 
       - name: Run tox (snowflake)
         if: matrix.adapter == 'snowflake'
@@ -187,7 +191,7 @@ jobs:
           DBT_TEST_USER_1: dbt_test_role_1
           DBT_TEST_USER_2: dbt_test_role_2
           DBT_TEST_USER_3: dbt_test_role_3
-        run: tox -- --ddtrace
+        run: python -m pytest {posargs} tests/functional --ddtrace
 
       - uses: actions/upload-artifact@v3
         if: always()
@@ -204,7 +208,7 @@ jobs:
         if: always()
         with:
           name: integration_results_${{ matrix.python-version }}_${{ matrix.os }}_${{ matrix.adapter }}-${{ steps.date.outputs.date }}.csv
-          path: integration_results.csv
+          path: test_results.csv
 
   require-label-comment:
     runs-on: ubuntu-latest
