@@ -24,8 +24,9 @@ black: ## Runs black  against staged changes to enforce style guide.
 
 .PHONY: lint
 lint: ## Runs flake8 and mypy code checks against staged changes.
+	pre-commit run mypy-check --hook-stage manual | grep -v "INFO"; \
 	pre-commit run flake8-check --hook-stage manual | grep -v "INFO"; \
-	pre-commit run mypy-check --hook-stage manual | grep -v "INFO"
+	pre-commit run black-check --hook-stage manual | grep -v "INFO"
 
 .PHONY: linecheck
 linecheck: ## Checks for all Python lines 100 characters or more
@@ -33,18 +34,18 @@ linecheck: ## Checks for all Python lines 100 characters or more
 
 .PHONY: unit
 unit: ## Runs unit tests with py38.
-	tox -e py38
+	python -m pytest tests/unit
 
 .PHONY: test
 test: ## Runs unit tests with py38 and code checks against staged changes.
-	tox -p -e py38; \
+	python -m pytest tests/unit; \
 	pre-commit run black-check --hook-stage manual | grep -v "INFO"; \
 	pre-commit run flake8-check --hook-stage manual | grep -v "INFO"; \
 	pre-commit run mypy-check --hook-stage manual | grep -v "INFO"
 
 .PHONY: integration
 integration: ## Runs snowflake integration tests with py38.
-	tox -e py38-snowflake --
+	python -m pytest tests/functional
 
 .PHONY: clean
 	@echo "cleaning repo"
