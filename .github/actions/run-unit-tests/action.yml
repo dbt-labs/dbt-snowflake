@@ -3,6 +3,9 @@ inputs:
   python-version:
     required: true
     default: '3.8'
+defaults:
+  run:
+    shell: bash
 runs:
   using: 'composite'
   steps:
