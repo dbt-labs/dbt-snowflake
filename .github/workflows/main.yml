@@ -36,31 +36,18 @@ defaults:
     shell: bash
 
 jobs:
+
   code-quality:
     name: Code Quality
-
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           persist-credentials: false
+      - name: Run Code Quality
+        uses: ./.github/actions/run-code-quality
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --user --upgrade pip
-          python -m pip install .[dev]
-
-      - name: Run pre-commit hooks
-        run: pre-commit run --all-files --show-diff-on-failure
-
-  unit:
+  unit-tests:
     name: Unit Tests / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
@@ -81,7 +68,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           file-name-stub: unit_results
 
-  build:
+  build-artifacts:
     name: Build Artifacts
 
     runs-on: ubuntu-latest
@@ -129,12 +116,12 @@ jobs:
           name: dist
           path: dist/
 
-  test-build:
+  verify-artifacts:
     name: Verify Artifacts / Python ${{ matrix.python-version }} / ${{ matrix.os }}
 
     if: needs.build.outputs.is_alpha == 0
 
-    needs: build
+    needs: build-artifacts
 
     runs-on: ${{ matrix.os }}
 
