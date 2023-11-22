@@ -125,7 +125,7 @@ jobs:
           python -m pip install .[build]
 
       - name: Build distributions
-        run: ./scripts/build-dist.sh
+        run: python -m build
 
       - name: Show distributions
         run: ls -lh dist/
