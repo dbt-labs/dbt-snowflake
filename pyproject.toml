@@ -1,11 +1,5 @@
 [build-system]
-requires = [
-    "build",
-    "check-wheel-contents",
-    "setuptools",
-    "twine",
-    "wheel",
-]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -36,7 +30,8 @@ dependencies = [
     # installed via dbt-core but referenced directly; don't pin to avoid version conflicts with dbt-core
     "agate",
 ]
-optional-dependencies.dev = [
+[optional-dependencies]
+dev = [
     "black~=23.0",
     "flake8",
     "flaky",
@@ -48,7 +43,7 @@ optional-dependencies.dev = [
     "types-pytz",
     "types-requests",
 ]
-optional-dependencies.test = [
+test = [
     "dbt-tests-adapter@git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-tests-adapter&subdirectory=tests/adapter",
     "ddtrace",
     "freezegun",
@@ -58,6 +53,11 @@ optional-dependencies.test = [
     "pytest-logbook",
     "pytest-xdist",
     "pytz",
+]
+build = [
+    "build",
+    "check-wheel-contents",
+    "twine",
 ]
 
 [tool.black]
