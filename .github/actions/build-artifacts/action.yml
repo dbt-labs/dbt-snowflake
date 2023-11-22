@@ -1,0 +1,26 @@
+name: Build Artifacts
+description: Builds a wheel and source distribution locally
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --user --upgrade pip
+        python -m pip install .[build]
+    - name: Build distributions
+      shell: bash
+      run: python -m build
+    - name: Show distributions
+      shell: bash
+      run: ls -lh dist/
+    - name: Check distribution descriptions
+      shell: bash
+      run: twine check dist/*
+    - name: Check wheel contents
+      shell: bash
+      run: check-wheel-contents dist/*.whl --ignore W007,W008

@@ -1,0 +1,39 @@
+name: Verify Artifact
+description: Downloads artifacts published during CI and verifies that they are installable
+inputs:
+  python-version:
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --user --upgrade pip
+        python -m pip install --upgrade wheel
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: dist
+        path: dist/
+
+    - name: Show distributions
+      shell: bash
+      run: ls -lh dist/
+
+    - name: Verify wheel distributions
+      shell: bash
+      run: |
+        find ./dist/*.whl -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
+        dbt --version
+
+    - name: Verify source distributions
+      shell: bash
+      run: |
+        find ./dist/*.gz -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
+        dbt --version

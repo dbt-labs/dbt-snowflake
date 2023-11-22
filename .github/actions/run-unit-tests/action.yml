@@ -3,7 +3,6 @@ description: Runs unit tests for a specific version of Python
 inputs:
   python-version:
     required: true
-    default: '3.8'
 runs:
   using: 'composite'
   steps:
