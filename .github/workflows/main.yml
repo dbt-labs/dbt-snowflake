@@ -71,7 +71,7 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
-      - uses: .github/actions/run-unit-tests.yml
+      - uses: ./actions/run-unit-tests.yml
         with:
           python-version: ${{ matrix.python-version }}
 
