@@ -66,7 +66,7 @@ create or replace transient table <model_identifier> (
 class SnowflakeColumnEqualSetup:
     @pytest.fixture
     def int_type(self):
-        return "FIXED"
+        return "NUMERIC"
 
     @pytest.fixture
     def schema_int_type(self):
