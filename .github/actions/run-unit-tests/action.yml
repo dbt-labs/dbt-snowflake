@@ -2,6 +2,7 @@ name: Run Unit Tests
 description: Runs unit tests for a specific version of Python
 inputs:
   python-version:
+    description: The version of Python to test against
     required: true
 runs:
   using: 'composite'
