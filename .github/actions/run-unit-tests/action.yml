@@ -1,4 +1,5 @@
 name: Run Unit Tests
+description: Runs unit tests for a specific version of Python
 inputs:
   python-version:
     required: true
