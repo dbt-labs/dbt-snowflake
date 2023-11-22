@@ -4,15 +4,13 @@ inputs:
     required: true
   file-name-stub:  # e.g. unit, integration
     required: true
-defaults:
-  run:
-    shell: bash
 runs:
   using: 'composite'
   steps:
     - name: Get current date
       if: always()
       id: date
+      shell: bash
       run: echo "date=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT  # no colons allowed for artifacts
     - uses: actions/upload-artifact@v3
       if: always()

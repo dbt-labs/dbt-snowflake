@@ -3,9 +3,6 @@ inputs:
   python-version:
     required: true
     default: '3.8'
-defaults:
-  run:
-    shell: bash
 runs:
   using: 'composite'
   steps:
@@ -14,8 +11,10 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
     - name: Install dependencies
+      shell: bash
       run: |
         python -m pip install --user --upgrade pip
         python -m pip install .[test]
     - name: Run unit tests
+      shell: bash
       run: python -m pytest tests/unit
