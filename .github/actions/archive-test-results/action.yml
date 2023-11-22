@@ -1,4 +1,4 @@
-name: Archive Unit Tests / Python ${{ inputs.python-version }}
+name: Archive Test Results
 inputs:
   python-version:
     required: true

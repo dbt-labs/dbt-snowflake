@@ -1,4 +1,4 @@
-name: Run Unit Tests / Python ${{ inputs.python-version }}
+name: Run Unit Tests
 inputs:
   python-version:
     required: true
