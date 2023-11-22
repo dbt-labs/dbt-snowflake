@@ -1,4 +1,5 @@
 name: Archive Test Results
+description: Archives the test results output from pytest
 inputs:
   python-version:
     required: true
