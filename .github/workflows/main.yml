@@ -62,29 +62,22 @@ jobs:
 
   unit:
     name: Unit Tests / Python ${{ matrix.python-version }}
-
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
-
     steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
       - uses: ./actions/run-unit-tests.yml
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Get current date
-        if: always()
-        id: date
-        run: echo "date=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT #no colons allowed for artifacts
-
-      - uses: actions/upload-artifact@v3
-        if: always()
+      - uses: ./actions/archive-test-results.yml
         with:
-          name: unit_results_${{ matrix.python-version }}-${{ steps.date.outputs.date }}.csv
-          path: test_results.csv
+          python-version: ${{ matrix.python-version }}
+          file-name-stub: unit_results
 
   build:
     name: Build Artifacts
