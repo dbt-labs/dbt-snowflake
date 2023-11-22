@@ -8,13 +8,10 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Get current date
-      if: always()
-      id: date
+    - id: get-date
       shell: bash
-      run: echo "date=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT  # no colons allowed for artifacts
+      run: echo "result=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT  # no colons allowed for artifacts
     - uses: actions/upload-artifact@v3
-      if: always()
       with:
-        name: ${{ inputs.file-name-stub }}_${{ inputs.python-version }}-${{ steps.date.outputs.date }}.csv
+        name: ${{ inputs.file-name-stub }}_${{ inputs.python-version }}_${{ steps.get-date.outputs.result }}.csv
         path: test_results.csv
