@@ -71,23 +71,9 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - uses: actions/run-unit-tests
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --user --upgrade pip
-          python -m pip install .[test]
-
-      - name: Run unit tests
-        run: python -m pytest tests/unit
 
       - name: Get current date
         if: always()
