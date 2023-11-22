@@ -30,7 +30,8 @@ dependencies = [
     # installed via dbt-core but referenced directly; don't pin to avoid version conflicts with dbt-core
     "agate",
 ]
-[optional-dependencies]
+
+[project.optional-dependencies]
 dev = [
     "black~=23.0",
     "flake8",
