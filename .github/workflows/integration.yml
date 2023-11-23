@@ -1,121 +1,86 @@
 # **what?**
-# This workflow runs all integration tests for supported OS
-# and python versions and core adapters. If triggered by PR,
-# the workflow will only run tests for adapters related
-# to code changes. Use the `test all` and `test ${adapter}`
-# label to run all or additional tests. Use `ok to test`
-# label to mark PRs from forked repositories that are safe
-# to run integration tests for. Requires secrets to run
-# against different warehouses.
-
+# Runs all integration tests for supported OS's and Python versions.
+# If triggered by a PR, the workflow will only run tests related to code changes.
+#
 # **why?**
-# This checks the functionality of dbt from a user's perspective
-# and attempts to catch functional regressions.
-
+# Check the functionality of dbt from a user's perspective and attempt to catch functional regressions.
+#
+# **how?**
+# Run the workflow in Actions.
+# Create a PR against a protected branch. If the PR is from a fork, include the `ok to test` label.
+# Use the `test all` label to run all integration tests regardless of changes.
+# Use the `ok to test` label to mark PRs from forks that are safe to run integration tests for.
+# Requires secrets to run against different warehouses.
+#
 # **when?**
-# This workflow will run on every push to a protected branch
-# and when manually triggered. It will also run for all PRs, including
-# PRs from forks. The workflow will be skipped until there is a label
-# to mark the PR as safe to run.
+# A commit is pushed to a PR against a protected branch.
+# A PR is merged into a protected branch.
+# Manually triggered.
 
 name: Adapter Integration Tests
-
 on:
-  # pushes to release branches
   push:
     branches:
       - "main"
       - "develop"
       - "*.latest"
       - "releases/*"
-  # all PRs, important to note that `pull_request_target` workflows
-  # will run in the context of the target branch of a PR
   pull_request_target:
-  # manual trigger
   workflow_dispatch:
     inputs:
       dbt-core-branch:
-        description: "branch of dbt-core to use in dev requirements"
+        description: "Branch of dbt-core to test against"
         required: false
         type: string
-
-# explicitly turn off permissions for `GITHUB_TOKEN`
 permissions: read-all
-
-# will cancel previous workflows triggered by the same event and for the same ref for PRs or same SHA otherwise
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ contains(github.event_name, 'pull_request') && github.event.pull_request.head.ref || github.sha }}
   cancel-in-progress: true
-
-# sets default shell to bash, for all operating systems
 defaults:
   run:
     shell: bash
-
 jobs:
 
   ok-to-test:
-    name: OK to Run
+    name: OK to Test
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'pull_request_target' ||
+      github.event.pull_request.head.repo.full_name == github.repository ||
+      contains(github.event.pull_request.labels.*.name, 'ok to test')
+    steps:
+      - run: echo "OK to Test"
+
+  approval-required:
+    name: Approval Required
+    runs-on: ubuntu-latest
+    needs: ok-to-test
+    if: ${{ needs.ok-to-test.result == 'skipped' }}
     permissions:
       pull-requests: write
-    outputs:
-      result: ${{ steps.is_approved.outputs.result }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - id: is_approved
-        run: |
-          result= \
-            ${{ github.event_name }} == 'pull_request_target' || \
-            ${{ github.event.pull_request.head.repo.full_name }} == '${{ github.repository }}' || \
-            ${{ contains(github.event.pull_request.labels.*.name, 'ok to test') }}
-          echo "result=$(result)" >> $GITHUB_OUTPUT
-      - if: ${{ steps.is_approved.outputs.result == false }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        uses: unsplash/comment-on-pr@master
+      - uses: unsplash/comment-on-pr@master
         with:
           msg: |
             "You do not have permissions to run integration tests, @dbt-labs/core "\
             "needs to label this PR with `ok to test` in order to run integration tests!"
           check_for_duplicate_msg: true
 
-  generate-test-matrix:
-    name: Generate Test Matrix
-    runs-on: ubuntu-latest
-    needs: ok-to-test
-    if: ${{ needs.ok-to-test.outputs.result }}
-    outputs:
-      matrix: ${{ steps.generate-test-matrix.outputs.result }}
-    steps:
-      - name: Check out the repository (non-PR)
-        if: github.event_name != 'pull_request_target'
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-      - name: Check out the repository (PR)
-        if: github.event_name == 'pull_request_target'
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha }}
-      - uses: ./.github/actions/generate-test-matrix
-        id: generate-test-matrix
-        with:
-          python-version: ${{ matrix.python-version }}
-          dbt-core-branch: ${{ inputs.dbt-core-branch }}
-
   integration-tests:
     name: Integration Tests / Python ${{ matrix.python-version }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: generate-test-matrix
-    # run if not a PR from a forked repository or has a label to mark as safe to test
-    # also checks that the matrix generated is not empty
-    if: >-
-      needs.generate-test-matrix.outputs.matrix &&
-      fromJSON( needs.generate-test-matrix.outputs.matrix ).include[0]
+    needs: ok-to-test
+    if: ${{ needs.ok-to-test.result == 'success' }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.test-metadata.outputs.matrix) }}
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: ['3.8', '3.9', '3.10', '3.11']
+          - os: [ubuntu-latest, macos-latest, windows-latest]
+            python-version: ['3.8']
     env:
       SNOWFLAKE_TEST_ACCOUNT: ${{ secrets.SNOWFLAKE_TEST_ACCOUNT }}
       SNOWFLAKE_TEST_PASSWORD: ${{ secrets.SNOWFLAKE_TEST_PASSWORD }}
