@@ -1,0 +1,30 @@
+name: Branch Package Metadata
+description: Get package metadata from a particular branch
+inputs:
+  branch:
+    description: The branch whose metadata is required
+    required: true
+outputs:
+  latest-commit-sha:
+    description: The SHA of the latest commit on the target branch
+    value: ${{ steps.latest-commit.output.sha }}
+  current-version-number:
+    description: The version number on the target branch (e.g. 1.7.0rc1)
+    value: ${{ steps.current-version.output.number }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout ${{ github.repository }}@${{ branch }}
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ branch }}
+    - id: latest-commit
+      shell: bash
+      run: |
+        latest_commit_sha=$(git rev-parse HEAD)
+        echo "sha=latest_commit_sha" >> $GITHUB_OUTPUT
+    - id: current-version
+      shell: bash
+      run: |
+        current_version=`awk -F"current_version = " '{print $2}' .bumpversion.cfg | tr '\n' ' '`
+        echo "number=$current_version" >> $GITHUB_OUTPUT

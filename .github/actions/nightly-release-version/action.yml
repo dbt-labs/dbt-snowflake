@@ -1,0 +1,30 @@
+name: Nightly Release Version
+description: Get the nightly release version given a current version
+inputs:
+  current-version-number:
+    description: The current version number (e.g. 1.7.1)
+    required: true
+outputs:
+  release-version-number:
+    description: The version number to use for a nightly release (e.g. 1.7.1+dev20231122)
+    value: ${{ steps.nightly-release-version.output.$number }}
+runs:
+  using: 'composite'
+  steps:
+    - id: semver
+      uses: dbt-labs/actions/parse-semver@v1.1.0
+      with:
+        version: ${{ inputs.current-version-number }}
+    # Bump to the next patch because when this is a previously released patch, the changelog
+    # markdown will already exist and cause a failure in another step
+    - id: bump-patch
+      shell: bash
+      run: echo "patch=$((${{ steps.semver.outputs.patch }}+1))" >> $GITHUB_OUTPUT
+    - id: current-date
+      shell: bash
+      run: echo "date=$(date +'%m%d%Y')" >> $GITHUB_OUTPUT
+    - id: nightly-release-version
+      shell: bash
+      run: |
+        number="${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.bump-patch.outputs.patch }}+dev${{ steps.current-date.outputs.date }}"
+        echo "$number=$number" >> $GITHUB_OUTPUT
