@@ -45,7 +45,7 @@ jobs:
     name: OK to Test
     runs-on: ubuntu-latest
     if: >-
-      github.event_name == 'pull_request_target' ||
+      github.event_name != 'pull_request_target' ||
       github.event.pull_request.head.repo.full_name == github.repository ||
       contains(github.event.pull_request.labels.*.name, 'ok to test')
     steps:
