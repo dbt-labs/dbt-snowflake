@@ -1,19 +1,21 @@
 # **what?**
-# Runs code quality checks, unit tests, and verifies python build on
-# all code commited to the repository. This workflow should not
-# require any secrets since it runs for PRs from forked repos.
-# By default, secrets are not passed to workflows running from
-# a forked repo.
-
+# Runs all unit tests, code quality checks, and build checks for supported OS's and Python versions.
+#
 # **why?**
-# Ensure code for dbt meets a certain quality standard.
-
+# Check the functionality of dbt from a developer's perspective and attempt to catch implementation regressions.
+#
+# **how?**
+# Run the workflow in Actions.
+# Create a PR against a protected branch.
+#     This workflow cannot use any secrets since it runs for PRs from forked repos.
+#     By default, secrets are not passed to workflows running from a forked repo.
+#
 # **when?**
-# This will run for all PRs, when code is pushed to a release
-# branch, and when manually triggered.
+# A commit is pushed to a PR against a protected branch.
+# A PR is merged into a protected branch.
+# Manually triggered.
 
 name: Tests and Code Checks
-
 on:
   push:
     branches:
@@ -23,18 +25,13 @@ on:
       - "releases/*"
   pull_request:
   workflow_dispatch:
-
 permissions: read-all
-
-# will cancel previous workflows triggered by the same event and for the same ref for PRs or same SHA otherwise
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ contains(github.event_name, 'pull_request') && github.event.pull_request.head.ref || github.sha }}
   cancel-in-progress: true
-
 defaults:
   run:
     shell: bash
-
 jobs:
 
   code-quality:
