@@ -8,6 +8,9 @@ inputs:
     description: The branch of dbt-core to test against
     required: false
     default: ''
+  dd-api-key:
+    description: The API key for DataDog
+    required: true
 runs:
   using: 'composite'
   steps:
@@ -31,7 +34,7 @@ runs:
       env:
         DBT_INVOCATION_ENV: github-actions
         DD_CIVISIBILITY_AGENTLESS_ENABLED: true
-        DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+        DD_API_KEY: ${{ inputs.dd-api-key }}
         DD_SITE: datadoghq.com
         DD_ENV: ci
         DD_SERVICE: ${{ github.event.repository.name }}

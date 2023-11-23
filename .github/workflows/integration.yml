@@ -111,6 +111,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           dbt-core-branch: ${{ inputs.dbt-core-branch }}
+          dd-api-key: ${{ secrets.DD_API_KEY }}
       - uses: ./.github/actions/archive-test-results
         with:
           python-version: ${{ matrix.python-version }}
