@@ -135,8 +135,9 @@ class SnowflakeAdapter(SQLAdapter):
             # if the schema doesn't exist, we just want to return.
             # Alternatively, we could query the list of schemas before we start
             # and skip listing the missing ones, which sounds expensive.
-            # The error messages are different in English and Japanese, So need each handling.
-            if "Object does not exist" in str(exc) or "オブジェクトは存在しない" in str(exc):
+            # "002043 (02000)" is error code for "object does not exist or is not found"
+            # The error messages are different in English and Japanese, need each handling.
+            if "002043 (02000)" in str(exc):
                 return []
             raise
 
