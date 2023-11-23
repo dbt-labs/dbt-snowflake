@@ -1,27 +1,25 @@
 # **what?**
-# The purpose of this workflow is to trigger CI to run for each release
-# branch on a regular cadence. If the CI workflow fails for a branch, it
-# will post to dev-core-alerts to raise awareness. The
-
+# Scheduled CI runs tests on release branches.
+# If the CI workflow fails for a branch, it will post to dev-adapter-alerts to raise awareness.
+#
 # **why?**
-# Ensures release branches are always shippable and not broken.
-# Also, can catch any dependencies shifting beneath us that might
-# introduce breaking changes (could also impact Cloud).
-
+# Ensure `main` is always shippable.
+# Catch regressions due to dependencies shifting beneath us.
+#
+# **how?**
+# Scheduled. Triggers other workflows (main.yml and integration.yml).
+# Manually run via GitHub Actions.
+#
 # **when?**
-# Once each morning. Manual trigger can also test on demand
+# Scheduled daily at 12:00 UTC.
+# Manually triggered
 
 name: Release branch scheduled testing
-
 on:
   schedule:
     - cron: '0 12 * * *' # 12:00 UTC
-
-  workflow_dispatch: # for manual triggering
-
-# no special access is needed
+  workflow_dispatch:
 permissions: read-all
-
 jobs:
   run_tests:
     uses: dbt-labs/actions/.github/workflows/release-branch-tests.yml@main

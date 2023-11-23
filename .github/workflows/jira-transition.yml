@@ -1,23 +1,20 @@
 # **what?**
-# Transition a Jira issue to a new state
-# Only supports these GitHub Issue transitions:
-#   closed, deleted, reopened
-
+# Mirror the GitHub issue status into Jira.
+#
 # **why?**
-# Jira needs to be kept up-to-date
-
+# Jira is our tool for issue tracking and upstream reporting but users submit issues via GitHub.
+#
+# **how?**
+# Close, delete, or reopen a GitHub issue.
+#
 # **when?**
-# On issue closing, deletion, reopened
+# The GitHub issue is closed, deleted, or reopened.
 
 name: Jira Issue Transition
-
 on:
   issues:
     types: [closed, deleted, reopened]
-
-# no special access is needed
 permissions: read-all
-
 jobs:
   call-label-action:
     uses: dbt-labs/actions/.github/workflows/jira-transition.yml@main

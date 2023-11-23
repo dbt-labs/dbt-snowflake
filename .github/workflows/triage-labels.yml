@@ -11,16 +11,12 @@
 # This will run when a comment is added to an issue and that issue has to `awaiting_response` label.
 
 name: Update Triage Label
-
 on: issue_comment
-
 defaults:
   run:
     shell: bash
-
 permissions:
   issues: write
-
 jobs:
   triage_label:
     if: contains(github.event.issue.labels.*.name, 'awaiting_response')

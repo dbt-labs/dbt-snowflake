@@ -1,33 +1,29 @@
 # **what?**
-# The purpose of this workflow is to trigger CI to run for main on a regular
-# cadence. If the CI workflow fails for a branch, it will post to
-# dev-core-alerts to raise awareness.  The 'aurelien-baudet/workflow-dispatch'
-
+# Scheduled CI runs tests on `main`.
+# If the CI workflow fails for a branch, it will post to dev-adapter-alerts to raise awareness.
+#
 # **why?**
-# Ensures main is always shippable and not broken. Also, can catch any
-# dependencies shifting beneath us that might introduce breaking changes
-# (could also impact Cloud).
-
+# Ensure `main` is always shippable.
+# Catch regressions due to dependencies shifting beneath us.
+#
+# **how?**
+# Scheduled. Triggers other workflows (main.yml and integration.yml).
+# Manually run via GitHub Actions.
+#
 # **when?**
-# Mainly on a schedule of 9:00, 13:00, 18:00 UTC everyday.
-# Manual trigger can also test on demand
+# Scheduled daily at 9:00, 13:00, 18:00 UTC.
+# Manually triggered.
 
 name: Main branch scheduled testing
-
 on:
   schedule:
     - cron: '0 9,13,18 * * *' # 9:00, 13:00, 18:00 UTC
-
-  workflow_dispatch: # for manual triggering
-
-# no special access is needed
+  workflow_dispatch:
 permissions: read-all
-
 jobs:
   kick-off-ci:
     name: Kick-off CI
     runs-on: ubuntu-latest
-
     strategy:
       # must run CI 1 branch at a time b/c the workflow-dispatch Action polls for
       # latest run for results and it gets confused when we kick off multiple runs
@@ -36,24 +32,20 @@ jobs:
       fail-fast: false
       matrix:
         branch: [main]
-        workflow_name: [main.yml, integration.yml]
-
+        workflow: [main.yml, integration.yml]
     steps:
-    - name: Call CI workflow for ${{ matrix.branch }} branch
-      id: trigger-step
+    - id: run-workflow
       uses: aurelien-baudet/workflow-dispatch@v2
       with:
-        workflow: ${{ matrix.workflow_name }}
+        workflow: ${{ matrix.workflow }}
         ref: ${{ matrix.branch }}
         token: ${{ secrets.FISHTOWN_BOT_PAT }}
-
-    - name: Post failure to Slack
-      uses: ravsamhq/notify-slack-action@v2
-      if: ${{ always() && !contains(steps.trigger-step.outputs.workflow-conclusion,'success') }}
+    - uses: ravsamhq/notify-slack-action@v2
+      if: ${{ always() && !contains(steps.run-workflow.outputs.workflow-conclusion,'success') }}
       with:
         status: ${{ job.status }}
-        notification_title: 'dbt-snowflake scheduled run of ${{ matrix.workflow_name }} on "${{ matrix.branch }}" branch not successful'
-        message_format: ':x: ${{ matrix.workflow_name }} CI on branch "${{ matrix.branch }}" ${{ steps.trigger-step.outputs.workflow-conclusion }}'
-        footer: 'Linked failed CI run ${{ steps.trigger-step.outputs.workflow-url }}'
+        notification_title: 'dbt-snowflake scheduled run of ${{ matrix.workflow }} on "${{ matrix.branch }}" branch not successful'
+        message_format: ':x: ${{ matrix.workflow }} CI on branch "${{ matrix.branch }}" ${{ steps.run-workflow.outputs.workflow-conclusion }}'
+        footer: 'Linked failed CI run ${{ steps.run-workflow.outputs.workflow-url }}'
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_ADAPTER_ALERTS }}

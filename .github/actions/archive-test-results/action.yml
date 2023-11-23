@@ -2,8 +2,10 @@ name: Archive Test Results
 description: Archives the test results output from pytest
 inputs:
   python-version:
+    description: The version of python to be used in the file name
     required: true
   file-name-stub:  # e.g. unit, integration
+    description: The file name stub to be used at the beginning of the file name
     required: true
 runs:
   using: 'composite'

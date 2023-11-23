@@ -1,24 +1,25 @@
 # **what?**
-# Mirrors issues into Jira. Includes the information: title,
-# GitHub Issue ID and URL
-
+# Mirrors issues into Jira, including the title, GitHub Issue ID, and URL.
+# Updates GitHub issue to include the Jira issue key in the title.
+#
 # **why?**
-# Jira is our tool for tracking and we need to see these issues in there
-
+# Jira is our tool for issue tracking and upstream reporting but users submit issues via GitHub.
+#
+# **how?**
+# Create a GitHub issue.
+# Label a GitHub issue with the `Jira` label.
+#
 # **when?**
-# On issue creation or when an issue is labeled `Jira`
+# A GitHub issue is created or labelled.
 
 name: Jira Issue Creation
-
 on:
   issues:
     types: [opened, labeled]
-
 permissions:
   issues: write
-
 jobs:
-  call-label-action:
+  create-jira-issue:
     uses: dbt-labs/actions/.github/workflows/jira-creation.yml@main
     with:
       project_key: ADAP
