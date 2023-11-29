@@ -8,8 +8,9 @@ git+https://github.com/dbt-labs/dbt-core.git@1.5.latest#egg=dbt-tests-adapter&su
 black~=23.1
 bumpversion~=0.6.0
 click~=8.1
-flake8~=6.0;python_version>="3.8"
+cryptography~=41.0.7
 ddtrace~=1.16
+flake8~=6.0;python_version>="3.8"
 flaky~=3.7
 freezegun~=1.2
 ipdb~=0.13.13
