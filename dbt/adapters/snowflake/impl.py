@@ -136,7 +136,7 @@ class SnowflakeAdapter(SQLAdapter):
             # Alternatively, we could query the list of schemas before we start
             # and skip listing the missing ones, which sounds expensive.
             # "002043 (02000)" is error code for "object does not exist or is not found"
-            # The error messages are different in English and Japanese, need each handling.
+            # The error message text may vary across languages, but the error code is expected to be more stable
             if "002043 (02000)" in str(exc):
                 return []
             raise
