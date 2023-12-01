@@ -1,0 +1,6 @@
+kind: Security
+body: DDOS vulnerability in 41.0.5. Uptick to avoid
+time: 2023-11-28T17:37:16.11557-08:00
+custom:
+  Author: versusfacit
+  PR: "852"
