@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import agate
 from dbt.adapters.relation_configs import RelationConfigChange, RelationResults
-from dbt.contracts.graph.nodes import ModelNode
+from dbt.contracts.graph.nodes import ParsedNode
 from dbt.contracts.relation import ComponentName
 
 from dbt.adapters.snowflake.relation_configs.base import SnowflakeRelationConfigBase
@@ -17,7 +17,6 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
 
     The following parameters are configurable by dbt:
     - name: name of the dynamic table
-    - query: the query behind the table
     - target_lag: the maximum amount of time that the dynamic table’s content should lag behind updates to the base tables
     - snowflake_warehouse: the name of the warehouse that provides the compute resources for refreshing the dynamic table
 
@@ -27,19 +26,17 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     name: str
     schema_name: str
     database_name: str
-    query: str
     target_lag: str
     snowflake_warehouse: str
 
     @classmethod
-    def from_dict(cls, config_dict) -> "SnowflakeDynamicTableConfig":
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "SnowflakeDynamicTableConfig":
         kwargs_dict = {
             "name": cls._render_part(ComponentName.Identifier, config_dict.get("name")),
             "schema_name": cls._render_part(ComponentName.Schema, config_dict.get("schema_name")),
             "database_name": cls._render_part(
                 ComponentName.Database, config_dict.get("database_name")
             ),
-            "query": config_dict.get("query"),
             "target_lag": config_dict.get("target_lag"),
             "snowflake_warehouse": config_dict.get("snowflake_warehouse"),
         }
@@ -48,27 +45,25 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
         return dynamic_table
 
     @classmethod
-    def parse_model_node(cls, model_node: ModelNode) -> dict:
+    def parse_node(cls, node: ParsedNode) -> Dict[str, Any]:
         config_dict = {
-            "name": model_node.identifier,
-            "schema_name": model_node.schema,
-            "database_name": model_node.database,
-            "query": model_node.compiled_code,
-            "target_lag": model_node.config.extra.get("target_lag"),
-            "snowflake_warehouse": model_node.config.extra.get("snowflake_warehouse"),
+            "name": node.identifier,
+            "schema_name": node.schema,
+            "database_name": node.database,
+            "target_lag": node.config.extra.get("target_lag"),
+            "snowflake_warehouse": node.config.extra.get("snowflake_warehouse"),
         }
 
         return config_dict
 
     @classmethod
-    def parse_relation_results(cls, relation_results: RelationResults) -> dict:
+    def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:
         dynamic_table: agate.Row = relation_results["dynamic_table"].rows[0]
 
         config_dict = {
             "name": dynamic_table.get("name"),
             "schema_name": dynamic_table.get("schema_name"),
             "database_name": dynamic_table.get("database_name"),
-            "query": dynamic_table.get("text"),
             "target_lag": dynamic_table.get("target_lag"),
             "snowflake_warehouse": dynamic_table.get("warehouse"),
         }
