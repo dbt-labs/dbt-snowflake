@@ -71,7 +71,7 @@ class SnowflakeAdapterResponse(AdapterResponse):
 @dataclass
 class SnowflakeCredentials(Credentials):
     account: str
-    user: str
+    user: Optional[str] = None
     warehouse: Optional[str] = None
     role: Optional[str] = None
     password: Optional[str] = None
@@ -148,6 +148,8 @@ class SnowflakeCredentials(Credentials):
         # Pull all of the optional authentication args for the connector,
         # let connector handle the actual arg validation
         result = {}
+        if self.user:
+            result["user"] = self.user
         if self.password:
             result["password"] = self.password
         if self.host:
@@ -186,6 +188,8 @@ class SnowflakeCredentials(Credentials):
             result["client_store_temporary_credential"] = True
             # enable mfa token cache for linux
             result["client_request_mfa_token"] = True
+        elif not self.user:
+            raise DbtInternalError("user must be set if authenticator is not")
         result["reuse_connections"] = self.reuse_connections
         result["private_key"] = self._get_private_key()
         return result
@@ -348,7 +352,6 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
             handle = snowflake.connector.connect(
                 account=creds.account,
-                user=creds.user,
                 database=creds.database,
                 schema=creds.schema,
                 warehouse=creds.warehouse,
