@@ -8,7 +8,7 @@ from dbt.adapters.relation_configs import (
     RelationResults,
 )
 from dbt.contracts.graph.nodes import ModelNode
-from dbt.contracts.relation import ComponentName
+from dbt.adapters.contracts.relation import ComponentName
 
 from dbt.adapters.snowflake.relation_configs.policies import (
     SnowflakeIncludePolicy,

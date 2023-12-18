@@ -4,7 +4,7 @@ from typing import Optional, Type
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.relation_configs import RelationConfigChangeAction, RelationResults
 from dbt.context.providers import RuntimeConfigObject
-from dbt.utils import classproperty
+from dbt.adapters.utils import classproperty
 
 from dbt.adapters.snowflake.relation_configs import (
     SnowflakeDynamicTableConfig,

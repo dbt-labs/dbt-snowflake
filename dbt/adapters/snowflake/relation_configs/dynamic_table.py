@@ -4,7 +4,7 @@ from typing import Optional
 import agate
 from dbt.adapters.relation_configs import RelationConfigChange, RelationResults
 from dbt.contracts.graph.nodes import ModelNode
-from dbt.contracts.relation import ComponentName
+from dbt.adapters.contracts.relation import ComponentName
 
 from dbt.adapters.snowflake.relation_configs.base import SnowflakeRelationConfigBase
 
