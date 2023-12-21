@@ -15,7 +15,7 @@ from dbt.adapters.sql.impl import (
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
-from dbt.contracts.graph.nodes import ConstraintType
+from dbt.common.contracts.constraints import ConstraintType
 from dbt.common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt.common.utils import filter_null_values
 
