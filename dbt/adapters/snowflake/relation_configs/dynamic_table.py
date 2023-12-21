@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict, Any
 
 import agate
 from dbt.adapters.relation_configs import RelationConfigChange, RelationResults
-from dbt.contracts.graph.nodes import ModelNode
+from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.contracts.relation import ComponentName
 
 from dbt.adapters.snowflake.relation_configs.base import SnowflakeRelationConfigBase
@@ -48,14 +48,14 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
         return dynamic_table
 
     @classmethod
-    def parse_model_node(cls, model_node: ModelNode) -> dict:
+    def parse_relation_config(cls, relation_config: RelationConfig) -> Dict[str, Any]:
         config_dict = {
-            "name": model_node.identifier,
-            "schema_name": model_node.schema,
-            "database_name": model_node.database,
-            "query": model_node.compiled_code,
-            "target_lag": model_node.config.extra.get("target_lag"),
-            "snowflake_warehouse": model_node.config.extra.get("snowflake_warehouse"),
+            "name": relation_config.identifier,
+            "schema_name": relation_config.schema,
+            "database_name": relation_config.database,
+            "query": relation_config.compiled_code,  # type: ignore
+            "target_lag": relation_config.config.extra.get("target_lag"),  # type: ignore
+            "snowflake_warehouse": relation_config.config.extra.get("snowflake_warehouse"),  # type: ignore
         }
 
         return config_dict

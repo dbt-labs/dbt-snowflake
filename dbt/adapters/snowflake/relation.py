@@ -48,7 +48,7 @@ class SnowflakeRelation(BaseRelation):
         existing_dynamic_table = SnowflakeDynamicTableConfig.from_relation_results(
             relation_results
         )
-        new_dynamic_table = SnowflakeDynamicTableConfig.from_model_node(runtime_config.model)
+        new_dynamic_table = SnowflakeDynamicTableConfig.from_relation_config(runtime_config.model)
 
         config_change_collection = SnowflakeDynamicTableConfigChangeset()
 

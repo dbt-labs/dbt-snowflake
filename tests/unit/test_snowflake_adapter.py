@@ -9,8 +9,9 @@ from dbt.adapters.snowflake import SnowflakeAdapter
 from dbt.adapters.snowflake import Plugin as SnowflakePlugin
 from dbt.adapters.snowflake.column import SnowflakeColumn
 from dbt.adapters.snowflake.connections import SnowflakeCredentials
-from dbt.adapters.base.query_headers import MacroQueryStringSetter
 from dbt.contracts.files import FileHash
+from dbt.context.manifest import generate_query_header_context
+from dbt.context.providers import generate_runtime_macro_context
 from dbt.contracts.graph.manifest import ManifestStateCheck
 from dbt.common.clients import agate_helper
 from snowflake import connector as snowflake_connector
@@ -80,9 +81,10 @@ class TestSnowflakeAdapter(unittest.TestCase):
 
         self.snowflake.return_value = self.handle
         self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
-        self.adapter._macro_manifest_lazy = load_internal_manifest_macros(self.config)
-        self.adapter.connections.query_header = MacroQueryStringSetter(
-            self.config, self.adapter._macro_manifest_lazy
+        self.adapter.set_macro_resolver(load_internal_manifest_macros(self.config))
+        self.adapter.set_macro_context_generator(generate_runtime_macro_context)
+        self.adapter.connections.set_query_header(
+            generate_query_header_context(self.config, self.adapter.get_macro_resolver())
         )
 
         self.qh_patch = mock.patch.object(self.adapter.connections.query_header, "add")
