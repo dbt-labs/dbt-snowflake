@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field
 from typing import Optional, Type
 
+import sqlglot
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.relation_configs import RelationConfigChangeAction, RelationResults
 from dbt.context.providers import RuntimeConfigObject
 from dbt.utils import classproperty
+from sqlglot import parse_one
 
 from dbt.adapters.snowflake.relation_configs import (
     SnowflakeDynamicTableConfig,
@@ -69,3 +71,13 @@ class SnowflakeRelation(BaseRelation):
         if config_change_collection.has_changes:
             return config_change_collection
         return None
+
+    def render_limited(self) -> str:
+        rendered = self.render()
+        if self.limit is None:
+            return rendered
+        elif self.limit == 0:
+            return f"(select * from {rendered} where false limit 0) _dbt_limit_subq"
+        else:
+            # we use sqlglot to inject the limit into the users query to prevent non-deterministic ordering of results
+            return parse_one(rendered, read=sqlglot.Dialects.SNOWFLAKE).limit(self.limit).sql()  # type: ignore
