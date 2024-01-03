@@ -75,7 +75,7 @@ def find_exc_info_in_parsed_logs(parsed_logs, exc_info_name):
     )
 
 
-class TestListRelationsWithoutCaching:
+class TestListRelationsWithoutCachingSingle:
     @pytest.fixture(scope="class")
     def models(self):
         my_models = {"my_model_base.sql": TABLE_BASE_SQL}
@@ -88,7 +88,6 @@ class TestListRelationsWithoutCaching:
     def macros(self):
         return {
             "validate_list_relations_without_caching.sql": MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING,
-            "validate_list_relations_without_caching_raise_error.sql": MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING_RAISE_ERROR,
         }
 
     def test__snowflake__list_relations_without_caching_termination(self, project):
@@ -96,8 +95,7 @@ class TestListRelationsWithoutCaching:
         validates that we do NOT trigger pagination logic snowflake__list_relations_without_caching
         macro when there are fewer than max_results_per_iter relations in the target schema
         """
-
-        _ = run_dbt(["run", "-s", "my_model_base"])
+        run_dbt(["run", "-s", "my_model_base"])
 
         database = project.database
         schemas = project.created_schemas
@@ -121,6 +119,23 @@ class TestListRelationsWithoutCaching:
 
             assert n_relations == "n_relations: 1"
 
+
+class TestListRelationsWithoutCachingFull:
+    @pytest.fixture(scope="class")
+    def models(self):
+        my_models = {"my_model_base.sql": TABLE_BASE_SQL}
+        for view in range(0, NUM_VIEWS):
+            my_models.update({f"my_model_{view}.sql": VIEW_X_SQL})
+
+        return my_models
+
+    @pytest.fixture(scope="class")
+    def macros(self):
+        return {
+            "validate_list_relations_without_caching.sql": MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING,
+            "validate_list_relations_without_caching_raise_error.sql": MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING_RAISE_ERROR,
+        }
+
     def test__snowflake__list_relations_without_caching(self, project):
         """
         validates pagination logic in snowflake__list_relations_without_caching macro counts
@@ -128,7 +143,7 @@ class TestListRelationsWithoutCaching:
         calls of SHOW TERSE OBJECTS.
         """
         # purpose of the first run is to create the replicated views in the target schema
-        _ = run_dbt(["run", "--exclude", "my_model_base"])
+        run_dbt(["run"])
 
         database = project.database
         schemas = project.created_schemas
@@ -157,6 +172,8 @@ class TestListRelationsWithoutCaching:
         validates pagination logic terminates and raises a compilation error
         when exceeding the limit of how many results to return.
         """
+        run_dbt(["run"])
+
         database = project.database
         schemas = project.created_schemas
 

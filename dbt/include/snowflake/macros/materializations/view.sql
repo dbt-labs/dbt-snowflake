@@ -1,7 +1,7 @@
 {% materialization view, adapter='snowflake' -%}
 
     {% set original_query_tag = set_query_tag() %}
-    {% set to_return = create_or_replace_view() %}
+    {% set to_return = snowflake__create_or_replace_view() %}
 
     {% set target_relation = this.incorporate(type='view') %}
 

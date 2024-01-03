@@ -33,6 +33,11 @@ on:
   pull_request_target:
   # manual trigger
   workflow_dispatch:
+    inputs:
+      dbt-core-branch:
+        description: "branch of dbt-core to use in dev-requirements.txt"
+        required: false
+        type: string
 
 # explicitly turn off permissions for `GITHUB_TOKEN`
 permissions: read-all
@@ -158,6 +163,12 @@ jobs:
           python -m pip install tox
           python -m pip --version
           tox --version
+
+      - name: Update dev_requirements.txt
+        if: inputs.dbt-core-branch != ''
+        run: |
+          pip install bumpversion
+          ./.github/scripts/update_dbt_core_branch.sh ${{ inputs.dbt-core-branch }}
 
       - name: Run tox (snowflake)
         if: matrix.adapter == 'snowflake'
