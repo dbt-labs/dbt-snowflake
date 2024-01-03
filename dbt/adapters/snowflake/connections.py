@@ -1,5 +1,7 @@
 import base64
 import datetime
+import os
+
 import pytz
 import re
 from contextlib import contextmanager
@@ -47,8 +49,18 @@ from dbt.ui import line_wrap_message, warning_tag
 
 
 logger = AdapterLogger("Snowflake")
+
+if os.getenv("DBT_SNOWFLAKE_CONNECTOR_DEBUG_LOGGING"):
+    for logger_name in ["snowflake.connector", "botocore", "boto3"]:
+        logger.debug(f"Setting {logger_name} to DEBUG")
+        logger.set_adapter_dependency_log_level(logger_name, "DEBUG")
+
 _TOKEN_REQUEST_URL = "https://{}.snowflakecomputing.com/oauth/token-request"
-ROW_VALUE_REGEX = re.compile(r"Row Values: \[(.|\n)*\]")
+
+ERROR_REDACTION_PATTERNS = {
+    re.compile(r"Row Values: \[(.|\n)*\]"): "Row Values: [redacted]",
+    re.compile(r"Duplicate field key '(.|\n)*'"): "Duplicate field key '[redacted]'",
+}
 
 
 @dataclass
@@ -103,6 +115,8 @@ class SnowflakeCredentials(Credentials):
     def unique_field(self):
         return self.account
 
+    # the results show up in the output of dbt debug runs, for more see..
+    # https://docs.getdbt.com/guides/dbt-ecosystem/adapter-development/3-building-a-new-adapter#editing-the-connection-manager
     def _connection_keys(self):
         return (
             "account",
@@ -112,9 +126,7 @@ class SnowflakeCredentials(Credentials):
             "role",
             "schema",
             "authenticator",
-            "private_key",
             "private_key_path",
-            "private_key_passphrase",
             "token",
             "oauth_client_id",
             "query_tag",
@@ -280,13 +292,14 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         try:
             yield
         except snowflake.connector.errors.ProgrammingError as e:
-            unscrubbed_msg = str(e)
+            msg = str(e)
 
             # A class of Snowflake errors -- such as a failure from attempting to merge
             # duplicate rows -- includes row values in the error message, i.e.
             # [12345, "col_a_value", "col_b_value", etc...]. We don't want to log potentially
             # sensitive user data.
-            msg = re.sub(ROW_VALUE_REGEX, "Row Values: [redacted]", unscrubbed_msg)
+            for regex_pattern, replacement_message in ERROR_REDACTION_PATTERNS.items():
+                msg = re.sub(regex_pattern, replacement_message, msg)
 
             logger.debug("Snowflake query id: {}".format(e.sfqid))
             logger.debug("Snowflake error: {}".format(msg))

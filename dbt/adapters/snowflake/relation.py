@@ -20,6 +20,14 @@ from dbt.adapters.snowflake.relation_configs import (
 class SnowflakeRelation(BaseRelation):
     type: Optional[SnowflakeRelationType] = None  # type: ignore
     quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
+    renameable_relations = frozenset({SnowflakeRelationType.Table, SnowflakeRelationType.View})
+    replaceable_relations = frozenset(
+        {
+            SnowflakeRelationType.DynamicTable,
+            SnowflakeRelationType.Table,
+            SnowflakeRelationType.View,
+        }
+    )
 
     @property
     def is_dynamic_table(self) -> bool:
@@ -50,10 +58,12 @@ class SnowflakeRelation(BaseRelation):
                 context=new_dynamic_table.target_lag,
             )
 
-        if new_dynamic_table.warehouse != existing_dynamic_table.warehouse:
-            config_change_collection.warehouse = SnowflakeDynamicTableWarehouseConfigChange(
-                action=RelationConfigChangeAction.alter,
-                context=new_dynamic_table.warehouse,
+        if new_dynamic_table.snowflake_warehouse != existing_dynamic_table.snowflake_warehouse:
+            config_change_collection.snowflake_warehouse = (
+                SnowflakeDynamicTableWarehouseConfigChange(
+                    action=RelationConfigChangeAction.alter,
+                    context=new_dynamic_table.snowflake_warehouse,
+                )
             )
 
         if config_change_collection.has_changes:

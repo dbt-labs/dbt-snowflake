@@ -44,9 +44,23 @@ class SnowflakeDynamicTableChanges:
         set_model_file(project, dynamic_table, new_model)
 
     @staticmethod
+    def change_config_via_alter_downstream(project, dynamic_table):
+        initial_model = get_model_file(project, dynamic_table)
+        new_model = initial_model.replace(
+            "target_lag='120        seconds'", "target_lag='downstream'"
+        )
+        set_model_file(project, dynamic_table, new_model)
+
+    @staticmethod
     def check_state_alter_change_is_applied(adapter, dynamic_table):
         # see above
         assert query_target_lag(adapter, dynamic_table) == "5 minutes"
+        assert query_warehouse(adapter, dynamic_table) == "DBT_TESTING"
+
+    @staticmethod
+    def check_state_alter_change_is_applied_downstream(adapter, dynamic_table):
+        # see above
+        assert query_target_lag(adapter, dynamic_table) == "downstream"
         assert query_warehouse(adapter, dynamic_table) == "DBT_TESTING"
 
     @staticmethod
@@ -104,8 +118,12 @@ class SnowflakeDynamicTableChanges:
             ["--debug", "run", "--models", my_dynamic_table.identifier, "--full-refresh"]
         )
         assert self.query_relation_type(project, my_dynamic_table) == "dynamic_table"
-        assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs, False)
-        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs)
+        assert_message_in_logs(
+            f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', ""), False
+        )
+        assert_message_in_logs(
+            f"Applying REPLACE to: {my_dynamic_table.render().upper()}", logs.replace('"', "")
+        )
 
 
 class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
@@ -124,8 +142,34 @@ class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
 
         # self.check_state_alter_change_is_applied(adapter, my_dynamic_table)
 
-        assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs)
-        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
+        assert_message_in_logs(
+            f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', "")
+        )
+        assert_message_in_logs(
+            f"Applying REPLACE to: {my_dynamic_table.render().upper()}",
+            logs.replace('"', ""),
+            False,
+        )
+
+    def test_change_is_applied_via_alter_downstream(self, project, adapter, my_dynamic_table):
+        """
+        See above about the two commented assertions. In the meantime, these have been validated manually.
+        """
+        # self.check_start_state(adapter, my_dynamic_table)
+
+        self.change_config_via_alter_downstream(project, my_dynamic_table)
+        _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
+
+        # self.check_state_alter_change_is_applied_downstream(adapter, my_dynamic_table)
+
+        assert_message_in_logs(
+            f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', "")
+        )
+        assert_message_in_logs(
+            f"Applying REPLACE to: {my_dynamic_table.render().upper()}",
+            logs.replace('"', ""),
+            False,
+        )
 
     @pytest.mark.skip(
         "dbt-snowflake does not currently monitor any changes the trigger a full refresh"
@@ -140,7 +184,9 @@ class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
         # self.check_state_alter_change_is_applied(adapter, my_dynamic_table)
         # self.check_state_replace_change_is_applied(adapter, my_dynamic_table)
 
-        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs)
+        assert_message_in_logs(
+            f"Applying REPLACE to: {my_dynamic_table.render().upper()}", logs.replace('"', "")
+        )
 
 
 class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
@@ -164,8 +210,14 @@ class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
             f" to `continue` for `{my_dynamic_table}`",
             logs,
         )
-        assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs, False)
-        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
+        assert_message_in_logs(
+            f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', ""), False
+        )
+        assert_message_in_logs(
+            f"Applying REPLACE to: {my_dynamic_table.render().upper()}",
+            logs.replace('"', ""),
+            False,
+        )
 
     def test_change_is_not_applied_via_replace(self, project, adapter, my_dynamic_table):
         # self.check_start_state(adapter, my_dynamic_table)
@@ -181,8 +233,14 @@ class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
             f" to `continue` for `{my_dynamic_table}`",
             logs,
         )
-        assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs, False)
-        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
+        assert_message_in_logs(
+            f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', ""), False
+        )
+        assert_message_in_logs(
+            f"Applying REPLACE to: {my_dynamic_table.render().upper()}",
+            logs.replace('"', ""),
+            False,
+        )
 
 
 class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
@@ -208,8 +266,14 @@ class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
             f" to `fail` for `{my_dynamic_table}`",
             logs,
         )
-        assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs, False)
-        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
+        assert_message_in_logs(
+            f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', ""), False
+        )
+        assert_message_in_logs(
+            f"Applying REPLACE to: {my_dynamic_table.render().upper()}",
+            logs.replace('"', ""),
+            False,
+        )
 
     def test_change_is_not_applied_via_replace(self, project, adapter, my_dynamic_table):
         # self.check_start_state(adapter, my_dynamic_table)
@@ -227,5 +291,11 @@ class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
             f" to `fail` for `{my_dynamic_table}`",
             logs,
         )
-        assert_message_in_logs(f"Applying ALTER to: {my_dynamic_table}", logs, False)
-        assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
+        assert_message_in_logs(
+            f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', ""), False
+        )
+        assert_message_in_logs(
+            f"Applying REPLACE to: {my_dynamic_table.render().upper()}",
+            logs.replace('"', ""),
+            False,
+        )
