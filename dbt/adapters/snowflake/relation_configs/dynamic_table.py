@@ -61,7 +61,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
         return config_dict
 
     @classmethod
-    def parse_relation_results(cls, relation_results: RelationResults) -> dict:
+    def parse_relation_results(cls, relation_results: RelationResults) -> Dict:
         dynamic_table: agate.Row = relation_results["dynamic_table"].rows[0]
 
         config_dict = {
