@@ -4,7 +4,7 @@ prompts:
   account:
     hint: 'What is your account id for Snowflake? [https://<this_value>.snowflakecomputing.com]'
   user:
-    hint: 'What is your personal user login for Snowflake?'
+    hint: 'What is your user login for Snowflake?'
   _choose_authentication_type:
     password:
       password:
@@ -12,7 +12,7 @@ prompts:
         hide_input: true
     keypair:
       private_key_path:
-        hint: 'What is the path/to/private.key for Snowflake authentication?'
+        hint: 'What is the path/to/the/private.key for Snowflake authentication?'
       private_key_passphrase:
         hint: 'What is the passphrase for the private key, if the key is encrypted?'
         hide_input: true
