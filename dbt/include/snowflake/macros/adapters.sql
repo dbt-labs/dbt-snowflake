@@ -42,7 +42,7 @@
 
   {% set columns = [] %}
   {% for row in result %}
-    {% do columns.append(api.Column.from_description(row['name'], row['type'])) %}
+    {% do columns.append(api.Column.from_description(row['name'], row['type'], comment=row.get('comment'))) %}
   {% endfor %}
   {% do return(columns) %}
 {% endmacro %}
