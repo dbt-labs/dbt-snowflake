@@ -43,12 +43,12 @@ class SnowflakeRelation(BaseRelation):
 
     @classmethod
     def dynamic_table_config_changeset(
-        cls, relation_results: RelationResults, runtime_config: RelationConfig
+        cls, relation_results: RelationResults, relation_config: RelationConfig
     ) -> Optional[SnowflakeDynamicTableConfigChangeset]:
         existing_dynamic_table = SnowflakeDynamicTableConfig.from_relation_results(
             relation_results
         )
-        new_dynamic_table = SnowflakeDynamicTableConfig.from_relation_config(runtime_config)
+        new_dynamic_table = SnowflakeDynamicTableConfig.from_relation_config(relation_config)
 
         config_change_collection = SnowflakeDynamicTableConfigChangeset()
 

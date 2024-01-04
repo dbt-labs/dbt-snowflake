@@ -124,7 +124,7 @@
   {%- set max_total_results = max_results_per_iter * max_iter -%}
 
   {%- set sql -%}
-    show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }}
+    show terse objects in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }}
   {%- endset -%}
 
   {%- set result = run_query(sql) -%}
