@@ -450,7 +450,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
     def process_results(cls, column_names, rows):
         # Override for Snowflake. The datetime objects returned by
         # snowflake-connector-python are not pickleable, so we need
-        # to replace them with sane timezones
+        # to replace them with same timezones
         fixed = []
         for row in rows:
             fixed_row = []
