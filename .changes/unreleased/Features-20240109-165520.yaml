@@ -1,0 +1,6 @@
+kind: Features
+body: Update base adapter references as part of decoupling migration
+time: 2024-01-09T16:55:20.859657-06:00
+custom:
+  Author: McKnight-42
+  Issue: "882"
