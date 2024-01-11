@@ -10,6 +10,9 @@
     temporary
   {%- endif %} view {{ relation }}
   {% if config.persist_column_docs() -%}
+    {%- if model.description -%}
+        COMMENT='{{ model.description }}'
+    {%- endif -%}
     {% set model_columns = model.columns %}
     {% set query_columns = get_columns_in_query(sql) %}
     {{ get_persist_docs_column_list(model_columns, query_columns) }}

@@ -27,6 +27,11 @@
     {{ sql_header if sql_header is not none }}
 
         create or replace {{ table_type }} table {{ relation }}
+        {% if config.persist_column_docs() -%}
+            {%- if model.description -%}
+                COMMENT='{{ model.description }}'
+            {%- endif -%}
+        {%- endif -%}
         {%- set contract_config = config.get('contract') -%}
         {%- if contract_config.enforced -%}
           {{ get_assert_columns_equivalent(sql) }}
