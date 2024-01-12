@@ -1,0 +1,6 @@
+kind: Features
+body: Add table/view comment to the CREATE statement to execute less queries
+time: 2024-01-12T02:06:00.777689+01:00
+custom:
+  Author: pol-defont-reaulx
+  Issue: "883"
