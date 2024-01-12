@@ -11,7 +11,7 @@ from time import sleep
 from typing import Optional, Tuple, Union, Any, List
 
 import agate
-import dbt.common.clients.agate_helper
+import dbt_common.clients.agate_helper
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -32,20 +32,20 @@ from snowflake.connector.errors import (
     BindUploadError,
 )
 
-from dbt.common.exceptions import (
+from dbt_common.exceptions import (
     DbtInternalError,
     DbtRuntimeError,
     DbtConfigError,
 )
-from dbt.common.exceptions import DbtDatabaseError
+from dbt_common.exceptions import DbtDatabaseError
 from dbt.adapters.base import Credentials  # type: ignore
 from dbt.adapters.exceptions.connection import FailedToConnectError
 from dbt.adapters.contracts.connection import AdapterResponse, Connection
 from dbt.adapters.sql import SQLConnectionManager  # type: ignore
 from dbt.adapters.events.logging import AdapterLogger  # type: ignore
-from dbt.common.events.functions import warn_or_error
+from dbt_common.events.functions import warn_or_error
 from dbt.adapters.events.types import AdapterEventWarning
-from dbt.common.ui import line_wrap_message, warning_tag
+from dbt_common.ui import line_wrap_message, warning_tag
 
 
 logger = AdapterLogger("Snowflake")
@@ -476,7 +476,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         if fetch:
             table = self.get_result_from_cursor(cursor, limit)
         else:
-            table = dbt.common.clients.agate_helper.empty_table()
+            table = dbt_common.clients.agate_helper.empty_table()
         return response, table
 
     def add_standard_query(self, sql: str, **kwargs) -> Tuple[Connection, Any]:
