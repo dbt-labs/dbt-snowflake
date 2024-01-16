@@ -11,7 +11,7 @@ from time import sleep
 from typing import Optional, Tuple, Union, Any, List
 
 import agate
-import dbt_common.clients.agate_helper
+from dbt_common.clients.agate_helper import empty_table
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -476,7 +476,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         if fetch:
             table = self.get_result_from_cursor(cursor, limit)
         else:
-            table = dbt_common.clients.agate_helper.empty_table()
+            table = empty_table()
         return response, table
 
     def add_standard_query(self, sql: str, **kwargs) -> Tuple[Connection, Any]:
