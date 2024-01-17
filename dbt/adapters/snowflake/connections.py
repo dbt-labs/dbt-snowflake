@@ -38,9 +38,8 @@ from dbt_common.exceptions import (
     DbtConfigError,
 )
 from dbt_common.exceptions import DbtDatabaseError
-from dbt.adapters.base import Credentials  # type: ignore
 from dbt.adapters.exceptions.connection import FailedToConnectError
-from dbt.adapters.contracts.connection import AdapterResponse, Connection
+from dbt.adapters.contracts.connection import AdapterResponse, Connection, Credentials
 from dbt.adapters.sql import SQLConnectionManager  # type: ignore
 from dbt.adapters.events.logging import AdapterLogger  # type: ignore
 from dbt_common.events.functions import warn_or_error
