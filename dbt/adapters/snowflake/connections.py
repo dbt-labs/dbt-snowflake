@@ -11,7 +11,7 @@ from time import sleep
 from typing import Optional, Tuple, Union, Any, List
 
 import agate
-import dbt.clients.agate_helper
+import dbt.common.clients.agate_helper
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -32,20 +32,20 @@ from snowflake.connector.errors import (
     BindUploadError,
 )
 
-from dbt.exceptions import (
+from dbt.common.exceptions import (
     DbtInternalError,
     DbtRuntimeError,
-    FailedToConnectError,
-    DbtDatabaseError,
-    DbtProfileError,
+    DbtConfigError,
 )
+from dbt.common.exceptions import DbtDatabaseError
 from dbt.adapters.base import Credentials  # type: ignore
-from dbt.contracts.connection import AdapterResponse, Connection
+from dbt.adapters.exceptions.connection import FailedToConnectError
+from dbt.adapters.contracts.connection import AdapterResponse, Connection
 from dbt.adapters.sql import SQLConnectionManager  # type: ignore
-from dbt.events import AdapterLogger  # type: ignore
-from dbt.events.functions import warn_or_error
-from dbt.events.types import AdapterEventWarning
-from dbt.ui import line_wrap_message, warning_tag
+from dbt.adapters.events.logging import AdapterLogger  # type: ignore
+from dbt.common.events.functions import warn_or_error
+from dbt.adapters.events.types import AdapterEventWarning
+from dbt.common.ui import line_wrap_message, warning_tag
 
 
 logger = AdapterLogger("Snowflake")
@@ -247,7 +247,7 @@ class SnowflakeCredentials(Credentials):
     def _get_private_key(self):
         """Get Snowflake private key by path, from a Base64 encoded DER bytestring or None."""
         if self.private_key and self.private_key_path:
-            raise DbtProfileError("Cannot specify both `private_key`  and `private_key_path`")
+            raise DbtConfigError("Cannot specify both `private_key`  and `private_key_path`")
 
         if self.private_key_passphrase:
             encoded_passphrase = self.private_key_passphrase.encode()
@@ -476,7 +476,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         if fetch:
             table = self.get_result_from_cursor(cursor, limit)
         else:
-            table = dbt.clients.agate_helper.empty_table()
+            table = dbt.common.clients.agate_helper.empty_table()
         return response, table
 
     def add_standard_query(self, sql: str, **kwargs) -> Tuple[Connection, Any]:

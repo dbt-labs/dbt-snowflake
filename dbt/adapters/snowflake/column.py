@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from dbt.adapters.base.column import Column
-from dbt.exceptions import DbtRuntimeError
+from dbt.common.exceptions import DbtRuntimeError
 
 
 @dataclass

@@ -101,7 +101,7 @@ class TestListRelationsWithoutCachingSingle:
         schemas = project.created_schemas
 
         for schema in schemas:
-            schema_relation = f"{database}.{schema}"
+            schema_relation = {"database": database, "schema": schema}
             kwargs = {"schema_relation": schema_relation}
             _, log_output = run_dbt_and_capture(
                 [
@@ -149,7 +149,7 @@ class TestListRelationsWithoutCachingFull:
         schemas = project.created_schemas
 
         for schema in schemas:
-            schema_relation = f"{database}.{schema}"
+            schema_relation = {"database": database, "schema": schema}
             kwargs = {"schema_relation": schema_relation}
             _, log_output = run_dbt_and_capture(
                 [
@@ -161,7 +161,6 @@ class TestListRelationsWithoutCachingFull:
                     str(kwargs),
                 ]
             )
-
             parsed_logs = parse_json_logs(log_output)
             n_relations = find_result_in_parsed_logs(parsed_logs, "n_relations")
 
@@ -178,7 +177,8 @@ class TestListRelationsWithoutCachingFull:
         schemas = project.created_schemas
 
         for schema in schemas:
-            schema_relation = f"{database}.{schema}"
+            schema_relation = {"database": database, "schema": schema}
+
             kwargs = {"schema_relation": schema_relation}
             _, log_output = run_dbt_and_capture(
                 [
@@ -191,7 +191,6 @@ class TestListRelationsWithoutCachingFull:
                 ],
                 expect_pass=False,
             )
-
             parsed_logs = parse_json_logs(log_output)
             traceback = find_exc_info_in_parsed_logs(parsed_logs, "Traceback")
             assert "dbt will list a maximum of 99 objects in schema " in traceback
