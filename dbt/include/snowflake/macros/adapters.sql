@@ -73,7 +73,7 @@
   {% for _ in range(0, max_iter) %}
 
       {%- set paginated_sql -%}
-         show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
+         show terse objects in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
       {%- endset -%}
 
       {%- set paginated_result = run_query(paginated_sql) %}
@@ -96,7 +96,7 @@
 
       {%- if loop.index == max_iter -%}
         {%- set msg -%}
-           dbt will list a maximum of {{ max_total_results }} objects in schema {{ schema_relation }}.
+           dbt will list a maximum of {{ max_total_results }} objects in schema {{ schema_relation.database }}.{{ schema_relation.schema }}.
            Your schema exceeds this limit. Please contact support@getdbt.com for troubleshooting tips,
            or review and reduce the number of objects contained.
         {%- endset -%}
@@ -124,7 +124,7 @@
   {%- set max_total_results = max_results_per_iter * max_iter -%}
 
   {%- set sql -%}
-    show terse objects in {{ schema_relation }} limit {{ max_results_per_iter }}
+    show terse objects in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }}
   {%- endset -%}
 
   {%- set result = run_query(sql) -%}
