@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from dbt.adapters.base.relation import Policy
-from dbt.common.dataclass_schema import StrEnum
+from dbt_common.dataclass_schema import StrEnum
 
 
 class SnowflakeRelationType(StrEnum):
