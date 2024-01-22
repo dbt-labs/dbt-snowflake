@@ -3,8 +3,8 @@ from typing import Optional, Type
 
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.relation_configs import RelationConfigChangeAction, RelationResults
-from dbt.context.providers import RuntimeConfigObject
-from dbt.utils import classproperty
+from dbt.adapters.contracts.relation import RelationConfig
+from dbt.adapters.utils import classproperty
 
 from dbt.adapters.snowflake.relation_configs import (
     SnowflakeDynamicTableConfig,
@@ -43,12 +43,12 @@ class SnowflakeRelation(BaseRelation):
 
     @classmethod
     def dynamic_table_config_changeset(
-        cls, relation_results: RelationResults, runtime_config: RuntimeConfigObject
+        cls, relation_results: RelationResults, relation_config: RelationConfig
     ) -> Optional[SnowflakeDynamicTableConfigChangeset]:
         existing_dynamic_table = SnowflakeDynamicTableConfig.from_relation_results(
             relation_results
         )
-        new_dynamic_table = SnowflakeDynamicTableConfig.from_model_node(runtime_config.model)
+        new_dynamic_table = SnowflakeDynamicTableConfig.from_relation_config(relation_config)
 
         config_change_collection = SnowflakeDynamicTableConfigChangeset()
 

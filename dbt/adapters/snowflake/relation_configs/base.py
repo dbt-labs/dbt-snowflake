@@ -1,14 +1,13 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
-
 import agate
 from dbt.adapters.base.relation import Policy
 from dbt.adapters.relation_configs import (
     RelationConfigBase,
     RelationResults,
 )
-from dbt.contracts.graph.nodes import ModelNode
-from dbt.contracts.relation import ComponentName
+
+from dbt.adapters.contracts.relation import ComponentName, RelationConfig
 
 from dbt.adapters.snowflake.relation_configs.policies import (
     SnowflakeIncludePolicy,
@@ -31,22 +30,22 @@ class SnowflakeRelationConfigBase(RelationConfigBase):
         return SnowflakeQuotePolicy()
 
     @classmethod
-    def from_model_node(cls, model_node: ModelNode):
-        relation_config = cls.parse_model_node(model_node)
-        relation = cls.from_dict(relation_config)
+    def from_relation_config(cls, relation_config: RelationConfig):
+        relation_config_dict = cls.parse_relation_config(relation_config)
+        relation = cls.from_dict(relation_config_dict)
         return relation
 
     @classmethod
-    def parse_model_node(cls, model_node: ModelNode) -> Dict[str, Any]:
+    def parse_relation_config(cls, relation_config: RelationConfig) -> Dict:
         raise NotImplementedError(
-            "`parse_model_node()` needs to be implemented on this RelationConfigBase instance"
+            "`parse_relation_config()` needs to be implemented on this RelationConfigBase instance"
         )
 
     @classmethod
     def from_relation_results(cls, relation_results: RelationResults):
         relation_config = cls.parse_relation_results(relation_results)
         relation = cls.from_dict(relation_config)
-        return relation
+        return relation  # type: ignore
 
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:
