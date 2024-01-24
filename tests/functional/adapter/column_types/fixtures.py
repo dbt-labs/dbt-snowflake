@@ -23,7 +23,7 @@ _SCHEMA_YML = """
 version: 2
 models:
   - name: model
-    tests:
+    data_tests:
       - is_type:
           column_map:
             smallint_col: ['numeric', 'number', 'not string', 'not float', 'not integer']

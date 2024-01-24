@@ -1,6 +1,7 @@
 import agate
 import re
 import unittest
+from multiprocessing import get_context
 from contextlib import contextmanager
 from unittest import mock
 
@@ -8,10 +9,11 @@ from dbt.adapters.snowflake import SnowflakeAdapter
 from dbt.adapters.snowflake import Plugin as SnowflakePlugin
 from dbt.adapters.snowflake.column import SnowflakeColumn
 from dbt.adapters.snowflake.connections import SnowflakeCredentials
-from dbt.adapters.base.query_headers import MacroQueryStringSetter
 from dbt.contracts.files import FileHash
+from dbt.context.manifest import generate_query_header_context
+from dbt.context.providers import generate_runtime_macro_context
 from dbt.contracts.graph.manifest import ManifestStateCheck
-from dbt.clients import agate_helper
+from dbt_common.clients import agate_helper
 from snowflake import connector as snowflake_connector
 
 from .utils import (
@@ -78,10 +80,11 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.mock_state_check.side_effect = _mock_state_check
 
         self.snowflake.return_value = self.handle
-        self.adapter = SnowflakeAdapter(self.config)
-        self.adapter._macro_manifest_lazy = load_internal_manifest_macros(self.config)
-        self.adapter.connections.query_header = MacroQueryStringSetter(
-            self.config, self.adapter._macro_manifest_lazy
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
+        self.adapter.set_macro_resolver(load_internal_manifest_macros(self.config))
+        self.adapter.set_macro_context_generator(generate_runtime_macro_context)
+        self.adapter.connections.set_query_header(
+            generate_query_header_context(self.config, self.adapter.get_macro_resolver())
         )
 
         self.qh_patch = mock.patch.object(self.adapter.connections.query_header, "add")
@@ -294,7 +297,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
 
     def test_client_session_keep_alive_true(self):
         self.config.credentials = self.config.credentials.replace(client_session_keep_alive=True)
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -321,7 +324,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
 
     def test_client_has_query_tag(self):
         self.config.credentials = self.config.credentials.replace(query_tag="test_query_tag")
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -355,7 +358,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.config.credentials = self.config.credentials.replace(
             password="test_password",
         )
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -386,7 +389,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
             password="test_password",
             authenticator="test_sso_url",
         )
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -417,7 +420,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
 
     def test_authenticator_externalbrowser_authentication(self):
         self.config.credentials = self.config.credentials.replace(authenticator="externalbrowser")
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -450,7 +453,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
             authenticator="oauth",
             token="my-oauth-token",
         )
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -488,7 +491,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
             private_key_passphrase="p@ssphr@se",
         )
 
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -522,7 +525,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
             private_key_passphrase=None,
         )
 
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -551,7 +554,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.config.credentials = self.config.credentials.replace(
             password="test_password", query_tag="test_query_tag"
         )
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -581,7 +584,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.config.credentials = self.config.credentials.replace(
             reuse_connections=True, client_session_keep_alive=True
         )
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -615,7 +618,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
             private_key_passphrase="p@ssphr@se",
         )
 
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
@@ -651,7 +654,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
             private_key_passphrase=None,
         )
 
-        self.adapter = SnowflakeAdapter(self.config)
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
         self.snowflake.assert_not_called()
