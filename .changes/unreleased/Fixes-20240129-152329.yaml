@@ -1,0 +1,6 @@
+kind: Fixes
+body: support safe_cast for numbers
+time: 2024-01-29T15:23:29.150935-07:00
+custom:
+  Author: graciegoheen
+  Issue: "891"
