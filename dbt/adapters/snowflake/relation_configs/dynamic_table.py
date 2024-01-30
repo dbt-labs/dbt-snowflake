@@ -30,6 +30,9 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     query: str
     target_lag: str
     snowflake_warehouse: str
+    refresh_mode: str
+    initialize: str
+    comment: Optional[str] = None
 
     @classmethod
     def from_dict(cls, config_dict) -> "SnowflakeDynamicTableConfig":
@@ -42,6 +45,9 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "query": config_dict.get("query"),
             "target_lag": config_dict.get("target_lag"),
             "snowflake_warehouse": config_dict.get("snowflake_warehouse"),
+            "refresh_mode": config_dict.get("refresh_mode"),
+            "initialize": config_dict.get("initialize"),
+            "comment": config_dict.get("comment"),
         }
 
         dynamic_table: "SnowflakeDynamicTableConfig" = super().from_dict(kwargs_dict)  # type: ignore
@@ -56,6 +62,9 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "query": relation_config.compiled_code,  # type: ignore
             "target_lag": relation_config.config.extra.get("target_lag"),  # type: ignore
             "snowflake_warehouse": relation_config.config.extra.get("snowflake_warehouse"),  # type: ignore
+            "refresh_mode": relation_config.config.extra.get("refresh_mode"),  # type: ignore
+            "initialize": relation_config.config.extra.get("initialize"),  # type: ignore
+            "comment": relation_config.config.extra.get("comment"),  # type: ignore
         }
 
         return config_dict
@@ -71,6 +80,9 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "query": dynamic_table.get("text"),
             "target_lag": dynamic_table.get("target_lag"),
             "snowflake_warehouse": dynamic_table.get("warehouse"),
+            "refresh_mode": dynamic_table.get("refresh_mode"), # Should I set defaults here or do they get passed as null
+            "initialize": dynamic_table.get("initialize"), # Should I set defaults here or do they get passed as null
+            "comment": dynamic_table.get("comment"),
         }
 
         return config_dict
