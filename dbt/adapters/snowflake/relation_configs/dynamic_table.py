@@ -20,6 +20,9 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     - query: the query behind the table
     - target_lag: the maximum amount of time that the dynamic table’s content should lag behind updates to the base tables
     - snowflake_warehouse: the name of the warehouse that provides the compute resources for refreshing the dynamic table
+    - refresh_mode: specifies the refresh type for the dynamic table.
+    - initialize: specifies the behavior of the initial refresh of the dynamic table
+    - comment: specifies a comment for the dynamic table.
 
     There are currently no non-configurable parameters.
     """
@@ -30,8 +33,8 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     query: str
     target_lag: str
     snowflake_warehouse: str
-    refresh_mode: str
-    initialize: str
+    refresh_mode: Optional[str] = None
+    initialize: Optional[str] = None
     comment: Optional[str] = None
 
     @classmethod
@@ -80,8 +83,8 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "query": dynamic_table.get("text"),
             "target_lag": dynamic_table.get("target_lag"),
             "snowflake_warehouse": dynamic_table.get("warehouse"),
-            "refresh_mode": dynamic_table.get("refresh_mode"), # Should I set defaults here or do they get passed as null
-            "initialize": dynamic_table.get("initialize"), # Should I set defaults here or do they get passed as null
+            "refresh_mode": dynamic_table.get("refresh_mode"),
+            "initialize": dynamic_table.get("initialize"),
             "comment": dynamic_table.get("comment"),
         }
 
