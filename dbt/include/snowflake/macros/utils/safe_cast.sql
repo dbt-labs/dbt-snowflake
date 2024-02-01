@@ -3,6 +3,6 @@
         {% set field_as_sting =  dbt.string_literal(field) if field is number else field %}
         try_cast({{field_as_sting}} as {{type}})
     {% else -%}
-        cast({{field}} as {{type}})
+        {{ adapter.dispatch('cast', 'dbt')(field, type) }}
     {% endif -%}
 {% endmacro %}
