@@ -1,6 +1,7 @@
 import pytest
 
 from dbt.tests.adapter.unit_testing.test_unit_testing import BaseUnitTestingTypes
+from dbt.tests.adapter.unit_testing.test_case_insensitivity import BaseUnitTestCaseInsensivity
 
 
 class TestSnowflakeUnitTestingTypes(BaseUnitTestingTypes):
@@ -27,3 +28,7 @@ class TestSnowflakeUnitTestingTypes(BaseUnitTestingTypes):
             ["['a','b','c']", "['a','b','c']"],
             ["[1,2,3]", "[1, 2, 3]"],
         ]
+
+
+class TestSnowflakeUnitTestCaseInsensitivity(BaseUnitTestCaseInsensivity):
+    pass
