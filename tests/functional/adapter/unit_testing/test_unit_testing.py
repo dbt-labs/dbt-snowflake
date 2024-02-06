@@ -1,7 +1,8 @@
 import pytest
 
-from dbt.tests.adapter.unit_testing.test_unit_testing import BaseUnitTestingTypes
+from dbt.tests.adapter.unit_testing.test_types import BaseUnitTestingTypes
 from dbt.tests.adapter.unit_testing.test_case_insensitivity import BaseUnitTestCaseInsensivity
+from dbt.tests.adapter.unit_testing.test_invalid_input import BaseUnitTestInvalidInput
 
 
 class TestSnowflakeUnitTestingTypes(BaseUnitTestingTypes):
@@ -31,4 +32,8 @@ class TestSnowflakeUnitTestingTypes(BaseUnitTestingTypes):
 
 
 class TestSnowflakeUnitTestCaseInsensitivity(BaseUnitTestCaseInsensivity):
+    pass
+
+
+class TestSnowflakeUnitTestInvalidInput(BaseUnitTestInvalidInput):
     pass
