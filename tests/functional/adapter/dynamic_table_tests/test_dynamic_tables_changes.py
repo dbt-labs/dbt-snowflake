@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 
-from dbt.common.contracts.config.materialization import OnConfigurationChangeOption
+from dbt_common.contracts.config.materialization import OnConfigurationChangeOption
 from dbt.tests.util import (
     assert_message_in_logs,
     get_model_file,

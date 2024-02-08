@@ -13,7 +13,7 @@ from dbt.contracts.files import FileHash
 from dbt.context.manifest import generate_query_header_context
 from dbt.context.providers import generate_runtime_macro_context
 from dbt.contracts.graph.manifest import ManifestStateCheck
-from dbt.common.clients import agate_helper
+from dbt_common.clients import agate_helper
 from snowflake import connector as snowflake_connector
 
 from .utils import (
