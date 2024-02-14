@@ -1,0 +1,6 @@
+kind: Features
+body: Support primative types + object, variant, array in snowflake for unit testing"
+time: 2024-02-05T17:48:16.118398-05:00
+custom:
+  Author: michelleark
+  Issue: "898"
