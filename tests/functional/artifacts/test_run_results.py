@@ -11,7 +11,7 @@ class TestRunResultsSuccess:
     def models(self):
         return {"model.sql": good_model_sql}
 
-    def test_timing_exists(self, project):
+    def test_adapter_response_exists(self, project):
         results = run_dbt(["run"])
         assert len(results.results) == 1
         assert results.results[0].adapter_response["query_id"].strip() != ""
