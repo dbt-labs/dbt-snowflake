@@ -69,7 +69,7 @@ setup(
     install_requires=[
         "dbt-core~={}".format(dbt_core_version),
         "dbt-common<2.0",
-        "dbt-adapters~=0.1.0a2",
+        "dbt-adapters<2.0",
         "snowflake-connector-python[secure-local-storage]~=3.0",
         # installed via dbt-core but referenced directly; don't pin to avoid version conflicts with dbt-core
         "agate",
