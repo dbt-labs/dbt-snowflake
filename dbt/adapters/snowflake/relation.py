@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Type
+from typing import FrozenSet, Optional, Type
 
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.relation_configs import RelationConfigChangeAction, RelationResults
@@ -20,13 +20,24 @@ from dbt.adapters.snowflake.relation_configs import (
 class SnowflakeRelation(BaseRelation):
     type: Optional[SnowflakeRelationType] = None  # type: ignore
     quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
-    renameable_relations = frozenset({SnowflakeRelationType.Table, SnowflakeRelationType.View})
-    replaceable_relations = frozenset(
-        {
-            SnowflakeRelationType.DynamicTable,
-            SnowflakeRelationType.Table,
-            SnowflakeRelationType.View,
-        }
+
+    renameable_relations: FrozenSet[SnowflakeRelationType] = field(
+        default_factory=lambda: frozenset(
+            {
+                SnowflakeRelationType.Table,
+                SnowflakeRelationType.View,
+            }
+        )
+    )
+
+    replaceable_relations: FrozenSet[SnowflakeRelationType] = field(
+        default_factory=lambda: frozenset(
+            {
+                SnowflakeRelationType.DynamicTable,
+                SnowflakeRelationType.Table,
+                SnowflakeRelationType.View,
+            }
+        )
     )
 
     @property
