@@ -24,6 +24,7 @@ from dbt_common.utils import filter_null_values
 class SnowflakeConfig(AdapterConfig):
     transient: Optional[bool] = None
     cluster_by: Optional[Union[str, List[str]]] = None
+    order_by_cluster_key: Optional[bool] = None
     automatic_clustering: Optional[bool] = None
     secure: Optional[bool] = None
     copy_grants: Optional[bool] = None
