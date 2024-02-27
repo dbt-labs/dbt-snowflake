@@ -23,7 +23,7 @@ class SnowflakeRelation(BaseRelation):
         default_factory=lambda: SnowflakeQuotePolicy()
     )
 
-    renameable_relations: FrozenSet[RelationType] = field(
+    renameable_relations: FrozenSet[SnowflakeRelationType] = field(
         default_factory=lambda: frozenset(
             {
                 SnowflakeRelationType.Table,
@@ -32,7 +32,7 @@ class SnowflakeRelation(BaseRelation):
         )
     )
 
-    replaceable_relations: FrozenSet[RelationType] = field(
+    replaceable_relations: FrozenSet[SnowflakeRelationType] = field(
         default_factory=lambda: frozenset(
             {
                 SnowflakeRelationType.DynamicTable,
