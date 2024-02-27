@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Type
+from typing import FrozenSet, Optional, Type
 
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.relation_configs import RelationConfigChangeAction, RelationResults
