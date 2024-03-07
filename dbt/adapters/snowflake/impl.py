@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Mapping, Any, Optional, List, Union, Dict
+from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple
 
 import agate
 
@@ -15,10 +15,9 @@ from dbt.adapters.sql.impl import (
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.snowflake import SnowflakeColumn
-from dbt.contracts.graph.manifest import Manifest
-from dbt.contracts.graph.nodes import ConstraintType
-from dbt.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
-from dbt.utils import filter_null_values
+from dbt_common.contracts.constraints import ConstraintType
+from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
+from dbt_common.utils import filter_null_values
 
 
 @dataclass
@@ -62,11 +61,13 @@ class SnowflakeAdapter(SQLAdapter):
         return "CURRENT_TIMESTAMP()"
 
     @classmethod
-    def _catalog_filter_table(cls, table: agate.Table, manifest: Manifest) -> agate.Table:
+    def _catalog_filter_table(
+        cls, table: agate.Table, used_schemas: FrozenSet[Tuple[str, str]]
+    ) -> agate.Table:
         # On snowflake, users can set QUOTED_IDENTIFIERS_IGNORE_CASE, so force
         # the column names to their lowercased forms.
         lowered = table.rename(column_names=[c.lower() for c in table.column_names])
-        return super()._catalog_filter_table(lowered, manifest)
+        return super()._catalog_filter_table(lowered, used_schemas)
 
     def _make_match_kwargs(self, database, schema, identifier):
         quoting = self.config.quoting

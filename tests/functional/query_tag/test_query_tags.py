@@ -31,7 +31,7 @@ models:
   - name: view_model_query_tag
     columns:
       - name: id
-        tests:
+        data_tests:
           - unique
 
 """

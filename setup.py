@@ -42,17 +42,8 @@ def _get_plugin_version_dict():
         return match.groupdict()
 
 
-# require a compatible minor version (~=), prerelease if this is a prerelease
-def _get_dbt_core_version():
-    parts = _get_plugin_version_dict()
-    minor = "{major}.{minor}.0".format(**parts)
-    pre = parts["prekind"] + "1" if parts["prekind"] else ""
-    return f"{minor}{pre}"
-
-
 package_name = "dbt-snowflake"
-package_version = "1.8.0a1"
-dbt_core_version = _get_dbt_core_version()
+package_version = "1.8.0b1"
 description = """The Snowflake adapter plugin for dbt"""
 
 setup(
@@ -67,7 +58,8 @@ setup(
     packages=find_namespace_packages(include=["dbt", "dbt.*"]),
     include_package_data=True,
     install_requires=[
-        "dbt-core~={}".format(dbt_core_version),
+        "dbt-common>=0.1.0a1,<2.0",
+        "dbt-adapters>=0.1.0a1,<2.0",
         "snowflake-connector-python[secure-local-storage]~=3.0",
         # installed via dbt-core but referenced directly; don't pin to avoid version conflicts with dbt-core
         "agate",
