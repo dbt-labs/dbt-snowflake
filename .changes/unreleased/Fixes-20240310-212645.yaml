@@ -1,0 +1,6 @@
+kind: Fixes
+body: Quoting isn't respected when modifying existing snowflake tables
+time: 2024-03-10T21:26:45.385668+01:00
+custom:
+  Author: ludwig-solita
+  Issue: "8080"
