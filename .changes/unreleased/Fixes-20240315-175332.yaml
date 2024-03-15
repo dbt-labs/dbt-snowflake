@@ -1,0 +1,7 @@
+kind: Fixes
+body: Snowflake quoting is not respected. This fix allows non ansi compliant column
+  names to be synced
+time: 2024-03-15T17:53:32.492312+01:00
+custom:
+  Author: ludwig-solita
+  Issue: "8080"
