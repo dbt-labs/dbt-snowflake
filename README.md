@@ -16,6 +16,7 @@ dbt is the T in ELT. Organize, cleanse, denormalize, filter, rename, and pre-agg
 
 ## dbt-snowflake
 
+
 The `dbt-snowflake` package contains all of the code enabling dbt to work with Snowflake. For
 more information on using dbt with Snowflake, consult [the docs](https://docs.getdbt.com/docs/profile-snowflake).
 
