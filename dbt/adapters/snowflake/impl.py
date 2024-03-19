@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple
 
 import agate
+
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
@@ -197,7 +198,6 @@ class SnowflakeAdapter(SQLAdapter):
         return f"DATEADD({interval}, {number}, {add_to})"
 
     def submit_python_job(self, parsed_model: dict, compiled_code: str):
-        super().submit_python_job
         schema = parsed_model["schema"]
         database = parsed_model["database"]
         identifier = parsed_model["alias"]
@@ -221,8 +221,7 @@ class SnowflakeAdapter(SQLAdapter):
             snowpark_telemetry_string = "dbtLabs_dbtPython"
             snowpark_telemetry_snippet = f"""
 import sys
-sys._xoptions['snowflake_partner_attribution'].append("{snowpark_telemetry_string}")
-"""
+sys._xoptions['snowflake_partner_attribution'].append("{snowpark_telemetry_string}")"""
         else:
             snowpark_telemetry_snippet = ""
 
