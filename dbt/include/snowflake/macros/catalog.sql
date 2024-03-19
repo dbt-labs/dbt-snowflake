@@ -41,7 +41,10 @@
         table_catalog as "table_database",
         table_schema as "table_schema",
         table_name as "table_name",
-        coalesce(table_type, 'DYNAMIC TABLE') as "table_type",
+        case
+            when target_lag not null and table_type = 'BASE TABLE' THEN 'DYNAMIC TABLE'
+            else coalesce(table_type, 'BASE TABLE')
+        end as "table_type",
         comment as "table_comment",
 
         -- note: this is the _role_ that owns the table
