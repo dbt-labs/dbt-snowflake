@@ -42,7 +42,7 @@
         table_schema as "table_schema",
         table_name as "table_name",
         case
-            when target_lag not null and table_type = 'BASE TABLE' THEN 'DYNAMIC TABLE'
+            when target_lag is not null and table_type = 'BASE TABLE' THEN 'DYNAMIC TABLE'
             else coalesce(table_type, 'BASE TABLE')
         end as "table_type",
         comment as "table_comment",
