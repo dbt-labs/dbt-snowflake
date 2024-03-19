@@ -1,0 +1,6 @@
+kind: Fixes
+body: Acknowledge `send_anonymous_usage_stats` setting for python models
+time: 2024-03-18T20:36:35.396323-04:00
+custom:
+  Author: mikealfare
+  Issue: "830"
