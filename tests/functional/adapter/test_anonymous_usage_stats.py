@@ -31,7 +31,7 @@ class TestAnonymousUsageStatsOn(AnonymousUsageStatsBase):
         return {"test": {"outputs": outputs, "target": "default"}}
 
     def test_stats_get_sent(self, project):
-        _, logs = run_dbt_and_capture(["run"])
+        _, logs = run_dbt_and_capture(["--debug", "run"])
         assert ANONYMOUS_USAGE_MESSAGE in logs
 
 
@@ -43,5 +43,5 @@ class TestAnonymousUsageStatsOff(AnonymousUsageStatsBase):
         return {"test": {"outputs": outputs, "target": "default"}}
 
     def test_stats_do_not_get_sent(self, project):
-        _, logs = run_dbt_and_capture(["run"])
+        _, logs = run_dbt_and_capture(["--debug", "run"])
         assert ANONYMOUS_USAGE_MESSAGE not in logs
