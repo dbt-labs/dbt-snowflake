@@ -1,0 +1,6 @@
+kind: Dependencies
+body: bump cryptography to 42.0.4 or higher for security callouts
+time: 2024-03-20T11:11:28.5121-05:00
+custom:
+  Author: McKnight-42
+  PR: "938"
