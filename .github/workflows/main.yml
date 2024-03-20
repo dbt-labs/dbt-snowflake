@@ -202,7 +202,7 @@ jobs:
 
       - name: Check wheel distributions
         run: |
-          dbt --version
+          python -c "import dbt.adapters.snowflake"
 
       - name: Install source distributions
         run: |
@@ -210,4 +210,4 @@ jobs:
 
       - name: Check source distributions
         run: |
-          dbt --version
+          python -c "import dbt.adapters.snowflake"
