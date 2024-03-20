@@ -42,7 +42,7 @@
         table_schema as "table_schema",
         table_name as "table_name",
         case
-            when is_dynamic = 'yes' and table_type = 'BASE TABLE' THEN 'DYNAMIC TABLE'
+            when is_dynamic = 'YES' and table_type = 'BASE TABLE' THEN 'DYNAMIC TABLE'
             else table_type
         end as "table_type",
         comment as "table_comment",
