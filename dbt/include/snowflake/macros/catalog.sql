@@ -38,38 +38,41 @@
 
 {% macro snowflake__get_catalog_tables_sql(information_schema) -%}
     select
-        table_catalog as "table_database",
-        table_schema as "table_schema",
-        table_name as "table_name",
-        case
-            when target_lag is not null and table_type = 'BASE TABLE' THEN 'DYNAMIC TABLE'
-            else coalesce(table_type, 'BASE TABLE')
-        end as "table_type",
-        comment as "table_comment",
-
-        -- note: this is the _role_ that owns the table
-        table_owner as "table_owner",
+        t.table_catalog as "table_database",
+        t.table_schema as "table_schema",
+        t.table_name as "table_name",
+    case
+        when tp.target_lag is not null and t.table_type = 'BASE TABLE' then 'DYNAMIC TABLE'
+        else t.table_type
+    end as "table_type",
+    t.comment as "table_comment",
+    t.table_owner as "table_owner",
 
         'Clustering Key' as "stats:clustering_key:label",
-        clustering_key as "stats:clustering_key:value",
+        t.clustering_key as "stats:clustering_key:value",
         'The key used to cluster this table' as "stats:clustering_key:description",
-        (clustering_key is not null) as "stats:clustering_key:include",
+        (t.clustering_key is not null) as "stats:clustering_key:include",
 
         'Row Count' as "stats:row_count:label",
-        row_count as "stats:row_count:value",
+        t.row_count as "stats:row_count:value",
         'An approximate count of rows in this table' as "stats:row_count:description",
-        (row_count is not null) as "stats:row_count:include",
+        (t.row_count is not null) as "stats:row_count:include",
 
         'Approximate Size' as "stats:bytes:label",
-        bytes as "stats:bytes:value",
+        t.bytes as "stats:bytes:value",
         'Approximate size of the table as reported by Snowflake' as "stats:bytes:description",
-        (bytes is not null) as "stats:bytes:include",
+        (t.bytes is not null) as "stats:bytes:include",
 
         'Last Modified' as "stats:last_modified:label",
-        to_varchar(convert_timezone('UTC', last_altered), 'yyyy-mm-dd HH24:MI'||'UTC') as "stats:last_modified:value",
+        to_varchar(convert_timezone('UTC', t.last_altered), 'yyyy-mm-dd HH24:MI'||'UTC') as "stats:last_modified:value",
         'The timestamp for last update/change' as "stats:last_modified:description",
-        (last_altered is not null and table_type='BASE TABLE') as "stats:last_modified:include"
-    from {{ information_schema }}.tables
+        (t.last_altered is not null and t.table_type = 'BASE TABLE') as "stats:last_modified:include"
+    from
+        {{ information_schema }}.tables t
+    left join
+        table_properties tp on t.table_catalog = tp.table_catalog
+        and t.table_schema = tp.table_schema
+        and t.table_name = tp.table_name;
 {%- endmacro %}
 
 
