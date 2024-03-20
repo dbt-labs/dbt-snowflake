@@ -1,0 +1,7 @@
+kind: Fixes
+body: modify metadata queries to take into account object type of BASE TABLE being
+  assigned to dynamic tables when was null previously
+time: 2024-03-20T15:40:54.074292-05:00
+custom:
+  Author: McKnight-42
+  Issue: "934"
