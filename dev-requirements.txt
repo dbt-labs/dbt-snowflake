@@ -11,6 +11,9 @@ click~=8.1
 cryptography~=41.0.7
 ddtrace~=1.16
 flake8~=6.0
+cryptography~=42.0.4
+ddtrace==2.3.0
+flake8~=6.1
 flaky~=3.7
 freezegun~=1.2
 ipdb~=0.13.13
