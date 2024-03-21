@@ -49,4 +49,4 @@ jobs:
       dbms_name: "snowflake"
       sha: "${{ inputs.sha }}"
 
-    secrets: inherit
+    secrets: "inherit"
