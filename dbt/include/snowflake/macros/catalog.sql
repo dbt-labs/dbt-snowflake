@@ -6,7 +6,10 @@
               table_catalog as "table_database",
               table_schema as "table_schema",
               table_name as "table_name",
-              coalesce(table_type, 'DYNAMIC TABLE') as "table_type",
+              case
+                  when is_dynamic = 'YES' and table_type = 'BASE TABLE' THEN 'DYNAMIC TABLE'
+                  else table_type
+              end as "table_type",
               comment as "table_comment",
 
               -- note: this is the _role_ that owns the table
