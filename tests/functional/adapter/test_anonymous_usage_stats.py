@@ -25,8 +25,8 @@ class AnonymousUsageStatsBase:
 
 class TestAnonymousUsageStatsOn(AnonymousUsageStatsBase):
     @pytest.fixture(scope="class")
-    def project_config_update(self):
-        return {"flags": {"send_anonymous_usage_stats": True}}
+    def profiles_config_update(self):
+        return {"config": {"send_anonymous_usage_stats": True}}
 
     def test_stats_get_sent(self, project):
         _, logs = run_dbt_and_capture(["--debug", "run"])
@@ -35,8 +35,8 @@ class TestAnonymousUsageStatsOn(AnonymousUsageStatsBase):
 
 class TestAnonymousUsageStatsOff(AnonymousUsageStatsBase):
     @pytest.fixture(scope="class")
-    def project_config_update(self, dbt_profile_target):
-        return {"flags": {"send_anonymous_usage_stats": False}}
+    def profiles_config_update(self):
+        return {"config": {"send_anonymous_usage_stats": False}}
 
     def test_stats_do_not_get_sent(self, project):
         _, logs = run_dbt_and_capture(["--debug", "run"])
