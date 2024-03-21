@@ -19,10 +19,6 @@ on:
         description: "The release version number (i.e. 1.0.0b1)"
         type: string
         required: true
-      sha:
-        description: "The sha to use (leave empty to use latest on main)"
-        type: string
-        required: false
       package_test_command:
         description: "Package test command"
         type: string
@@ -33,6 +29,10 @@ on:
         type: string
         default: "snowflake"
         required: true
+      sha:
+        description: "The sha to use (leave empty to use latest on main)"
+        type: string
+        required: false
 
 defaults:
   run:
