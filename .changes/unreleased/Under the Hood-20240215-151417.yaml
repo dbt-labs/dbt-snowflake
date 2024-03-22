@@ -1,0 +1,6 @@
+kind: Under the Hood
+body: Add `session_id` to `SnowflakeAdapterResponse`
+time: 2024-02-15T15:14:17.873819247+01:00
+custom:
+  Author: jeppe742
+  Issue: "881"
