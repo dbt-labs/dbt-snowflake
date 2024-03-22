@@ -10,7 +10,7 @@
 #
 # Manual trigger.
 
-name: Release internal patch
+name: "Release internal patch"
 
 on:
   workflow_dispatch:
@@ -35,7 +35,7 @@ defaults:
     shell: bash
 
 env:
-  PYTHON_TARGET_VERSION: 3.11
+  PYTHON_TARGET_VERSION: 3.8
 
 jobs:
   invoke-reusable-workflow:
