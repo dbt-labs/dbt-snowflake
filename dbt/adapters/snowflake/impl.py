@@ -218,10 +218,13 @@ class SnowflakeAdapter(SQLAdapter):
         if imports:
             imports = f"IMPORTS = ('{imports}')"
 
-        snowpark_telemetry_string = "dbtLabs_dbtPython"
-        snowpark_telemetry_snippet = f"""
+        if self.config.args.SEND_ANONYMOUS_USAGE_STATS:
+            snowpark_telemetry_string = "dbtLabs_dbtPython"
+            snowpark_telemetry_snippet = f"""
 import sys
 sys._xoptions['snowflake_partner_attribution'].append("{snowpark_telemetry_string}")"""
+        else:
+            snowpark_telemetry_snippet = ""
 
         common_procedure_code = f"""
 RETURNS STRING
