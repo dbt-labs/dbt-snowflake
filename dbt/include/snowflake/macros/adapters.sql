@@ -280,7 +280,7 @@
     of a materialization
   #}
   {% set dml_transaction -%}
-    begin;
+    begin transaction;
     {{ dml }};
     commit;
   {%- endset %}
