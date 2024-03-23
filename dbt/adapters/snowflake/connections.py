@@ -46,6 +46,7 @@ from dbt_common.events.functions import warn_or_error
 from dbt.adapters.events.types import AdapterEventWarning
 from dbt_common.ui import line_wrap_message, warning_tag
 
+from dbt.adapters.snowflake.session import build_sessions_params
 
 logger = AdapterLogger("Snowflake")
 
@@ -339,10 +340,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         timeout = creds.connect_timeout
 
         def connect():
-            session_parameters = {}
-
-            if creds.query_tag:
-                session_parameters.update({"QUERY_TAG": creds.query_tag})
+            session_parameters = build_sessions_params(creds.query_tag)
 
             handle = snowflake.connector.connect(
                 account=creds.account,
