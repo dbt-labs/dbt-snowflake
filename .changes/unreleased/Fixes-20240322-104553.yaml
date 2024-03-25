@@ -1,0 +1,6 @@
+kind: Fixes
+body: remove `private_key_path` from connection keys
+time: 2024-03-22T10:45:53.598328-05:00
+custom:
+  Author: McKnight-42
+  Issue: "949"
