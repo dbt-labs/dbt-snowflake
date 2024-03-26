@@ -125,7 +125,6 @@ class SnowflakeCredentials(Credentials):
             "role",
             "schema",
             "authenticator",
-            "private_key_path",
             "oauth_client_id",
             "query_tag",
             "client_session_keep_alive",
