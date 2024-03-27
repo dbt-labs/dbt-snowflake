@@ -205,6 +205,10 @@ class SnowflakeAdapter(SQLAdapter):
 
         packages = parsed_model["config"].get("packages", [])
         imports = parsed_model["config"].get("imports", [])
+        external_access_integrations = parsed_model["config"].get(
+            "external_access_integrations", []
+        )
+        secrets = parsed_model["config"].get("secrets", {})
         # adding default packages we need to make python model work
         default_packages = ["snowflake-snowpark-python"]
         package_names = [package.split("==")[0] for package in packages]
@@ -213,9 +217,18 @@ class SnowflakeAdapter(SQLAdapter):
                 packages.append(default_package)
         packages = "', '".join(packages)
         imports = "', '".join(imports)
-        # we can't pass empty imports clause to snowflake
+        external_access_integrations = "', '".join(external_access_integrations)
+        secrets = ", ".join(f"'{key}' = {value}" for key, value in secrets.items())
+
+        # we can't pass empty imports, external_access_integrations or secrets clause to snowflake
         if imports:
             imports = f"IMPORTS = ('{imports}')"
+        if external_access_integrations:
+            external_access_integrations = (
+                f"EXTERNAL_ACCESS_INTEGRATIONS = ('{external_access_integrations}')"
+            )
+        if secrets:
+            secrets = f"SECRETS = ({secrets})"
 
         if self.config.args.SEND_ANONYMOUS_USAGE_STATS:
             snowpark_telemetry_string = "dbtLabs_dbtPython"
@@ -230,6 +243,8 @@ RETURNS STRING
 LANGUAGE PYTHON
 RUNTIME_VERSION = '{python_version}'
 PACKAGES = ('{packages}')
+{external_access_integrations}
+{secrets}
 {imports}
 HANDLER = 'main'
 EXECUTE AS CALLER
