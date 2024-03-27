@@ -7,7 +7,7 @@ git+https://github.com/dbt-labs/dbt-core.git@1.2.latest#egg=dbt-tests-adapter&su
 black==22.3.0
 click~=8.0.4
 bumpversion
-ddtrace~=1.16
+ddtrace==2.6.4
 flake8
 flaky
 freezegun==0.3.12
@@ -15,7 +15,7 @@ ipdb
 mypy==0.942
 pip-tools
 pre-commit
-pytest
+pytest~=8.0.2
 pytest-dotenv
 pytest-logbook
 pytest-csv
