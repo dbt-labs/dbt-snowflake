@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple
+from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, TYPE_CHECKING
 
-import agate
 
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
 from dbt.adapters.base.meta import available
@@ -18,6 +17,9 @@ from dbt.adapters.snowflake import SnowflakeColumn
 from dbt_common.contracts.constraints import ConstraintType
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
+
+if TYPE_CHECKING:
+    import agate
 
 
 @dataclass
@@ -62,8 +64,8 @@ class SnowflakeAdapter(SQLAdapter):
 
     @classmethod
     def _catalog_filter_table(
-        cls, table: agate.Table, used_schemas: FrozenSet[Tuple[str, str]]
-    ) -> agate.Table:
+        cls, table: "agate.Table", used_schemas: FrozenSet[Tuple[str, str]]
+    ) -> "agate.Table":
         # On snowflake, users can set QUOTED_IDENTIFIERS_IGNORE_CASE, so force
         # the column names to their lowercased forms.
         lowered = table.rename(column_names=[c.lower() for c in table.column_names])
@@ -180,7 +182,7 @@ class SnowflakeAdapter(SQLAdapter):
             return column
 
     @available
-    def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
+    def standardize_grants_dict(self, grants_table: "agate.Table") -> dict:
         grants_dict: Dict[str, Any] = {}
 
         for row in grants_table:

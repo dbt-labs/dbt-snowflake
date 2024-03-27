@@ -1,12 +1,14 @@
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
 
-import agate
 from dbt.adapters.relation_configs import RelationConfigChange, RelationResults
 from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.contracts.relation import ComponentName
 
 from dbt.adapters.snowflake.relation_configs.base import SnowflakeRelationConfigBase
+
+if TYPE_CHECKING:
+    import agate
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
@@ -62,7 +64,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
 
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> Dict:
-        dynamic_table: agate.Row = relation_results["dynamic_table"].rows[0]
+        dynamic_table: "agate.Row" = relation_results["dynamic_table"].rows[0]
 
         config_dict = {
             "name": dynamic_table.get("name"),
