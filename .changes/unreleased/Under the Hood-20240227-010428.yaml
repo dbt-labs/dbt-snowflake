@@ -1,6 +1,0 @@
-kind: Under the Hood
-body: Add unit test for transaction semantics.
-time: 2024-02-27T01:04:28.713433-08:00
-custom:
-  Author: versusfacit
-  Issue: "912"
