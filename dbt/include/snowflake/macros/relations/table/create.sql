@@ -1,10 +1,14 @@
 {% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
+  {{ log('XXX: am i here?', info=True) }}
   {%- set transient = config.get('transient', default=true) -%}
+  {%- set iceberg = config.get('iceberg', default=true) -%}
 
   {% if temporary -%}
     {%- set table_type = "temporary" -%}
-  {%- elif transient -%}
-    {%- set table_type = "transient" -%}
+  {# {%- elif transient -%}
+    {%- set table_type = "transient" -%} #}
+  {%- elif iceberg -%}
+    {%- set table_type = "iceberg" -%}
   {%- else -%}
     {%- set table_type = "" -%}
   {%- endif %}
