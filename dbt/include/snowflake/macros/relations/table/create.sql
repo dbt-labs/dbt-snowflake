@@ -2,6 +2,9 @@
   {{ log('XXX: am i here?', info=True) }}
   {%- set transient = config.get('transient', default=true) -%}
   {%- set iceberg = config.get('iceberg', default=true) -%}
+  {%- set catalog = config.get('catalog') -%}
+  {%- set external_volume = config.get('external_volume') -%}
+
 
   {% if temporary -%}
     {%- set table_type = "temporary" -%}
@@ -36,6 +39,9 @@
           {{ get_assert_columns_equivalent(sql) }}
           {{ get_table_columns_and_constraints() }}
           {% set compiled_code = get_select_subquery(compiled_code) %}
+        {% endif %}
+        {% if iceberg and catalog and external_volume %}
+          CATALOG="{{ catalog }}", EXTERNAL_VOLUME="{{ external_volume }}"
         {% endif %}
         {% if copy_grants and not temporary -%} copy grants {%- endif %} as
         (
