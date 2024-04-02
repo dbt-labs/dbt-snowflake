@@ -4,7 +4,7 @@
   {%- set iceberg = config.get('iceberg', default=true) -%}
   {%- set catalog = config.get('catalog') -%}
   {%- set external_volume = config.get('external_volume') -%}
-
+  {%- set base_location = config.get('base_location') -%}
 
   {% if temporary -%}
     {%- set table_type = "temporary" -%}
@@ -41,7 +41,9 @@
           {% set compiled_code = get_select_subquery(compiled_code) %}
         {% endif %}
         {% if iceberg and catalog and external_volume %}
-          CATALOG="{{ catalog }}", EXTERNAL_VOLUME="{{ external_volume }}"
+          CATALOG="{{ catalog }}",
+          EXTERNAL_VOLUME="{{ external_volume }}",
+          BASE_LOCATION="{{ base_location }}"
         {% endif %}
         {% if copy_grants and not temporary -%} copy grants {%- endif %} as
         (
