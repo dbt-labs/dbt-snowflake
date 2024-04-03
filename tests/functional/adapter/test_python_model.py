@@ -199,8 +199,7 @@ class TestSecrets:
         return {"secret_python_model.py": SECRETS_MODE}
 
     def test_secrets(self, project):
-        # The SA running the integration tests does not have the required permissions.
-        # project.run_sql(
-        #     "create or replace secret test_secret type = generic_string secret_string='secret value';"
-        # )
+        project.run_sql(
+            "create or replace secret test_secret type = generic_string secret_string='secret value';"
+        )
         run_dbt(["run"])
