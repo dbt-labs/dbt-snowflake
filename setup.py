@@ -44,7 +44,7 @@ def _get_plugin_version_dict():
 
 
 package_name = "dbt-snowflake"
-package_version = "1.8.0b1"
+package_version = "1.8.0b2"
 description = """The Snowflake adapter plugin for dbt"""
 
 setup(
