@@ -1,0 +1,6 @@
+kind: Under the Hood
+body: Automate the Docker release as part of the PyPI release
+time: 2024-04-02T23:28:51.524626-04:00
+custom:
+  Author: mikealfare
+  Issue: "963"
