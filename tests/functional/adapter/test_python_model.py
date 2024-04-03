@@ -147,7 +147,7 @@ import snowflake.snowpark as snowpark
 def model(dbt, session: snowpark.Session):
     dbt.config(
         materialized="table",
-        external_access_integration=["test_external_access_integration"],
+        external_access_integrations=["test_external_access_integration"],
         packages=["httpx==0.26.0"]
     )
     import httpx
