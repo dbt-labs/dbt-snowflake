@@ -153,7 +153,7 @@ def model(dbt, session: snowpark.Session):
     import httpx
     return session.create_dataframe(
         pandas.DataFrame(
-            [{"result": httpx.get(url="https://www.google.com").stats_code}]
+            [{"result": httpx.get(url="https://www.google.com").status_code}]
         )
     )
 """
