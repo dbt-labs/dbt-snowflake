@@ -224,9 +224,9 @@ class SnowflakeAdapter(SQLAdapter):
         if imports:
             imports = f"IMPORTS = ('{imports}')"
         if external_access_integrations:
-            external_access_integrations = (
-                f"EXTERNAL_ACCESS_INTEGRATIONS = ('{external_access_integrations}')"
-            )
+            # Black is trying to make this a tuple.
+            # fmt: off
+            external_access_integrations = f"EXTERNAL_ACCESS_INTEGRATIONS = ('{external_access_integrations}')"
         if secrets:
             secrets = f"SECRETS = ({secrets})"
 
