@@ -7,7 +7,7 @@ from dbt.adapters.capability import Capability, CapabilityDict
 from dbt.cli.main import dbtRunner
 
 
-freshness_via_metadata_schema_yml = """version: 2
+freshness_via_metadata_schema_yml = """
 sources:
   - name: test_source
     freshness:
@@ -18,7 +18,7 @@ sources:
       - name: test_table
 """
 
-freshness_metadata_schema_batch_yml = """version: 2
+freshness_metadata_schema_batch_yml = """
 sources:
   - name: test_source
     freshness:
@@ -115,10 +115,11 @@ class TestGetLastRelationModifiedBatch(SetupGetLastRelationModified):
             "test_table_with_loaded_at_field", freshness_results_batch
         )
 
+        # Remove TableLastModifiedMetadataBatch and run freshness on same input without batch strategy
         capabilities_no_batch = CapabilityDict(
             {
                 capability: support
-                for capability, support in SnowflakeAdapter._capabilities.items()
+                for capability, support in SnowflakeAdapter.capabilities().items()
                 if capability != Capability.TableLastModifiedMetadataBatch
             }
         )
