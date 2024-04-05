@@ -6,7 +6,7 @@ This docker file is suitable for building dbt Docker images locally or using wit
 This Dockerfile can create images for the following target: `dbt-snowflake`
 
 In order to build a new image, run the following docker command.
-```
+```shell
 docker build --tag <your_image_name> --target dbt-snowflake <path/to/dockerfile>
 ```
 ---
@@ -15,7 +15,7 @@ docker build --tag <your_image_name> --target dbt-snowflake <path/to/dockerfile>
 ---
 
 By default the images will be populated with the most recent release of `dbt-snowflake`.  If you need to use a different version you can specify it by git ref using the `--build-arg` flag:
-```
+```shell
 docker build --tag <your_image_name> \
   --target dbt-snowflake \
   --build-arg dbt_snowflake_ref=<git_ref> \
@@ -24,13 +24,13 @@ docker build --tag <your_image_name> \
 
 ### Examples:
 To build an image named "my-dbt" that supports Snowflake using the latest releases:
-```
+```shell
 cd dbt-core/docker
 docker build --tag my-dbt --target dbt-snowflake .
 ```
 
 To build an image named "my-other-dbt" that supports Snowflake using the adapter version 1.0.0b1:
-```
+```shell
 cd dbt-core/docker
 docker build \
   --tag my-other-dbt \
@@ -43,7 +43,7 @@ docker build \
 There are a few special cases worth noting:
 
 * If you need to build against another architecture (linux/arm64 in this example) you can override the `build_for` build arg:
-```
+```shell
 docker build --tag my_dbt \
   --target dbt-snowflake \
   --build-arg build_for=linux/arm64 \
@@ -54,7 +54,7 @@ Supported architectures can be found in the python docker [dockerhub page](https
 
 ## Running an image in a container:
 The `ENTRYPOINT` for this Dockerfile is the command `dbt` so you can bind-mount your project to `/usr/app` and use dbt as normal:
-```
+```shell
 docker run \
   --network=host \
   --mount type=bind,source=path/to/project,target=/usr/app \
