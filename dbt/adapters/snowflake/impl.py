@@ -217,7 +217,7 @@ class SnowflakeAdapter(SQLAdapter):
                 packages.append(default_package)
         packages = "', '".join(packages)
         imports = "', '".join(imports)
-        external_access_integrations = "', '".join(external_access_integrations)
+        external_access_integrations = ", ".join(external_access_integrations)
         secrets = ", ".join(f"'{key}' = {value}" for key, value in secrets.items())
 
         # we can't pass empty imports, external_access_integrations or secrets clause to snowflake
@@ -226,7 +226,7 @@ class SnowflakeAdapter(SQLAdapter):
         if external_access_integrations:
             # Black is trying to make this a tuple.
             # fmt: off
-            external_access_integrations = f"EXTERNAL_ACCESS_INTEGRATIONS = ('{external_access_integrations}')"
+            external_access_integrations = f"EXTERNAL_ACCESS_INTEGRATIONS = ({external_access_integrations})"
         if secrets:
             secrets = f"SECRETS = ({secrets})"
 
