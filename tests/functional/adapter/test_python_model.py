@@ -182,12 +182,13 @@ import snowflake.snowpark as snowpark
 def model(dbt, session: snowpark.Session):
     dbt.config(
         materialized="table",
-        secrets={"secret_value": "test_secret"},
+        secrets={"secret_variable_name": "test_secret"},
+        external_access_integrations=["test_external_access_integration"],
     )
     import _snowflake
     return session.create_dataframe(
         pandas.DataFrame(
-            [{"secret_value": _snowflake.get_generic_secret_string(test_secret)}]
+            [{"secret_value": _snowflake.get_generic_secret_string(secret_variable_name)}]
         )
     )
 """
@@ -202,4 +203,15 @@ class TestSecrets:
         project.run_sql(
             "create or replace secret test_secret type = generic_string secret_string='secret value';"
         )
+
+        # The secrets you specify as values must also be specified in the external access integration.
+        # See https://docs.snowflake.com/en/developer-guide/external-network-access/creating-using-external-network-access#using-the-external-access-integration-in-a-function-or-procedure
+
+        # The SA running the integration tests does not have the required permissions.
+        # project.run_sql(
+        #     "create or replace network rule test_network_rule type = host_port mode = egress value_list= ('www.google.com:443');"
+        # )
+        # project.run_sql(
+        #     "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) allowed_authentication_secrets = (test_secret) enabled = true;"
+        # )
         run_dbt(["run"])
