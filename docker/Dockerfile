@@ -1,9 +1,9 @@
 ARG build_for=linux/amd64
+ARG py_version=3.10.7
+ARG dbt_snowflake_ref=dbt-snowflake@main
 
-FROM --platform=$build_for python:3.10.7-slim-bullseye as base
 
-# ref is updated automatically every final release via bumpversion
-ARG dbt_snowflake_ref=dbt-snowflake@v1.7.10
+FROM --platform=$build_for python:$py_version-slim-bullseye as base
 
 RUN apt-get update \
   && apt-get dist-upgrade -y \
@@ -26,8 +26,36 @@ ENV LANG=C.UTF-8
 
 RUN python -m pip install --upgrade pip setuptools wheel --no-cache-dir
 
+
+FROM base as dbt-snowflake
+
 WORKDIR /usr/app/dbt/
 ENTRYPOINT ["dbt"]
 
-FROM base as dbt-snowflake
 RUN python -m pip install --no-cache-dir "dbt-snowflake @ git+https://github.com/dbt-labs/${dbt_snowflake_ref}"
+
+
+FROM base as dbt-snowflake-dev
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        git-all \
+        libbz2-dev \
+        libffi-dev \
+        libgdbm-dev \
+        libncurses5-dev \
+        libnss3-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        wget \
+        zlib1g-dev
+
+# setup mount for local code
+WORKDIR /opt/code
+VOLUME /opt/code
+
+ENTRYPOINT python -m pip install --no-cache-dir -e . -r dev-requirements.txt \
+  && pre-commit install
+
+ENV PYTHONUNBUFFERED=1
