@@ -187,7 +187,7 @@ def model(dbt, session: snowpark.Session):
     import _snowflake
     return session.create_dataframe(
         pandas.DataFrame(
-            [{"secret_value": _snowflake.get_generic_secret_string(secret_variable_name)}]
+            [{"secret_value": _snowflake.get_generic_secret_string('secret_variable_name')}]
         )
     )
 """
