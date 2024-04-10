@@ -165,13 +165,12 @@ class TestExternalAccessIntegration:
         return {"external_access_integration_python_model.py": EXTERNAL_ACCESS_INTEGRATION_MODE}
 
     def test_external_access_integration(self, project):
-        # The SA running the integration tests does not have the required permissions.
-        # project.run_sql(
-        #     "create or replace network rule test_network_rule type = host_port mode = egress value_list= ('www.google.com:443');"
-        # )
-        # project.run_sql(
-        #     "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) enabled = true;"
-        # )
+        project.run_sql(
+            "create or replace network rule test_network_rule type = host_port mode = egress value_list= ('www.google.com:443');"
+        )
+        project.run_sql(
+            "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) enabled = true;"
+        )
         run_dbt(["run"])
 
 
@@ -207,11 +206,10 @@ class TestSecrets:
         # The secrets you specify as values must also be specified in the external access integration.
         # See https://docs.snowflake.com/en/developer-guide/external-network-access/creating-using-external-network-access#using-the-external-access-integration-in-a-function-or-procedure
 
-        # The SA running the integration tests does not have the required permissions.
-        # project.run_sql(
-        #     "create or replace network rule test_network_rule type = host_port mode = egress value_list= ('www.google.com:443');"
-        # )
-        # project.run_sql(
-        #     "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) allowed_authentication_secrets = (test_secret) enabled = true;"
-        # )
+        project.run_sql(
+            "create or replace network rule test_network_rule type = host_port mode = egress value_list= ('www.google.com:443');"
+        )
+        project.run_sql(
+            "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) allowed_authentication_secrets = (test_secret) enabled = true;"
+        )
         run_dbt(["run"])
