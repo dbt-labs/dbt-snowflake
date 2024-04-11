@@ -27,6 +27,7 @@ ENV LANG=C.UTF-8
 RUN python -m pip install --upgrade pip setuptools wheel --no-cache-dir
 
 
+# this image gets published to GHCR for production use
 FROM base as dbt-snowflake
 
 WORKDIR /usr/app/dbt/
@@ -35,6 +36,7 @@ ENTRYPOINT ["dbt"]
 RUN python -m pip install --no-cache-dir "dbt-snowflake @ git+https://github.com/dbt-labs/${dbt_snowflake_ref}"
 
 
+# this image does not get published, it is intended for local development only, see `Makefile` for usage
 FROM base as dbt-snowflake-dev
 
 RUN apt-get update && \
