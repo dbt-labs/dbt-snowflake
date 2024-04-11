@@ -35,12 +35,14 @@ ENTRYPOINT ["dbt"]
 
 RUN python -m pip install --no-cache-dir "dbt-snowflake @ git+https://github.com/dbt-labs/${dbt_snowflake_ref}"
 
+HEALTHCHECK CMD dbt --version || exit 1
+
 
 # this image does not get published, it is intended for local development only, see `Makefile` for usage
 FROM base as dbt-snowflake-dev
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
         git-all \
         libbz2-dev \
         libffi-dev \
@@ -51,13 +53,19 @@ RUN apt-get update && \
         libsqlite3-dev \
         libssl-dev \
         wget \
-        zlib1g-dev
+        zlib1g-dev \
+  && apt-get clean \
+  && rm -rf \
+    /var/lib/apt/lists/* \
+    /tmp/* \
+    /var/tmp/*
 
 # setup mount for local code
 WORKDIR /opt/code
 VOLUME /opt/code
 
-ENTRYPOINT python -m pip install --no-cache-dir -e . -r dev-requirements.txt \
-  && pre-commit install
+ENTRYPOINT ["python", "-m", "pip", "install", "--no-cache-dir", "-e", ".", "-r dev-requirements.txt", "&&", "pre-commit install"]
+
+HEALTHCHECK CMD dbt --version || exit 1
 
 ENV PYTHONUNBUFFERED=1
