@@ -1,8 +1,7 @@
 # this image gets published to GHCR for production use
-ARG build_for=linux/amd64
 ARG py_version=3.10.7
 
-FROM --platform=$build_for python:$py_version-slim-bullseye as base
+FROM python:$py_version-slim-bullseye as base
 
 RUN apt-get update \
   && apt-get dist-upgrade -y \
@@ -23,16 +22,16 @@ RUN apt-get update \
 ENV PYTHONIOENCODING=utf-8
 ENV LANG=C.UTF-8
 
-RUN python -m pip install --upgrade pip setuptools wheel --no-cache-dir
+RUN python -m pip install --upgrade "pip==24.0" "setuptools==69.2.0" "wheel==0.43.0" --no-cache-dir
 
 
 FROM base as dbt-snowflake
 
-ARG dbt_snowflake_ref=dbt-snowflake@main
+ARG commit_ref=main
 
 HEALTHCHECK CMD dbt --version || exit 1
 
 WORKDIR /usr/app/dbt/
 ENTRYPOINT ["dbt"]
 
-RUN python -m pip install --no-cache-dir "dbt-snowflake @ git+https://github.com/dbt-labs/${dbt_snowflake_ref}"
+RUN python -m pip install --no-cache-dir "dbt-snowflake @ git+https://github.com/dbt-labs/dbt-snowflake@${commit_ref}"
