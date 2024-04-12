@@ -200,7 +200,7 @@ jobs:
     needs: [bump-version-generate-changelog, build-test-package]
     permissions:
       packages: write
-    uses: dbt-labs/dbt-release/.github/workflows/release-docker.yml@er/update-local-run-docker
+    uses: dbt-labs/dbt-release/.github/workflows/release-docker.yml@main
     with:
       package: ${{ github.event.repository.name }}
       version_number: ${{ inputs.version_number }}
