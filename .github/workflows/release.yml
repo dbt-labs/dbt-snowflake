@@ -13,8 +13,8 @@
 #
 # **when?**
 # This workflow can be run manually on demand or can be called by other workflows
-name: "Release to GitHub, PyPI & Docker"
-run-name: "Release ${{ inputs.version_number }} to GitHub, PyPI & Docker"
+name: "Release to GitHub, PyPI, and Docker"
+run-name: "Release ${{ inputs.version_number }} to GitHub, PyPI, and Docker"
 
 on:
   workflow_dispatch:
