@@ -188,6 +188,10 @@ jobs:
           python -m pip install --upgrade wheel
           python -m pip --version
 
+      - name: install dev-requirements for PRs
+        if: ${{ contains(github.event_name, 'pull_request') }}
+        run: python -m pip install -r dev-requirements.txt
+
       - uses: actions/download-artifact@v3
         with:
           name: dist
