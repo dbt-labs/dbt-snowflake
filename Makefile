@@ -68,25 +68,30 @@ help: ## Show this help message.
 
 .PHONY: ubuntu
 ubuntu:
-	docker build -f docker/Dockerfile -t dbt-snowflake-dev .
+	docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev .
 	docker run --rm -it --name dbt-snowflake-dev -v $(shell pwd):/opt/code dbt-snowflake-dev
 
 .PHONY: ubuntu-py38
 ubuntu-py38:
-	docker build -f docker/Dockerfile -t dbt-snowflake-dev . --build-arg py_version=3.8
+	docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev . --build-arg py_version=3.8
 	docker run --rm -it --name dbt-snowflake-dev -v $(shell pwd):/opt/code dbt-snowflake-dev
 
 .PHONY: ubuntu-py39
 ubuntu-py39:
-	docker build -f docker/Dockerfile -t dbt-snowflake-dev . --build-arg py_version=3.9
+	docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev . --build-arg py_version=3.9
 	docker run --rm -it --name dbt-snowflake-dev -v $(shell pwd):/opt/code dbt-snowflake-dev
 
 .PHONY: ubuntu-py310
 ubuntu-py310:
-	docker build -f docker/Dockerfile -t dbt-snowflake-dev . --build-arg py_version=3.10
+	docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev . --build-arg py_version=3.10
 	docker run --rm -it --name dbt-snowflake-dev -v $(shell pwd):/opt/code dbt-snowflake-dev
 
 .PHONY: ubuntu-py311
 ubuntu-py311:
-	docker build -f docker/Dockerfile -t dbt-snowflake-dev . --build-arg py_version=3.11
+	docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev . --build-arg py_version=3.11
 	docker run --rm -it --name dbt-snowflake-dev -v $(shell pwd):/opt/code dbt-snowflake-dev
+
+.PHONY: docker-prod
+docker-prod:
+	docker build -f docker/Dockerfile -t dbt-snowflake . --build-arg build_for=linux/arm64/v8
+	docker run --rm -it --name dbt-snowflake -v $(shell pwd):/opt/code dbt-snowflake
