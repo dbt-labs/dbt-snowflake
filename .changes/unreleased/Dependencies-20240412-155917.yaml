@@ -1,0 +1,6 @@
+kind: "Dependencies"
+body: "Bump actions/github-script from 6 to 7"
+time: 2024-04-12T15:59:17.00000Z
+custom:
+  Author: dependabot[bot]
+  PR: 970
