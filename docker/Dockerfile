@@ -13,10 +13,8 @@ RUN apt-get update \
     libpq-dev=13.14-0+deb11u1 \
     make=4.3-4.1 \
     openssh-client=1:8.4p1-5+deb11u3 \
-    software-properties-common=0.96.20.2-2.1
-
-# cleanup
-RUN apt-get clean \
+    software-properties-common=0.96.20.2-2.1 \
+  && apt-get clean \
   && rm -rf \
     /var/lib/apt/lists/* \
     /tmp/* \
