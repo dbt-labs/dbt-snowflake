@@ -74,4 +74,3 @@ docker-dev:
 .PHONY: docker-prod
 docker-prod:
 	docker build -f docker/Dockerfile -t dbt-snowflake .
-	docker run --rm -it --name dbt-snowflake -v $(shell pwd):/opt/code dbt-snowflake
