@@ -17,6 +17,6 @@ clear \
 "#########################################\n"\
 && docker build --tag dbt-snowflake-1.0.0b1 \
   --target dbt-snowflake \
-  --build-arg dbt_snowflake_ref=dbt-snowflake@v1.0.0b1 \
+  --build-arg commit_ref=v1.0.0b1 \
   docker \
 && docker run dbt-snowflake-1.0.0b1 --version
