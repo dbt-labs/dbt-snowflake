@@ -34,7 +34,8 @@ def _get_plugin_version_dict():
     _semver = r"""(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"""
     _pre = r"""((?P<prekind>a|b|rc)(?P<pre>\d+))?"""
     _nightly = r"""(\.(?P<nightly>[a-z0-9]+)?)?"""
-    _version_pattern = rf"""version\s*=\s*["']{_semver}{_pre}{_nightly}["']"""
+    _build = r"""(\+build[0-9]+)?"""
+    _version_pattern = rf"""version\s*=\s*["']{_semver}{_pre}{_nightly}{_build}["']"""
     with open(_version_path) as f:
         match = re.search(_version_pattern, f.read().strip())
         if match is None:
@@ -43,7 +44,7 @@ def _get_plugin_version_dict():
 
 
 package_name = "dbt-snowflake"
-package_version = "1.8.0b1"
+package_version = "1.8.0b2"
 description = """The Snowflake adapter plugin for dbt"""
 
 setup(
@@ -61,6 +62,8 @@ setup(
         "dbt-common>=0.1.0a1,<2.0",
         "dbt-adapters>=0.1.0a1,<2.0",
         "snowflake-connector-python[secure-local-storage]~=3.0",
+        # add dbt-core to ensure backwards compatibility of installation, this is not a functional dependency
+        "dbt-core>=1.8.0a1",
         # installed via dbt-core but referenced directly; don't pin to avoid version conflicts with dbt-core
         "agate",
     ],
