@@ -80,3 +80,12 @@ class SnowflakeRelation(BaseRelation):
         if config_change_collection.has_changes:
             return config_change_collection
         return None
+
+    def render_limited(self) -> str:
+        rendered = self.render()
+        if self.limit is None:
+            return rendered
+        elif self.limit == 0:
+            return f"(select * from {rendered} where false limit 0)"
+        else:
+            return f"(select * from {rendered} limit {self.limit})"
