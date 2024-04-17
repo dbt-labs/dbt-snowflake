@@ -1,3 +1,4 @@
+import pytest
 from dbt.tests.adapter.query_comment.test_query_comment import (
     BaseQueryComments,
     BaseMacroQueryComments,
@@ -17,7 +18,12 @@ class TestMacroQueryCommentsSnowflake(BaseMacroQueryComments):
 
 
 class TestMacroArgsQueryCommentsSnowflake(BaseMacroArgsQueryComments):
-    pass
+    @pytest.skip(
+        "This test is incorrectly comparing the version of `dbt-core`"
+        "to the version of `dbt-snowflake`, which is not always the same."
+    )
+    def test_matches_comment(self, project, get_package_version):
+        pass
 
 
 class TestMacroInvalidQueryCommentsSnowflake(BaseMacroInvalidQueryComments):
