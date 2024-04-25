@@ -1,0 +1,6 @@
+kind: Under the Hood
+body: Add entrypoint to setup.py to allow pipx installation
+time: 2024-04-25T14:34:31.796721+02:00
+custom:
+  Author: aranke
+  Issue: ' '
