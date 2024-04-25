@@ -1,0 +1,6 @@
+kind: Fixes
+body: 'test contract enforcement for GEOGRAPHY and GEOMETRY types '
+time: 2024-04-12T09:45:07.55962-07:00
+custom:
+  Author: michelleark
+  Issue: "894"
