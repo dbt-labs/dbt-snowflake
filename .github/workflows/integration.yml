@@ -86,7 +86,7 @@ jobs:
         #  'false' - if none of changed files matches any of filter rules
         # also, returns:
         #  `changes` - JSON array with names of all filters matching any of the changed files
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         id: get-changes
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
