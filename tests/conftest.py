@@ -15,7 +15,7 @@ def dbt_profile_target():
         "threads": 4,
         "account": os.getenv("SNOWFLAKE_TEST_ACCOUNT"),
         "user": os.getenv("SNOWFLAKE_TEST_USER"),
-        "password": os.getenv("SNOWFLAKE_TEST_PASSWORD"),
+        "password": os.getenv("DBT_ENV_SECRET_SNOWFLAKE_TEST_PASSWORD"),
         "database": os.getenv("SNOWFLAKE_TEST_DATABASE"),
         "warehouse": os.getenv("SNOWFLAKE_TEST_WAREHOUSE"),
     }
