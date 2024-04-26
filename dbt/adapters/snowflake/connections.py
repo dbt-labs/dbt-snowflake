@@ -82,6 +82,7 @@ class SnowflakeCredentials(Credentials):
     oauth_client_id: Optional[str] = None
     oauth_client_secret: Optional[str] = None
     query_tag: Optional[str] = None
+    application: Optional[str] = None
     client_session_keep_alive: bool = False
     host: Optional[str] = None
     port: Optional[int] = None
@@ -127,6 +128,7 @@ class SnowflakeCredentials(Credentials):
             "authenticator",
             "oauth_client_id",
             "query_tag",
+            "application",
             "client_session_keep_alive",
             "host",
             "port",
@@ -352,7 +354,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 role=creds.role,
                 autocommit=True,
                 client_session_keep_alive=creds.client_session_keep_alive,
-                application="dbt",
+                application=creds.application if creds.application else "dbt",
                 insecure_mode=creds.insecure_mode,
                 session_parameters=session_parameters,
                 **creds.auth_args(),

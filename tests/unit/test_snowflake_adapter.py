@@ -580,6 +580,36 @@ class TestSnowflakeAdapter(unittest.TestCase):
             ]
         )
 
+    def test_application(self):
+        self.config.credentials = self.config.credentials.replace(
+            password="test_password", application="test_application"
+        )
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
+        conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
+
+        self.snowflake.assert_not_called()
+        conn.handle
+        self.snowflake.assert_has_calls(
+            [
+                mock.call(
+                    account="test_account",
+                    autocommit=True,
+                    client_session_keep_alive=False,
+                    database="test_database",
+                    password="test_password",
+                    role=None,
+                    schema="public",
+                    user="test_user",
+                    warehouse="test_warehouse",
+                    private_key=None,
+                    application="test_application",
+                    insecure_mode=False,
+                    session_parameters={"QUERY_TAG": "test_query_tag"},
+                    reuse_connections=None,
+                )
+            ]
+        )
+
     def test_reuse_connections_with_keep_alive(self):
         self.config.credentials = self.config.credentials.replace(
             reuse_connections=True, client_session_keep_alive=True
