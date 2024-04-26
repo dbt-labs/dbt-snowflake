@@ -20,6 +20,7 @@ on:
 
 permissions:
   contents: write # this is the permission that allows creating a new release
+  packages: write # this is the permission that allows pushing Docker images
 
 defaults:
   run:
@@ -39,7 +40,7 @@ jobs:
 
     steps:
       - name: "Checkout ${{ github.repository }} Branch ${{ env.RELEASE_BRANCH }}"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.RELEASE_BRANCH }}
 
