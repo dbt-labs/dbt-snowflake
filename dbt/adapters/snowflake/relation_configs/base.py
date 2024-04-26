@@ -45,7 +45,7 @@ class SnowflakeRelationConfigBase(RelationConfigBase):
     def from_relation_results(cls, relation_results: RelationResults):
         relation_config = cls.parse_relation_results(relation_results)
         relation = cls.from_dict(relation_config)
-        return relation  # type: ignore
+        return relation
 
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:

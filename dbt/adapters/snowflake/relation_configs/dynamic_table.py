@@ -44,7 +44,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "snowflake_warehouse": config_dict.get("snowflake_warehouse"),
         }
 
-        dynamic_table: "SnowflakeDynamicTableConfig" = super().from_dict(kwargs_dict)  # type: ignore
+        dynamic_table: "SnowflakeDynamicTableConfig" = super().from_dict(kwargs_dict)
         return dynamic_table
 
     @classmethod
@@ -53,9 +53,9 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "name": relation_config.identifier,
             "schema_name": relation_config.schema,
             "database_name": relation_config.database,
-            "query": relation_config.compiled_code,  # type: ignore
-            "target_lag": relation_config.config.extra.get("target_lag"),  # type: ignore
-            "snowflake_warehouse": relation_config.config.extra.get("snowflake_warehouse"),  # type: ignore
+            "query": relation_config.compiled_code,
+            "target_lag": relation_config.config.extra.get("target_lag"),
+            "snowflake_warehouse": relation_config.config.extra.get("snowflake_warehouse"),
         }
 
         return config_dict

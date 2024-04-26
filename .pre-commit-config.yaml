@@ -49,6 +49,7 @@ repos:
         -   --show-error-codes
         -   --ignore-missing-imports
         -   --explicit-package-bases
+        -   --warn-unused-ignores
         -   --pretty
         files: ^dbt/adapters
         additional_dependencies:

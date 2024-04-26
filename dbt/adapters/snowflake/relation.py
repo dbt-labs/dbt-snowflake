@@ -18,7 +18,7 @@ from dbt.adapters.snowflake.relation_configs import (
 
 @dataclass(frozen=True, eq=False, repr=False)
 class SnowflakeRelation(BaseRelation):
-    type: Optional[SnowflakeRelationType] = None  # type: ignore
+    type: Optional[SnowflakeRelationType] = None
     quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
     require_alias: bool = False
     renameable_relations: FrozenSet[SnowflakeRelationType] = field(
