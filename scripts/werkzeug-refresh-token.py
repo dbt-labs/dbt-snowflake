@@ -22,9 +22,9 @@ def _make_response(client_id, client_secret, refresh_token):
     return Response(
         textwrap.dedent(
             f'''\
-        SNOWFLAKE_TEST_OAUTH_REFRESH_TOKEN="{refresh_token}"
-        SNOWFLAKE_TEST_OAUTH_CLIENT_ID="{client_id}"
-        SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET="{client_secret}"'''
+        DBT_ENV_SECRET_SNOWFLAKE_TEST_OAUTH_REFRESH_TOKEN="{refresh_token}"
+        DBT_ENV_SECRET_SNOWFLAKE_TEST_OAUTH_CLIENT_ID="{client_id}"
+        DBT_ENV_SECRET_SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET="{client_secret}"'''
         )
     )
 
