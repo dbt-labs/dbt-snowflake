@@ -24,8 +24,8 @@ class SnowflakeRelation(BaseRelation):
     renameable_relations: FrozenSet[SnowflakeRelationType] = field(
         default_factory=lambda: frozenset(
             {
-                SnowflakeRelationType.Table,
-                SnowflakeRelationType.View,
+                SnowflakeRelationType.Table,  # type: ignore
+                SnowflakeRelationType.View,  # type: ignore
             }
         )
     )
@@ -33,9 +33,9 @@ class SnowflakeRelation(BaseRelation):
     replaceable_relations: FrozenSet[SnowflakeRelationType] = field(
         default_factory=lambda: frozenset(
             {
-                SnowflakeRelationType.DynamicTable,
-                SnowflakeRelationType.Table,
-                SnowflakeRelationType.View,
+                SnowflakeRelationType.DynamicTable,  # type: ignore
+                SnowflakeRelationType.Table,  # type: ignore
+                SnowflakeRelationType.View,  # type: ignore
             }
         )
     )

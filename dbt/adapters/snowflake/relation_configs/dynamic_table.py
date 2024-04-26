@@ -104,9 +104,11 @@ class SnowflakeDynamicTableConfigChangeset:
         return any(
             [
                 self.target_lag.requires_full_refresh if self.target_lag else False,
-                self.snowflake_warehouse.requires_full_refresh
-                if self.snowflake_warehouse
-                else False,
+                (
+                    self.snowflake_warehouse.requires_full_refresh
+                    if self.snowflake_warehouse
+                    else False
+                ),
             ]
         )
 
