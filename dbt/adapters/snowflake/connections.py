@@ -94,6 +94,7 @@ class SnowflakeCredentials(Credentials):
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
     reuse_connections: Optional[bool] = None
+    application: Optional[str] = None
 
     def __post_init__(self):
         if self.authenticator != "oauth" and (
@@ -352,7 +353,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
                 role=creds.role,
                 autocommit=True,
                 client_session_keep_alive=creds.client_session_keep_alive,
-                application="dbt",
+                application=creds.application if creds.application else "dbt",
                 insecure_mode=creds.insecure_mode,
                 session_parameters=session_parameters,
                 **creds.auth_args(),
