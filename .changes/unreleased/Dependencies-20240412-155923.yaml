@@ -1,0 +1,6 @@
+kind: "Dependencies"
+body: "Bump dorny/paths-filter from 2 to 3"
+time: 2024-04-12T15:59:23.00000Z
+custom:
+  Author: dependabot[bot]
+  PR: 972
