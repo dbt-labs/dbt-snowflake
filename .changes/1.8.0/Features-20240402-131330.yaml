@@ -1,6 +1,0 @@
-kind: Features
-body: Add external_access_integration and secret to python models
-time: 2024-04-02T13:13:30.952425+01:00
-custom:
-  Author: Lindblomsebastian
-  Issue: "955"
