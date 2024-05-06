@@ -11,7 +11,7 @@ def query_relation_type(project, relation: SnowflakeRelation) -> Optional[str]:
     sql = f"""
         select
             case
-                when table_type = 'BASE TABLE' and is_dynamic = 'YES' then 'dynamic_table'
+                when table_type = 'BASE TABLE' and (is_dynamic = 'YES' or is_dynamic = 'Y') then 'dynamic_table'
                 when table_type = 'BASE TABLE' then 'table'
                 when table_type = 'VIEW' then 'view'
                 when table_type = 'EXTERNAL TABLE' then 'external_table'
