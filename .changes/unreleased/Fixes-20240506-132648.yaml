@@ -1,0 +1,7 @@
+kind: Fixes
+body: update is_dynamic values to be in line with accepted values post 2024_03 sonwflake
+  change bundle
+time: 2024-05-06T13:26:48.498776-05:00
+custom:
+  Author: McKnight-42
+  Issue: "1016"
