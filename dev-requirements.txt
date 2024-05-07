@@ -3,6 +3,7 @@
 git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core
 git+https://github.com/dbt-labs/dbt-adapters.git
 git+https://github.com/dbt-labs/dbt-adapters.git#subdirectory=dbt-tests-adapter
+git+https://github.com/dbt-labs/dbt-common.git
 
 # if version 1.x or greater -> pin to major version
 # if version 0.x -> pin to minor
