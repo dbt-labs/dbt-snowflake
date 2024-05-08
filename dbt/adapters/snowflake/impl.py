@@ -3,10 +3,10 @@ from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple
 
 import agate
 
-from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
-from dbt.adapters.sql import SQLAdapter  # type: ignore
+from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
@@ -129,7 +129,9 @@ class SnowflakeAdapter(SQLAdapter):
             else:
                 raise
 
-    def list_relations_without_caching(self, schema_relation: SnowflakeRelation) -> List[SnowflakeRelation]:  # type: ignore
+    def list_relations_without_caching(
+        self, schema_relation: SnowflakeRelation
+    ) -> List[SnowflakeRelation]:
         kwargs = {"schema_relation": schema_relation}
         try:
             results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
@@ -145,7 +147,7 @@ class SnowflakeAdapter(SQLAdapter):
         quote_policy = {"database": True, "schema": True, "identifier": True}
 
         columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):  # type: ignore
+        for _database, _schema, _identifier, _type in results.select(columns):
             try:
                 _type = self.Relation.get_relation_type(_type.lower())
             except ValueError:
