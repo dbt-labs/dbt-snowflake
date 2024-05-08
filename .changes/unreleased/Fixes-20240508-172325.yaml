@@ -1,0 +1,6 @@
+kind: Fixes
+body: update test structure to match changes made in dbt-core
+time: 2024-05-08T17:23:25.938128-05:00
+custom:
+  Author: McKnight-42
+  Issue: "1029"
