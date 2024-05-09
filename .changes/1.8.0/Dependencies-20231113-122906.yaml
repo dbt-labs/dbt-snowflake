@@ -1,6 +1,0 @@
-kind: "Dependencies"
-body: "Bump mypy from 1.6.1 to 1.7.0"
-time: 2023-11-13T12:29:06.00000Z
-custom:
-  Author: dependabot[bot]
-  PR: 828
