@@ -40,8 +40,8 @@ from dbt_common.exceptions import (
 from dbt_common.exceptions import DbtDatabaseError
 from dbt.adapters.exceptions.connection import FailedToConnectError
 from dbt.adapters.contracts.connection import AdapterResponse, Connection, Credentials
-from dbt.adapters.sql import SQLConnectionManager  # type: ignore
-from dbt.adapters.events.logging import AdapterLogger  # type: ignore
+from dbt.adapters.sql import SQLConnectionManager
+from dbt.adapters.events.logging import AdapterLogger
 from dbt_common.events.functions import warn_or_error
 from dbt.adapters.events.types import AdapterEventWarning
 from dbt_common.ui import line_wrap_message, warning_tag
@@ -415,7 +415,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             rows_affected=cursor.rowcount,
             code=code,
             query_id=cursor.sfqid,
-        )  # type: ignore
+        )
 
     # disable transactional logic by default on Snowflake
     # except for DML statements where explicitly defined
@@ -487,7 +487,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         auto_begin: bool = True,
         bindings: Optional[Any] = None,
         abridge_sql_log: bool = False,
-    ) -> Tuple[Connection, Any]:  # type: ignore
+    ) -> Tuple[Connection, Any]:
         if bindings:
             # The snowflake connector is stricter than, e.g., psycopg2 -
             # which allows any iterable thing to be passed as a binding.
@@ -513,7 +513,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         if cursor is None:
             self._raise_cursor_not_found_error(sql)
 
-        return connection, cursor  # type: ignore
+        return connection, cursor
 
     def _stripped_queries(self, sql: str) -> List[str]:
         def strip_query(query):
@@ -580,7 +580,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         """Reuse connections by deferring release until adapter context manager in core
         resets adapters. This cleanup_all happens before Python teardown. Idle connections
         incur no costs while waiting in the connection pool."""
-        if self.profile.credentials.reuse_connections:  # type: ignore
+        if self.profile.credentials.reuse_connections:
             return
         super().release()
 
