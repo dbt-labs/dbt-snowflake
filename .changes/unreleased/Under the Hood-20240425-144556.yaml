@@ -3,4 +3,4 @@ body: Speedup catalog string comparison by using ilike before equals
 time: 2024-04-25T14:45:56.549787+02:00
 custom:
   Author: aranke
-  Issue: ' '
+  Issue: '1035'
