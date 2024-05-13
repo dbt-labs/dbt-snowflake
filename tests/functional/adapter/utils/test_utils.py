@@ -6,6 +6,7 @@ from dbt.tests.adapter.utils.test_bool_or import BaseBoolOr
 from dbt.tests.adapter.utils.test_cast_bool_to_text import BaseCastBoolToText
 from dbt.tests.adapter.utils.test_concat import BaseConcat
 from dbt.tests.adapter.utils.test_current_timestamp import BaseCurrentTimestampAware
+from dbt.tests.adapter.utils.test_date import BaseDate
 from dbt.tests.adapter.utils.test_dateadd import BaseDateAdd
 from dbt.tests.adapter.utils.test_datediff import BaseDateDiff
 from dbt.tests.adapter.utils.test_date_spine import BaseDateSpine
@@ -59,6 +60,10 @@ class TestConcat(BaseConcat):
 
 # Use either BaseCurrentTimestampAware or BaseCurrentTimestampNaive but not both
 class TestCurrentTimestamp(BaseCurrentTimestampAware):
+    pass
+
+
+class TestDate(BaseDate):
     pass
 
 
