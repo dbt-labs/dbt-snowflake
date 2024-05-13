@@ -61,6 +61,11 @@ on:
         type: boolean
         default: false
         required: false
+      only_docker:
+        description: "Only release Docker image, skip GitHub & PyPI"
+        type: boolean
+        default: false
+        required: false
   workflow_call:
     inputs:
       sha:
@@ -129,6 +134,7 @@ jobs:
           echo Package test command:               ${{ inputs.package_test_command }}
           echo Test run:                           ${{ inputs.test_run }}
           echo Nightly release:                    ${{ inputs.nightly_release }}
+          echo Only Docker:                        ${{ inputs.only_docker }}
 
   bump-version-generate-changelog:
     name: Bump package version, Generate changelog
@@ -144,7 +150,7 @@ jobs:
 
   log-outputs-bump-version-generate-changelog:
     name: "[Log output] Bump package version, Generate changelog"
-    if: ${{ !failure() && !cancelled() }}
+    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
     needs: [bump-version-generate-changelog]
     runs-on: ubuntu-latest
     steps:
@@ -155,7 +161,7 @@ jobs:
 
   build-test-package:
     name: Build, Test, Package
-    if: ${{ !failure() && !cancelled() }}
+    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
     needs: [bump-version-generate-changelog]
     uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
     with:
@@ -173,7 +179,7 @@ jobs:
 
   github-release:
     name: GitHub Release
-    if: ${{ !failure() && !cancelled() }}
+    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
     needs: [bump-version-generate-changelog, build-test-package]
     uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
     with:
@@ -184,7 +190,7 @@ jobs:
 
   pypi-release:
     name: PyPI Release
-    if: ${{ !failure() && !cancelled() }}
+    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
     needs: [bump-version-generate-changelog, build-test-package]
     uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@main
     with:
@@ -196,7 +202,10 @@ jobs:
 
   docker-release:
     name: "Docker Release"
-    if: ${{ !failure() && !cancelled() }}
+    # We cannot release to docker on a test run because it uses the tag in GitHub as
+    # what we need to release but draft releases don't actually tag the commit so it
+    # finds nothing to release
+    if: ${{ !failure() && !cancelled() && (!inputs.test_run || inputs.only_docker) }}
     needs: [bump-version-generate-changelog, build-test-package, github-release]
     permissions:
       packages: write
