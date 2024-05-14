@@ -18,14 +18,14 @@ from dbt.adapters.snowflake.relation_configs import (
 
 @dataclass(frozen=True, eq=False, repr=False)
 class SnowflakeRelation(BaseRelation):
-    type: Optional[SnowflakeRelationType] = None  # type: ignore
+    type: Optional[SnowflakeRelationType] = None
     quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
-
+    require_alias: bool = False
     renameable_relations: FrozenSet[SnowflakeRelationType] = field(
         default_factory=lambda: frozenset(
             {
-                SnowflakeRelationType.Table,
-                SnowflakeRelationType.View,
+                SnowflakeRelationType.Table,  # type: ignore
+                SnowflakeRelationType.View,  # type: ignore
             }
         )
     )
@@ -33,9 +33,9 @@ class SnowflakeRelation(BaseRelation):
     replaceable_relations: FrozenSet[SnowflakeRelationType] = field(
         default_factory=lambda: frozenset(
             {
-                SnowflakeRelationType.DynamicTable,
-                SnowflakeRelationType.Table,
-                SnowflakeRelationType.View,
+                SnowflakeRelationType.DynamicTable,  # type: ignore
+                SnowflakeRelationType.Table,  # type: ignore
+                SnowflakeRelationType.View,  # type: ignore
             }
         )
     )

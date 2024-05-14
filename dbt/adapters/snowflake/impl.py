@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, TYPE_CHECKING
 
 
-from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
-from dbt.adapters.sql import SQLAdapter  # type: ignore
+from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
@@ -55,6 +55,7 @@ class SnowflakeAdapter(SQLAdapter):
         {
             Capability.SchemaMetadataByRelations: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
+            Capability.TableLastModifiedMetadataBatch: CapabilitySupport(support=Support.Full),
         }
     )
 
@@ -130,7 +131,9 @@ class SnowflakeAdapter(SQLAdapter):
             else:
                 raise
 
-    def list_relations_without_caching(self, schema_relation: SnowflakeRelation) -> List[SnowflakeRelation]:  # type: ignore
+    def list_relations_without_caching(
+        self, schema_relation: SnowflakeRelation
+    ) -> List[SnowflakeRelation]:
         kwargs = {"schema_relation": schema_relation}
         try:
             results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
@@ -146,7 +149,7 @@ class SnowflakeAdapter(SQLAdapter):
         quote_policy = {"database": True, "schema": True, "identifier": True}
 
         columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):  # type: ignore
+        for _database, _schema, _identifier, _type in results.select(columns):
             try:
                 _type = self.Relation.get_relation_type(_type.lower())
             except ValueError:
@@ -207,6 +210,10 @@ class SnowflakeAdapter(SQLAdapter):
 
         packages = parsed_model["config"].get("packages", [])
         imports = parsed_model["config"].get("imports", [])
+        external_access_integrations = parsed_model["config"].get(
+            "external_access_integrations", []
+        )
+        secrets = parsed_model["config"].get("secrets", {})
         # adding default packages we need to make python model work
         default_packages = ["snowflake-snowpark-python"]
         package_names = [package.split("==")[0] for package in packages]
@@ -215,9 +222,18 @@ class SnowflakeAdapter(SQLAdapter):
                 packages.append(default_package)
         packages = "', '".join(packages)
         imports = "', '".join(imports)
-        # we can't pass empty imports clause to snowflake
+        external_access_integrations = ", ".join(external_access_integrations)
+        secrets = ", ".join(f"'{key}' = {value}" for key, value in secrets.items())
+
+        # we can't pass empty imports, external_access_integrations or secrets clause to snowflake
         if imports:
             imports = f"IMPORTS = ('{imports}')"
+        if external_access_integrations:
+            # Black is trying to make this a tuple.
+            # fmt: off
+            external_access_integrations = f"EXTERNAL_ACCESS_INTEGRATIONS = ({external_access_integrations})"
+        if secrets:
+            secrets = f"SECRETS = ({secrets})"
 
         if self.config.args.SEND_ANONYMOUS_USAGE_STATS:
             snowpark_telemetry_string = "dbtLabs_dbtPython"
@@ -232,6 +248,8 @@ RETURNS STRING
 LANGUAGE PYTHON
 RUNTIME_VERSION = '{python_version}'
 PACKAGES = ('{packages}')
+{external_access_integrations}
+{secrets}
 {imports}
 HANDLER = 'main'
 EXECUTE AS CALLER
