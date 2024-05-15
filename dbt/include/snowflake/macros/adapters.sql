@@ -73,7 +73,7 @@
   {% for _ in range(0, max_iter) %}
 
       {%- set paginated_sql -%}
-         show terse objects in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
+        {{ snowflake__get_show_objects_sql(schema_relation, max_results_per_iter) }} from '{{ watermark.table_name }}'
       {%- endset -%}
 
       {%- set paginated_result = run_query(paginated_sql) %}
@@ -119,12 +119,16 @@
 
 {% endmacro %}
 
+{% macro snowflake__get_show_objects_sql(schema, results_per_iteration) %}
+    show objects in {{ schema.database }}.{{ schema.schema }} limit {{ results_per_iteration }}
+{% endmacro %}
+
 {% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
 
   {%- set max_total_results = max_results_per_iter * max_iter -%}
 
   {%- set sql -%}
-    show terse objects in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }}
+    {{ snowflake__get_show_objects_sql(schema_relation, max_results_per_iter) }}
   {%- endset -%}
 
   {%- set result = run_query(sql) -%}
