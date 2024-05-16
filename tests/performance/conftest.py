@@ -2,8 +2,6 @@ import os
 
 import pytest
 
-my_check = os.environ.get("DBT_PERFORMANCE_TESTING", 0)
-
 
 def _get_setting(environment_variable: str) -> bool:
     raw_value = os.environ.get(environment_variable, False)
