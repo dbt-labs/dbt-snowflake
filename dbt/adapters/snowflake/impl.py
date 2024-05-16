@@ -146,21 +146,40 @@ class SnowflakeAdapter(SQLAdapter):
         relations = []
         quote_policy = {"database": True, "schema": True, "identifier": True}
 
-        columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):
-            try:
-                _type = self.Relation.get_relation_type(_type.lower())
-            except ValueError:
-                _type = self.Relation.External
-            relations.append(
-                self.Relation.create(
-                    database=_database,
-                    schema=_schema,
-                    identifier=_identifier,
-                    quote_policy=quote_policy,
-                    type=_type,
+        if "is_dynamic" in results.column_names:
+            columns = ["database_name", "schema_name", "name", "kind", "is_dynamic"]
+            for _database, _schema, _identifier, _type, is_dynamic in results.select(columns):
+                try:
+                    _type = self.Relation.get_relation_type(_type.lower())
+                    if _type == self.Relation.Table and is_dynamic == "Y":
+                        _type = self.Relation.DynamicTable
+                except ValueError:
+                    _type = self.Relation.External
+                relations.append(
+                    self.Relation.create(
+                        database=_database,
+                        schema=_schema,
+                        identifier=_identifier,
+                        quote_policy=quote_policy,
+                        type=_type,
+                    )
                 )
-            )
+        else:
+            columns = ["database_name", "schema_name", "name", "kind"]
+            for _database, _schema, _identifier, _type in results.select(columns):
+                try:
+                    _type = self.Relation.get_relation_type(_type.lower())
+                except ValueError:
+                    _type = self.Relation.External
+                relations.append(
+                    self.Relation.create(
+                        database=_database,
+                        schema=_schema,
+                        identifier=_identifier,
+                        quote_policy=quote_policy,
+                        type=_type,
+                    )
+                )
 
         return relations
 
