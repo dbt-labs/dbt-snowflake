@@ -13,7 +13,7 @@ from dbt.tests.util import run_dbt, get_connection
 from tests.performance.conftest import performance_test
 
 
-MY_SEED = """
+SEED = """
 id,value
 0,red
 1,yellow
@@ -60,7 +60,7 @@ class BaseConfig:
 
     @pytest.fixture(scope="class")
     def seeds(self):
-        yield {"my_seed.csv": MY_SEED}
+        yield {"my_seed.csv": SEED}
 
     @pytest.fixture(scope="class")
     def models(self):
