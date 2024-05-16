@@ -147,22 +147,39 @@ class SnowflakeAdapter(SQLAdapter):
         quote_policy = {"database": True, "schema": True, "identifier": True}
 
         columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):
-            try:
-                _type = self.Relation.get_relation_type(_type.lower())
-            except ValueError:
-                _type = self.Relation.External
+        if "is_dynamic" in results.column_names:
+            columns.append("is_dynamic")
+
+        for result in results.select(columns):
+            database, schema, identifier, relation_type = self._parse_list_relations_result(result)
             relations.append(
                 self.Relation.create(
-                    database=_database,
-                    schema=_schema,
-                    identifier=_identifier,
+                    database=database,
+                    schema=schema,
+                    identifier=identifier,
+                    type=relation_type,
                     quote_policy=quote_policy,
-                    type=_type,
                 )
             )
 
         return relations
+
+    def _parse_list_relations_result(self, result: agate.Row) -> Tuple[str, str, str, str]:
+        try:
+            database, schema, identifier, relation_type, is_dynamic = result
+        except ValueError:
+            database, schema, identifier, relation_type = result
+            is_dynamic = "N"
+
+        try:
+            relation_type = self.Relation.get_relation_type(relation_type.lower())
+        except ValueError:
+            relation_type = self.Relation.External
+
+        if relation_type == self.Relation.Table and is_dynamic == "Y":
+            relation_type = self.Relation.DynamicTable
+
+        return database, schema, identifier, relation_type
 
     def quote_seed_column(self, column: str, quote_config: Optional[bool]) -> str:
         quote_columns: bool = False
