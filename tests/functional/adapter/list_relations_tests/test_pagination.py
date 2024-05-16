@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 import json
@@ -5,15 +7,16 @@ from dbt.tests.util import run_dbt, run_dbt_and_capture
 
 # Testing rationale:
 # - snowflake SHOW TERSE OBJECTS command returns at max 10K objects in a single call
-# - when dbt attempts to write into a scehma with more than 10K objects, compilation will fail
+# - when dbt attempts to write into a schema with more than 10K objects, compilation will fail
 #   unless we paginate the result
 # - however, testing this process is difficult at a full scale of 10K actual objects populated
 #   into a fresh testing schema
 # - accordingly, we create a smaller set of views and test the looping iteration logic in
 #   smaller chunks
 
-NUM_VIEWS = 100
-NUM_EXPECTED_RELATIONS = 1 + NUM_VIEWS
+NUM_VIEWS = 90
+NUM_DYNAMIC_TABLES = 10
+NUM_EXPECTED_RELATIONS = 1 + NUM_VIEWS + NUM_DYNAMIC_TABLES
 
 TABLE_BASE_SQL = """
 {{ config(materialized='table') }}
@@ -24,6 +27,20 @@ select 1 as id
 VIEW_X_SQL = """
 select id from {{ ref('my_model_base') }}
 """.lstrip()
+
+DYNAMIC_TABLE = (
+    """
+{{ config(
+    materialized='dynamic_table',
+    target_lag='1 hour',
+    snowflake_warehouse='"""
+    + os.getenv("SNOWFLAKE_TEST_WAREHOUSE")
+    + """',
+) }}
+
+select id from {{ ref('my_model_base') }}
+"""
+)
 
 MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING = """
 {% macro validate_list_relations_without_caching(schema_relation) %}
@@ -81,7 +98,8 @@ class TestListRelationsWithoutCachingSingle:
         my_models = {"my_model_base.sql": TABLE_BASE_SQL}
         for view in range(0, NUM_VIEWS):
             my_models.update({f"my_model_{view}.sql": VIEW_X_SQL})
-
+        for dynamic_table in range(0, NUM_DYNAMIC_TABLES):
+            my_models.update({f"my_dynamic_table_{dynamic_table}.sql": DYNAMIC_TABLE})
         return my_models
 
     @pytest.fixture(scope="class")
@@ -126,7 +144,8 @@ class TestListRelationsWithoutCachingFull:
         my_models = {"my_model_base.sql": TABLE_BASE_SQL}
         for view in range(0, NUM_VIEWS):
             my_models.update({f"my_model_{view}.sql": VIEW_X_SQL})
-
+        for dynamic_table in range(0, NUM_DYNAMIC_TABLES):
+            my_models.update({f"my_dynamic_table_{dynamic_table}.sql": DYNAMIC_TABLE})
         return my_models
 
     @pytest.fixture(scope="class")
