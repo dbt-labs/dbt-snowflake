@@ -1,0 +1,6 @@
+kind: Fixes
+body: Allow enabling/disabling stats collection on catalog table using env var
+time: 2024-05-16T22:41:34.256095+01:00
+custom:
+    Author: aranke
+    Issue: "1048"

@@ -37,6 +37,8 @@
 
 
 {% macro snowflake__get_catalog_tables_sql(information_schema) -%}
+    {%- set enable_stats = env_var('DBT_CATALOG_TABLE_ENABLE_STATS', 'true') == 'true' -%}
+
     select
         table_catalog as "table_database",
         table_schema as "table_schema",
@@ -46,11 +48,10 @@
             else table_type
         end as "table_type",
         comment as "table_comment",
+        table_owner as "table_owner"
 
-        -- note: this is the _role_ that owns the table
-        table_owner as "table_owner",
-
-        'Clustering Key' as "stats:clustering_key:label",
+        {%- if enable_stats %}
+        ,'Clustering Key' as "stats:clustering_key:label",
         clustering_key as "stats:clustering_key:value",
         'The key used to cluster this table' as "stats:clustering_key:description",
         (clustering_key is not null) as "stats:clustering_key:include",
@@ -69,6 +70,8 @@
         to_varchar(convert_timezone('UTC', last_altered), 'yyyy-mm-dd HH24:MI'||'UTC') as "stats:last_modified:value",
         'The timestamp for last update/change' as "stats:last_modified:description",
         (last_altered is not null and table_type='BASE TABLE') as "stats:last_modified:include"
+        {%- endif %}
+
     from {{ information_schema }}.tables
 {%- endmacro %}
 
