@@ -1,22 +1,20 @@
-{% macro snowflake__create_external_table(source_node) %}
+{% macro snowflake__create_external_table(relation, compiled_code) %}
 
-    {%- set columns = source_node.columns.values() -%}
-    {%- set external = source_node.external -%}
-    {%- set partitions = external.partitions -%}
+    {# {%- set columns = source_node.columns.values() -%} #}
 
-    {# {{ log('XXX: columns: ' ~ columns, info=True) }}
+    {# {%- set external = source_node.external -%} #}
+    {% set file_format = config.get('file_format') %}
+    {% set location = config.get('location') %}
+
+    {# {%- set partitions = external.partitions -%} #}
+
+    {{ log('XXX: columns: ' ~ columns, info=True) }}
     {{ log('XXX: partitions: ' ~ columns, info=True) }}
     {% set partition_map = partitions|map(attribute='name')|join(', ') %}
-    {{ log('XXX: partition_map: ' ~ partition_map, info=True) }} #}
+    {{ log('XXX: partition_map: ' ~ partition_map, info=True) }}
 
+    {%- set is_csv = is_csv(file_format) -%}
 
-
-
-    {%- set is_csv = dbt_external_tables.is_csv(external.file_format) -%}
-
-  {%- set relation = api.Relation.create(
-      database=source_node.database, schema=source_node.schema, identifier=source_node.name,
-      type='external_table') -%}
 
 {# https://docs.snowflake.net/manuals/sql-reference/sql/create-external-table.html #}
 {# This assumes you have already created an external stage #}
@@ -36,8 +34,8 @@
     {% endfor %}
 
     )
-    location = {{external.location}} {# stage #}
+    location = {{location}} {# stage #}
 
-    file_format = {{external.file_format}}
+    file_format = {{file_format}}
 
 {% endmacro %}
