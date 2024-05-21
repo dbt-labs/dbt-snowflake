@@ -1,15 +1,11 @@
-{% macro snowflake__create_external_table(relation, compiled_code) %}
+{% macro snowflake__create_external_table(relation, columns) %}
 
-    {# {%- set columns = source_node.columns.values() -%} #}
-
-    {# {%- set external = source_node.external -%} #}
     {% set file_format = config.get('file_format') %}
     {% set location = config.get('location') %}
 
     {# {%- set partitions = external.partitions -%} #}
 
     {{ log('XXX: columns: ' ~ columns, info=True) }}
-    {{ log('XXX: partitions: ' ~ columns, info=True) }}
     {% set partition_map = partitions|map(attribute='name')|join(', ') %}
     {{ log('XXX: partition_map: ' ~ partition_map, info=True) }}
 
