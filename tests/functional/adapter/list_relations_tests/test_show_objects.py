@@ -73,7 +73,7 @@ class TestShowObjects:
             database=project.database, schema=project.test_schema, identifier=""
         )
         with get_connection(my_adapter):
-            relations = my_adapter.list_relations_without_caching(schema)
+            relations = my_adapter.list_relations_without_caching(schema.without_identifier())
         return relations
 
     def test_list_relations_without_caching(self, project):
