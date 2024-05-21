@@ -16,6 +16,9 @@ from dbt.tests.util import run_dbt, run_dbt_and_capture
 
 NUM_VIEWS = 90
 NUM_DYNAMIC_TABLES = 10
+# the total number should be between the numbers referenced in the "passing" and "failing" macros below
+# - MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING (11 iter * 10 results per iter -> 110 objects)
+# - MACROS__VALIDATE__SNOWFLAKE__LIST_RELATIONS_WITHOUT_CACHING_RAISE_ERROR (33 iter * 3 results per iter -> 99 objects)
 NUM_EXPECTED_RELATIONS = 1 + NUM_VIEWS + NUM_DYNAMIC_TABLES
 
 TABLE_BASE_SQL = """
