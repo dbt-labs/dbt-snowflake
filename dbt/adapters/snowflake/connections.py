@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
 from time import sleep
-from typing import Optional, Tuple, Union, Any, List
+from typing import Any, List, Iterable, Optional, Tuple, Union
 
 import agate
 from dbt_common.clients.agate_helper import empty_table
@@ -443,25 +443,28 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         split_query = snowflake.connector.util_text.split_statements(sql_buf)
         return [part[0] for part in split_query]
 
-    @classmethod
-    def process_results(cls, column_names, rows):
-        # Override for Snowflake. The datetime objects returned by
-        # snowflake-connector-python are not pickleable, so we need
-        # to replace them with sane timezones
-        fixed = []
+    @staticmethod
+    def _fix_rows(rows: Iterable[Iterable]) -> Iterable[Iterable]:
+        # See note in process_results().
         for row in rows:
             fixed_row = []
             for col in row:
                 if isinstance(col, datetime.datetime) and col.tzinfo:
                     offset = col.utcoffset()
+                    assert offset is not None
                     offset_seconds = offset.total_seconds()
-                    new_timezone = pytz.FixedOffset(offset_seconds // 60)
+                    new_timezone = pytz.FixedOffset(int(offset_seconds // 60))
                     col = col.astimezone(tz=new_timezone)
                 fixed_row.append(col)
 
-            fixed.append(fixed_row)
+            yield fixed_row
 
-        return super().process_results(column_names, fixed)
+    @classmethod
+    def process_results(cls, column_names, rows):
+        # Override for Snowflake. The datetime objects returned by
+        # snowflake-connector-python are not pickleable, so we need
+        # to replace them with sane timezones.
+        return super().process_results(column_names, cls._fix_rows(rows))
 
     def execute(
         self, sql: str, auto_begin: bool = False, fetch: bool = False, limit: Optional[int] = None

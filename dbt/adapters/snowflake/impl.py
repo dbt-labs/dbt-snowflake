@@ -143,26 +143,37 @@ class SnowflakeAdapter(SQLAdapter):
                 return []
             raise
 
-        relations = []
-        quote_policy = {"database": True, "schema": True, "identifier": True}
-
+        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
         columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):
-            try:
-                _type = self.Relation.get_relation_type(_type.lower())
-            except ValueError:
-                _type = self.Relation.External
-            relations.append(
-                self.Relation.create(
-                    database=_database,
-                    schema=_schema,
-                    identifier=_identifier,
-                    quote_policy=quote_policy,
-                    type=_type,
-                )
-            )
+        if "is_dynamic" in results.column_names:
+            columns.append("is_dynamic")
 
-        return relations
+        return [self._parse_list_relations_result(result) for result in results.select(columns)]
+
+    def _parse_list_relations_result(self, result: agate.Row) -> SnowflakeRelation:
+        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
+        try:
+            database, schema, identifier, relation_type, is_dynamic = result
+        except ValueError:
+            database, schema, identifier, relation_type = result
+            is_dynamic = "N"
+
+        try:
+            relation_type = self.Relation.get_relation_type(relation_type.lower())
+        except ValueError:
+            relation_type = self.Relation.External
+
+        if relation_type == self.Relation.Table and is_dynamic == "Y":
+            relation_type = self.Relation.DynamicTable
+
+        quote_policy = {"database": True, "schema": True, "identifier": True}
+        return self.Relation.create(
+            database=database,
+            schema=schema,
+            identifier=identifier,
+            type=relation_type,
+            quote_policy=quote_policy,
+        )
 
     def quote_seed_column(self, column: str, quote_config: Optional[bool]) -> str:
         quote_columns: bool = False
