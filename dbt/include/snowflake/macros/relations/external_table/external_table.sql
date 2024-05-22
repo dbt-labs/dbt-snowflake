@@ -2,12 +2,8 @@
 
     {% set file_format = config.get('file_format') %}
     {% set location = config.get('location') %}
-
-    {# {%- set partitions = external.partitions -%} #}
-
-    {{ log('XXX: columns: ' ~ columns, info=True) }}
+    {% set partitions = config.get('partitions') %}
     {% set partition_map = partitions|map(attribute='name')|join(', ') %}
-    {{ log('XXX: partition_map: ' ~ partition_map, info=True) }}
 
     {%- set is_csv = is_csv(file_format) -%}
 
@@ -19,7 +15,6 @@
     (
 
     {%- for column in columns %}
-        {{ log('column: ' ~ column.name, info=True) }}
         {%- set column_alias = column.name %}
         {%- set col_expression -%}
                 {%- set col_id = 'value:c' ~ loop.index if is_csv else 'value:' ~ column_alias -%}
