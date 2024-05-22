@@ -1,52 +1,22 @@
-{% macro snowflake__create_external_schema(source_node) %}
+{% macro snowflake__refresh_external_table(relation) %}
 
-    {% set schema_exists_query %}
-        show terse schemas like '{{ source_node.schema }}' in database {{ source_node.database }} limit 1;
-    {% endset %}
-    {% if execute %}
-        {% set schema_exists = run_query(schema_exists_query)|length > 0 %}
-    {% else %}
-        {% set schema_exists = false %}
-    {% endif %}
+    {% set snowpipe = config.get('snowpipe', none) %}
 
-    {% if schema_exists %}
-        {% set ddl %}
-            select 'Schema {{ source_node.schema }} exists' from dual;
-        {% endset %}
-    {% else %}
-        {% set fqn %}
-            {% if source_node.database %}
-                {{ source_node.database }}.{{ source_node.schema }}
-            {% else %}
-                {{ source_node.schema }}
-            {% endif %}
-        {% endset %}
-
-        {% set ddl %}
-            create schema if not exists {{ fqn }};
-        {% endset %}
-    {% endif %}
-
-    {% do return(ddl) %}
-
-{% endmacro %}
-
-{% macro snowflake__refresh_external_table(source_node) %}
-
-    {% set external = source_node.external %}
-    {% set snowpipe = source_node.external.get('snowpipe', none) %}
-
-    {% set auto_refresh = external.get('auto_refresh', false) %}
-    {% set partitions = external.get('partitions', none) %}
-    {% set delta_format = (external.table_format | lower == "delta") %}
-
+    {% set auto_refresh = config.get('auto_refresh', false) %}
     {% set manual_refresh = not auto_refresh %}
+
+    {% set partitions = config.get('partitions', none) %}
+
+    {% set table_format = config.get('table_format', none) %}
+    {% if table_format %}
+        {% set is_delta = table_format | lower == "delta" %}
+    {% endif %}
 
     {% if manual_refresh %}
 
         {% set ddl %}
         begin;
-        alter external table {{source(source_node.source_name, source_node.name)}} refresh;
+        alter external table {{ relation }} refresh;
         commit;
         {% endset %}
 
