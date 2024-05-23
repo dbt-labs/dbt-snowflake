@@ -1,15 +1,31 @@
 {% macro snowflake__create_external_table(relation, columns) %}
 
+    {% set snowpipe = config.get('snowpipe') %}
+
+    {% if snowpipe %}
+
+        {{ snowflake_get_build_snowpipe_sql(relation) }}
+
+    {% else %}
+
+        {{ get_create_external_table_sql(relation, columns) }}
+
+    {% endif %}
+
+{# https://docs.snowflake.net/manuals/sql-reference/sql/create-external-table.html #}
+{# This assumes you have already created an external stage #}
+
+
+{% endmacro %}
+
+{% macro get_create_external_table_sql(relation, columns) %}
+
     {% set file_format = config.get('file_format') %}
     {% set location = config.get('location') %}
     {% set partitions = config.get('partitions') %}
     {% set partition_map = partitions|map(attribute='name')|join(', ') %}
 
     {%- set is_csv = is_csv(file_format) -%}
-
-
-{# https://docs.snowflake.net/manuals/sql-reference/sql/create-external-table.html #}
-{# This assumes you have already created an external stage #}
 
     create or replace external table {{ relation }}
     {%- if columns or partitions or infer_schema -%}

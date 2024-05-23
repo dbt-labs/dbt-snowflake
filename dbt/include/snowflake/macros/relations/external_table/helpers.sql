@@ -1,7 +1,5 @@
 {% macro snowflake__refresh_external_table(relation) %}
 
-    {% set snowpipe = config.get('snowpipe', none) %}
-
     {% set auto_refresh = config.get('auto_refresh', false) %}
     {% set manual_refresh = not auto_refresh %}
 
