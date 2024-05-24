@@ -8,3 +8,12 @@ terraform {
     }
   }
 }
+
+provider "snowflake" {
+  alias = "security_admin"
+  role  = "SECURITYADMIN"
+  # SNOWFLAKE_ACCOUNT
+  # SNOWFLAKE_USER
+  # SNOWFLAKE_AUTHENTICATOR
+  # SNOWFLAKE_PRIVATE_KEY
+}
