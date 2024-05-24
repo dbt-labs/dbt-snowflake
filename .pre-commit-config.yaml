@@ -55,3 +55,11 @@ repos:
         additional_dependencies:
         -   types-pytz
         -   types-requests
+
+-   repo: local
+    hooks:
+    -   id: terraform-lint
+        name: terraform-lint
+        entry: bash -c 'cd infra && terraform fmt && terraform validate'
+        language: system
+        pass_filenames: false
