@@ -4,7 +4,7 @@
 
     {% if snowpipe %}
 
-        {{ snowflake_get_build_snowpipe_sql(relation) }}
+        {{ snowflake_get_build_snowpipe_sql(relation, columns) }}
 
     {% else %}
 

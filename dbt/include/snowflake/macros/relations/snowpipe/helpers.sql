@@ -1,6 +1,4 @@
-{% macro snowflake_create_empty_table(relation) %}
-
-    {%- set columns = relation.columns.values() %}
+{% macro snowflake_create_empty_table(relation, columns) %}
 
     create or replace table {{ relation }} (
         {% if columns|length == 0 %}
@@ -18,10 +16,8 @@
 
 {% endmacro %}
 
-{% macro snowflake_get_copy_sql(relation, explicit_transaction=false) %}
+{% macro snowflake_get_copy_sql(relation, columns, explicit_transaction=false) %}
 {# This assumes you have already created an external stage #}
-
-    {%- set columns = relation.columns.values() -%}
 
     {% set location = config.get('location') %}
     {% set file_format = config.get('file_format') %}
@@ -64,7 +60,7 @@
 {% endmacro %}
 
 
-{% macro snowflake_create_snowpipe(relation) %}
+{% macro snowflake_create_snowpipe(relation, columns) %}
 
     {% set snowpipe = config.get('snowpipe', none) %}
 
@@ -74,7 +70,7 @@
         {% if snowpipe.aws_sns_topic -%} aws_sns_topic = '{{snowpipe.aws_sns_topic}}' {%- endif %}
         {% if snowpipe.integration -%} integration = '{{snowpipe.integration}}' {%- endif %}
         {% if snowpipe.error_integration -%} error_integration = '{{snowpipe.error_integration}}' {%- endif %}
-        as {{ snowflake_get_copy_sql(relation) }}
+        as {{ snowflake_get_copy_sql(relation, columns) }}
 
 {% endmacro %}
 

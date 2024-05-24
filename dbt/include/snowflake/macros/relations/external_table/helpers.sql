@@ -10,11 +10,17 @@
         {% set is_delta = table_format | lower == "delta" %}
     {% endif %}
 
-    {% if manual_refresh %}
+    {# snowpipe as well #}
+    {% set snowpipe = config.get('snowpipe', none) %}
+    {% set auto_ingest = snowpipe.get('auto_ingest', false) if snowpipe is mapping %}
+
+    {% set relation_type = 'pipe' if snowpipe is not none else 'external table' %}
+
+    {% if manual_refresh or auto_ingest %}
 
         {% set ddl %}
         begin;
-        alter external table {{ relation }} refresh;
+        alter {{ relation_type }} {{ relation }} refresh;
         commit;
         {% endset %}
 

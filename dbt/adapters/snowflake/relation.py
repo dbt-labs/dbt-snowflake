@@ -48,6 +48,14 @@ class SnowflakeRelation(BaseRelation):
     def DynamicTable(cls) -> str:
         return str(SnowflakeRelationType.DynamicTable)
 
+    @property
+    def is_snowpipe(self) -> bool:
+        return self.type == SnowflakeRelationType.SnowPipe
+
+    @classproperty
+    def SnowPipe(cls) -> str:
+        return str(SnowflakeRelationType.SnowPipe)
+
     @classproperty
     def get_relation_type(cls) -> Type[SnowflakeRelationType]:
         return SnowflakeRelationType
