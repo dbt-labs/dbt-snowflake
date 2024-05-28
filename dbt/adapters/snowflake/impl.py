@@ -10,7 +10,9 @@ from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
+    GET_RELATION_METADATA_NAME,
 )
+from dbt.artifacts.schemas.catalog import TableMetadata, StatsDict, StatsItem
 
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
@@ -54,6 +56,7 @@ class SnowflakeAdapter(SQLAdapter):
             Capability.SchemaMetadataByRelations: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadataBatch: CapabilitySupport(support=Support.Full),
+            Capability.GetRelationMetadata: CapabilitySupport(support=Support.Full),
         }
     )
 
@@ -128,6 +131,67 @@ class SnowflakeAdapter(SQLAdapter):
                 return []
             else:
                 raise
+
+    def get_relation_metadata(
+        self, relation: SnowflakeRelation
+    ) -> Tuple[Optional[TableMetadata], StatsDict]:
+        kwargs = {"relation": relation}
+        try:
+            results = self.execute_macro(
+                GET_RELATION_METADATA_NAME, kwargs=kwargs, needs_conn=True
+            )
+        except DbtDatabaseError as exc:
+            # If we don't have permissions to the object, return empty
+            if "Object does not exist" in str(exc):
+                return None, {}
+
+        # If we don't get any results, return empty
+        if len(results) == 0:
+            return None, {}
+
+        row = results[0]
+
+        is_dynamic = row.get("is_dynamic")
+        kind = row.get("kind")
+
+        if is_dynamic == "YES" and kind == "BASE TABLE":
+            table_type = "DYNAMIC TABLE"
+        else:
+            table_type = kind
+
+        table_metadata = TableMetadata(
+            type=table_type,
+            schema=row.get("schema_name"),
+            name=row.get("name"),
+            database=row.get("database_name"),
+            comment=row.get("comment"),
+            owner=row.get("owner"),
+        )
+        stats_dict: StatsDict = {
+            "has_stats": StatsItem(
+                id="has_stats",
+                label="Has Stats?",
+                value=True,
+                include=False,
+                description="Indicates whether there are statistics for this table",
+            ),
+            "row_count": StatsItem(
+                id="row_count",
+                label="Row Count",
+                value=row.get("rows"),
+                include=True,
+                description="Number of rows in the table as reported by Snowflake",
+            ),
+            "bytes": StatsItem(
+                id="bytes",
+                label="Approximate Size",
+                value=row.get("bytes"),
+                include=True,
+                description="Size of the table as reported by Snowflake",
+            ),
+        }
+
+        return table_metadata, stats_dict
 
     def list_relations_without_caching(
         self, schema_relation: SnowflakeRelation
