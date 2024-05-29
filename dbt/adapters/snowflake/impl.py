@@ -12,7 +12,7 @@ from dbt.adapters.sql.impl import (
     LIST_RELATIONS_MACRO_NAME,
     GET_RELATION_METADATA_NAME,
 )
-from dbt_common.artifacts.schemas.catalog import TableMetadata, StatsDict, StatsItem
+from dbt_common.artifacts.catalog import TableMetadata, StatsDict, StatsItem
 
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
