@@ -1,8 +1,9 @@
 from contextlib import contextmanager
-from typing import List
+from typing import Tuple, Optional
 from unittest import mock
 
 from dbt.adapters.base import BaseAdapter, BaseRelation
+from dbt_common.contracts.metadata import TableMetadata, StatsDict
 
 
 def adapter_factory():
@@ -34,7 +35,9 @@ def adapter_factory():
         def get_columns_in_relation(self, *args, **kwargs):
             return self.responder.get_columns_in_relation(*args, **kwargs)
 
-        def get_relation_metadata(self, relation: BaseRelation) -> List[BaseRelation]:
+        def get_relation_metadata(
+            self, relation: BaseRelation
+        ) -> Tuple[Optional[TableMetadata], StatsDict]:
             return self.responder.get_relation_metadata(relation)
 
         def expand_column_types(self, *args, **kwargs):

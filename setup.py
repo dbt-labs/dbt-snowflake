@@ -57,7 +57,7 @@ setup(
     packages=find_namespace_packages(include=["dbt", "dbt.*"]),
     include_package_data=True,
     install_requires=[
-        "dbt-common>=1.0.4,<2.0",
+        "dbt-common>=1.2.0,<2.0",
         "dbt-adapters>=1.1.1,<2.0",
         "snowflake-connector-python[secure-local-storage]~=3.0",
         # add dbt-core to ensure backwards compatibility of installation, this is not a functional dependency
