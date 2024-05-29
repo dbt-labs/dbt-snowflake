@@ -2,8 +2,10 @@ from contextlib import contextmanager
 from typing import Tuple, Optional
 from unittest import mock
 
-from dbt.adapters.base import BaseAdapter, BaseRelation
+from dbt.adapters.base import BaseAdapter
 from dbt_common.contracts.metadata import TableMetadata, StatsDict
+
+from dbt.adapters.snowflake import SnowflakeRelation
 
 
 def adapter_factory():
@@ -36,7 +38,7 @@ def adapter_factory():
             return self.responder.get_columns_in_relation(*args, **kwargs)
 
         def get_relation_metadata(
-            self, relation: BaseRelation
+            self, relation: SnowflakeRelation
         ) -> Tuple[Optional[TableMetadata], StatsDict]:
             return self.responder.get_relation_metadata(relation)
 
