@@ -18,6 +18,7 @@ Implement at the `dbt-adapters` level in `get_rename_sql()`:
     Returns: templated string
     */
     {{- log('Applying RENAME to: ' ~ relation) -}}
+    ------------ CHANGE: added the line below ------------
     {% set new_name = relation.incorporate(path={"identifier": new_name}).render() if new_name is string else new_name.render() %}
     {{- adapter.dispatch('get_rename_sql', 'dbt')(relation, new_name) -}}
 {%- endmacro -%}

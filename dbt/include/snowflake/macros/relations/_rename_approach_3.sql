@@ -46,6 +46,7 @@ Implement at the `dbt-snowflake` level by overriding `default__get_rename_sql()`
 
 
 ------------------------------------------ dbt-snowflake ------------------------------------------
+------------ CHANGE: added the entire macro below ------------
 {%- macro snowflake__get_rename_sql(relation, new_name) -%}
     {% set new_name = relation.incorporate(path={"identifier": new_name}).render() if new_name is string else new_name.render() %}
     {{ default__get_rename_sql(relation, new_name) }}

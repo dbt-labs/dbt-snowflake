@@ -52,5 +52,6 @@ Implement at the `dbt-snowflake` level in `snowflake__get_rename_x_sql()`:
         new_name: str - new identifier for `relation`
     Returns: templated string
     */
+    ------------ CHANGE: updated the line below ------------
     alter view {{ relation }} rename to {{ relation.incorporate(path={"identifier": new_name}) }}
 {%- endmacro -%}
