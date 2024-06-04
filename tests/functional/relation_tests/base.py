@@ -23,11 +23,20 @@ select * from {{ ref('my_seed') }}
 """
 
 
-MACRO__GET_RENAME_SQL = """
-{% macro test__get_rename_sql(database, schema, identifier, relation_type, new_name) -%}
+MACRO__GET_CREATE_BACKUP_SQL = """
+{% macro test__get_create_backup_sql(database, schema, identifier, relation_type) -%}
     {%- set relation = adapter.Relation.create(database=database, schema=schema, identifier=identifier, type=relation_type) -%}
-    {% call statement('test__get_rename_sql') -%}
-        {{ get_rename_sql(relation, new_name) }}
+    {% call statement('test__get_create_backup_sql') -%}
+        {{ get_create_backup_sql(relation) }}
+    {%- endcall %}
+{% endmacro %}"""
+
+
+MACRO__GET_RENAME_INTERMEDIATE_SQL = """
+{% macro test__get_rename_intermediate_sql(database, schema, identifier, relation_type) -%}
+    {%- set relation = adapter.Relation.create(database=database, schema=schema, identifier=identifier, type=relation_type) -%}
+    {% call statement('test__get_rename_intermediate_sql') -%}
+        {{ get_rename_intermediate_sql(relation) }}
     {%- endcall %}
 {% endmacro %}"""
 
@@ -41,12 +50,17 @@ class RelationOperation:
     def models(self):
         yield {
             "my_table.sql": TABLE,
+            "my_table__dbt_tmp.sql": TABLE,
             "my_view.sql": VIEW,
+            "my_view__dbt_tmp.sql": VIEW,
         }
 
     @pytest.fixture(scope="class")
     def macros(self):
-        yield {"test__get_rename_sql.sql": MACRO__GET_RENAME_SQL}
+        yield {
+            "test__get_create_backup_sql.sql": MACRO__GET_CREATE_BACKUP_SQL,
+            "test__get_rename_intermediate_sql.sql": MACRO__GET_RENAME_INTERMEDIATE_SQL,
+        }
 
     @pytest.fixture(scope="class", autouse=True)
     def setup(self, project):
