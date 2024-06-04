@@ -102,17 +102,17 @@ class SnowflakeAdapter(SQLAdapter):
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:
         default_warehouse = self.config.credentials.warehouse
         warehouse = config.get("snowflake_warehouse", default_warehouse)
-        logger.info(f"Running pre_model_hook with config: {config}")
+        logger.info("Running pre_model_hook:")
         logger.info(f"Default warehouse: {default_warehouse}, Selected warehouse: {warehouse}")
         if warehouse == default_warehouse or warehouse is None:
             return None
         previous = self._get_warehouse()
         self._use_warehouse(warehouse)
-        logger.info(f"Changed warehouse from {previous} to {warehouse}")
+        logger.info(f"Changed wareho use from {previous} to {warehouse}")
         return previous
 
     def post_model_hook(self, config: Mapping[str, Any], context: Optional[str]) -> None:
-        logger.info(f"Running post_model_hook with config: {config} and context: {context}")
+        logger.info(f"Running post_model_hook with config, and context: {context}")
         if context is not None:
             self._use_warehouse(context)
             logger.info(f"Restored warehouse to {context}")
