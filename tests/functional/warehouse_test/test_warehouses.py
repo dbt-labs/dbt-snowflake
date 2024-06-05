@@ -3,35 +3,34 @@ from dbt.tests.util import run_dbt, check_relations_equal
 
 import os
 
-
 models__override_warehouse_sql = """
 {{ config(snowflake_warehouse=env_var('SNOWFLAKE_TEST_ALT_WAREHOUSE', 'DBT_TEST_ALT'), materialized='table') }}
 select current_warehouse() as warehouse
-
 """
 
 models__expected_warehouse_sql = """
 {{ config(materialized='table') }}
 select '{{ env_var("SNOWFLAKE_TEST_ALT_WAREHOUSE", "DBT_TEST_ALT") }}' as warehouse
-
 """
 
 models__invalid_warehouse_sql = """
 {{ config(snowflake_warehouse='DBT_TEST_DOES_NOT_EXIST') }}
 select current_warehouse() as warehouse
-
 """
 
 project_config_models__override_warehouse_sql = """
 {{ config(materialized='table') }}
 select current_warehouse() as warehouse
-
 """
 
 project_config_models__expected_warehouse_sql = """
 {{ config(materialized='table') }}
 select '{{ env_var("SNOWFLAKE_TEST_ALT_WAREHOUSE", "DBT_TEST_ALT") }}' as warehouse
+"""
 
+project_config_models__invalid_warehouse_sql = """
+{{ config(materialized='table') }}
+select current_warehouse() as warehouse
 """
 
 
@@ -90,3 +89,25 @@ class TestConfigWarehouse:
             ]
         )
         check_relations_equal(project.adapter, ["OVERRIDE_WAREHOUSE", "EXPECTED_WAREHOUSE"])
+
+
+class TestInvalidConfigWarehouse:
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "invalid_warehouse.sql": project_config_models__invalid_warehouse_sql,
+        }
+
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "config-version": 2,
+            "models": {
+                "test": {
+                    "snowflake_warehouse": "DBT_TEST_DOES_NOT_EXIST",
+                },
+            },
+        }
+
+    def test_snowflake_override_invalid(self, project):
+        run_dbt(["run", "--models", "invalid_warehouse"], expect_pass=False)
