@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple
 
 import agate
+from dbt.adapters.base import BaseRelation
 
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
@@ -10,9 +11,9 @@ from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
-    GET_RELATION_METADATA_NAME,
+    GET_CATALOG_FOR_SINGLE_RELATION_NAME,
 )
-from dbt_common.contracts.metadata import TableMetadata, StatsDict, StatsItem
+from dbt_common.contracts.metadata import TableMetadata, StatsDict, StatsItem, CatalogTable
 
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
@@ -56,7 +57,7 @@ class SnowflakeAdapter(SQLAdapter):
             Capability.SchemaMetadataByRelations: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadataBatch: CapabilitySupport(support=Support.Full),
-            Capability.GetRelationMetadata: CapabilitySupport(support=Support.Full),
+            Capability.GetCatalogForSingleRelation: CapabilitySupport(support=Support.Full),
         }
     )
 
@@ -132,13 +133,19 @@ class SnowflakeAdapter(SQLAdapter):
             else:
                 raise
 
+    def get_catalog_for_single_relation(self, relation: BaseRelation) -> Optional[CatalogTable]:
+        kwargs = {"relation": relation}
+        return self.execute_macro(
+            GET_CATALOG_FOR_SINGLE_RELATION_NAME, kwargs=kwargs, needs_conn=True
+        )
+
     def get_relation_metadata(
         self, relation: SnowflakeRelation
     ) -> Tuple[Optional[TableMetadata], StatsDict]:
         kwargs = {"relation": relation}
         try:
             results = self.execute_macro(
-                GET_RELATION_METADATA_NAME, kwargs=kwargs, needs_conn=True
+                GET_CATALOG_FOR_SINGLE_RELATION_NAME, kwargs=kwargs, needs_conn=True
             )
         except DbtDatabaseError as exc:
             # If we don't have permissions to the object, return empty

@@ -5,6 +5,9 @@ from dbt.tests.adapter.basic.test_singular_tests import BaseSingularTests
 from dbt.tests.adapter.basic.test_singular_tests_ephemeral import (
     BaseSingularTestsEphemeral,
 )
+from dbt.tests.adapter.basic.test_get_catalog_for_single_relation import (
+    BaseGetCatalogForSingleRelation,
+)
 from dbt.tests.adapter.basic.test_empty import BaseEmpty
 from dbt.tests.adapter.basic.test_ephemeral import BaseEphemeral
 from dbt.tests.adapter.basic.test_incremental import BaseIncremental
@@ -22,6 +25,10 @@ class TestSimpleMaterializationsSnowflake(BaseSimpleMaterializations):
 
 
 class TestSingularTestsSnowflake(BaseSingularTests):
+    pass
+
+
+class TestGetCatalogForSingleRelationSnowflake(BaseGetCatalogForSingleRelation):
     pass
 
 
