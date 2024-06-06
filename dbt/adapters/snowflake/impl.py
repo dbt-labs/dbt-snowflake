@@ -7,7 +7,6 @@ from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
 from dbt.adapters.sql import SQLAdapter
-from dbt.adapters.events.logging import AdapterLogger
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
@@ -19,8 +18,6 @@ from dbt.adapters.snowflake import SnowflakeColumn
 from dbt_common.contracts.constraints import ConstraintType
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
-
-logger = AdapterLogger("Snowflake")
 
 
 @dataclass
@@ -102,20 +99,15 @@ class SnowflakeAdapter(SQLAdapter):
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:
         default_warehouse = self.config.credentials.warehouse
         warehouse = config.get("snowflake_warehouse", default_warehouse)
-        logger.info("Running pre_model_hook:")
-        logger.info(f"Default warehouse: {default_warehouse}, Selected warehouse: {warehouse}")
         if warehouse == default_warehouse or warehouse is None:
             return None
         previous = self._get_warehouse()
         self._use_warehouse(warehouse)
-        logger.info(f"Changed wareho use from {previous} to {warehouse}")
         return previous
 
     def post_model_hook(self, config: Mapping[str, Any], context: Optional[str]) -> None:
-        logger.info(f"Running post_model_hook with config, and context: {context}")
         if context is not None:
             self._use_warehouse(context)
-            logger.info(f"Restored warehouse to {context}")
 
     def list_schemas(self, database: str) -> List[str]:
         try:

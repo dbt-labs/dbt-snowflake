@@ -110,4 +110,5 @@ class TestInvalidConfigWarehouse:
         }
 
     def test_snowflake_override_invalid(self, project):
-        run_dbt(["run", "--models", "invalid_warehouse"], expect_pass=False)
+        result = run_dbt(["run", "--models", "invalid_warehouse"], expect_pass=False)
+        assert "Object does not exist, or operation cannot be performed" in result[0].message
