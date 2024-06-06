@@ -124,10 +124,46 @@
   {%- set max_total_results = max_results_per_iter * max_iter -%}
 
   {%- set sql -%}
-    show objects in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }}
+    show objects in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }};
+
+    SELECT
+    "database_name",
+    "schema_name",
+    "name",
+    "kind",
+    "is_dynamic"
+    FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
   {%- endset -%}
 
   {%- set result = run_query(sql) -%}
+
+  {%- set sql_extab -%}
+    show external tables in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }};
+
+    SELECT
+    "database_name",
+    "schema_name",
+    "name",
+    'external_table' as "kind",
+    'N' as "is_dynamic"
+    FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+  {%- endset -%}
+
+  {%- set result_extab = run_query(sql_extab) -%}
+
+  {%- set sql_pipes -%}
+    show pipes in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }};
+
+    SELECT
+    "database_name",
+    "schema_name",
+    "name",
+    'snowpipe' as "kind",
+    'N' as "is_dynamic"
+    FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+  {%- endset -%}
+
+  {%- set result_pipes = run_query(sql_pipes) -%}
 
   {%- set n = (result | length) -%}
   {%- set watermark = namespace(table_name=result.columns[1].values()[-1]) -%}
@@ -147,8 +183,10 @@
   {% endif %}
 
   {%- set all_results_array = [result] + paginated.result -%}
-  {%- set result = result.merge(all_results_array) -%}
-  {%- do return(result) -%}
+
+  {%- set result_stacked = adapter.stack_tables([result, result_pipes, result_extab]) -%}
+
+  {%- do return(result_stacked) -%}
 
 {% endmacro %}
 

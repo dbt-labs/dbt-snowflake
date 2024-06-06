@@ -300,3 +300,20 @@ CALL {proc_name}();
     def debug_query(self):
         """Override for DebugTask method"""
         self.execute("select 1 as id")
+
+    @available.parse_none
+    def stack_tables(self, tables_list: List[agate.Table]) -> agate.Table:
+        """
+        Given a list of agate_tables with the same column names & types
+        return a single unioned agate table.
+        """
+        non_empty_tables = [table for table in tables_list if len(table.rows) > 0]
+
+        if len(non_empty_tables) == 0:
+            return tables_list[0]
+        else:
+            return (
+                agate.TableSet(non_empty_tables, keys=range(len(non_empty_tables)))
+                .merge()
+                .exclude(["group"])
+            )
