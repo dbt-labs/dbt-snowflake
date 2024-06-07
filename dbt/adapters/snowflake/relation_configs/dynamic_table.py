@@ -53,7 +53,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "comment": config_dict.get("comment"),
         }
 
-        dynamic_table: "SnowflakeDynamicTableConfig" = super().from_dict(kwargs_dict)  # type: ignore
+        dynamic_table: "SnowflakeDynamicTableConfig" = super().from_dict(kwargs_dict)
         return dynamic_table
 
     @classmethod
@@ -62,9 +62,9 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "name": relation_config.identifier,
             "schema_name": relation_config.schema,
             "database_name": relation_config.database,
-            "query": relation_config.compiled_code,  # type: ignore
-            "target_lag": relation_config.config.extra.get("target_lag"),  # type: ignore
-            "snowflake_warehouse": relation_config.config.extra.get("snowflake_warehouse"),  # type: ignore
+            "query": relation_config.compiled_code,
+            "target_lag": relation_config.config.extra.get("target_lag"),
+            "snowflake_warehouse": relation_config.config.extra.get("snowflake_warehouse"),
             "refresh_mode": relation_config.config.extra.get("refresh_mode"),  # type: ignore
             "initialize": relation_config.config.extra.get("initialize"),  # type: ignore
             "comment": relation_config.config.extra.get("comment"),  # type: ignore
@@ -119,9 +119,11 @@ class SnowflakeDynamicTableConfigChangeset:
         return any(
             [
                 self.target_lag.requires_full_refresh if self.target_lag else False,
-                self.snowflake_warehouse.requires_full_refresh
-                if self.snowflake_warehouse
-                else False,
+                (
+                    self.snowflake_warehouse.requires_full_refresh
+                    if self.snowflake_warehouse
+                    else False
+                ),
             ]
         )
 

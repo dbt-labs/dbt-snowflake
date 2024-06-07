@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
 from time import sleep
-from typing import Optional, Tuple, Union, Any, List
+from typing import Any, List, Iterable, Optional, Tuple, Union
 
 import agate
 from dbt_common.clients.agate_helper import empty_table
@@ -40,8 +40,8 @@ from dbt_common.exceptions import (
 from dbt_common.exceptions import DbtDatabaseError
 from dbt.adapters.exceptions.connection import FailedToConnectError
 from dbt.adapters.contracts.connection import AdapterResponse, Connection, Credentials
-from dbt.adapters.sql import SQLConnectionManager  # type: ignore
-from dbt.adapters.events.logging import AdapterLogger  # type: ignore
+from dbt.adapters.sql import SQLConnectionManager
+from dbt.adapters.events.logging import AdapterLogger
 from dbt_common.events.functions import warn_or_error
 from dbt.adapters.events.types import AdapterEventWarning
 from dbt_common.ui import line_wrap_message, warning_tag
@@ -105,6 +105,7 @@ class SnowflakeCredentials(Credentials):
                     base_msg="Authenticator is not set to oauth, but an oauth-only parameter is set! Did you mean to set authenticator: oauth?"
                 )
             )
+        self.account = self.account.replace("_", "-")
 
     @property
     def type(self):
@@ -125,8 +126,6 @@ class SnowflakeCredentials(Credentials):
             "role",
             "schema",
             "authenticator",
-            "private_key_path",
-            "token",
             "oauth_client_id",
             "query_tag",
             "client_session_keep_alive",
@@ -417,7 +416,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             rows_affected=cursor.rowcount,
             code=code,
             query_id=cursor.sfqid,
-        )  # type: ignore
+        )
 
     # disable transactional logic by default on Snowflake
     # except for DML statements where explicitly defined
@@ -445,25 +444,28 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         split_query = snowflake.connector.util_text.split_statements(sql_buf)
         return [part[0] for part in split_query]
 
-    @classmethod
-    def process_results(cls, column_names, rows):
-        # Override for Snowflake. The datetime objects returned by
-        # snowflake-connector-python are not pickleable, so we need
-        # to replace them with sane timezones
-        fixed = []
+    @staticmethod
+    def _fix_rows(rows: Iterable[Iterable]) -> Iterable[Iterable]:
+        # See note in process_results().
         for row in rows:
             fixed_row = []
             for col in row:
                 if isinstance(col, datetime.datetime) and col.tzinfo:
                     offset = col.utcoffset()
+                    assert offset is not None
                     offset_seconds = offset.total_seconds()
-                    new_timezone = pytz.FixedOffset(offset_seconds // 60)
+                    new_timezone = pytz.FixedOffset(int(offset_seconds // 60))
                     col = col.astimezone(tz=new_timezone)
                 fixed_row.append(col)
 
-            fixed.append(fixed_row)
+            yield fixed_row
 
-        return super().process_results(column_names, fixed)
+    @classmethod
+    def process_results(cls, column_names, rows):
+        # Override for Snowflake. The datetime objects returned by
+        # snowflake-connector-python are not pickleable, so we need
+        # to replace them with sane timezones.
+        return super().process_results(column_names, cls._fix_rows(rows))
 
     def execute(
         self, sql: str, auto_begin: bool = False, fetch: bool = False, limit: Optional[int] = None
@@ -489,7 +491,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         auto_begin: bool = True,
         bindings: Optional[Any] = None,
         abridge_sql_log: bool = False,
-    ) -> Tuple[Connection, Any]:  # type: ignore
+    ) -> Tuple[Connection, Any]:
         if bindings:
             # The snowflake connector is stricter than, e.g., psycopg2 -
             # which allows any iterable thing to be passed as a binding.
@@ -515,7 +517,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         if cursor is None:
             self._raise_cursor_not_found_error(sql)
 
-        return connection, cursor  # type: ignore
+        return connection, cursor
 
     def _stripped_queries(self, sql: str) -> List[str]:
         def strip_query(query):
@@ -582,7 +584,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         """Reuse connections by deferring release until adapter context manager in core
         resets adapters. This cleanup_all happens before Python teardown. Idle connections
         incur no costs while waiting in the connection pool."""
-        if self.profile.credentials.reuse_connections:  # type: ignore
+        if self.profile.credentials.reuse_connections:
             return
         super().release()
 

@@ -15,6 +15,5 @@
         as (
             {{ sql }}
         )
-    ;
 
 {%- endmacro %}

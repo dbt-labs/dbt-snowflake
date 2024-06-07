@@ -3,10 +3,10 @@ from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple
 
 import agate
 
-from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
-from dbt.adapters.sql import SQLAdapter  # type: ignore
+from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
@@ -53,6 +53,7 @@ class SnowflakeAdapter(SQLAdapter):
         {
             Capability.SchemaMetadataByRelations: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
+            Capability.TableLastModifiedMetadataBatch: CapabilitySupport(support=Support.Full),
         }
     )
 
@@ -128,7 +129,9 @@ class SnowflakeAdapter(SQLAdapter):
             else:
                 raise
 
-    def list_relations_without_caching(self, schema_relation: SnowflakeRelation) -> List[SnowflakeRelation]:  # type: ignore
+    def list_relations_without_caching(
+        self, schema_relation: SnowflakeRelation
+    ) -> List[SnowflakeRelation]:
         kwargs = {"schema_relation": schema_relation}
         try:
             results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
@@ -140,26 +143,37 @@ class SnowflakeAdapter(SQLAdapter):
                 return []
             raise
 
-        relations = []
-        quote_policy = {"database": True, "schema": True, "identifier": True}
-
+        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
         columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):  # type: ignore
-            try:
-                _type = self.Relation.get_relation_type(_type.lower())
-            except ValueError:
-                _type = self.Relation.External
-            relations.append(
-                self.Relation.create(
-                    database=_database,
-                    schema=_schema,
-                    identifier=_identifier,
-                    quote_policy=quote_policy,
-                    type=_type,
-                )
-            )
+        if "is_dynamic" in results.column_names:
+            columns.append("is_dynamic")
 
-        return relations
+        return [self._parse_list_relations_result(result) for result in results.select(columns)]
+
+    def _parse_list_relations_result(self, result: agate.Row) -> SnowflakeRelation:
+        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
+        try:
+            database, schema, identifier, relation_type, is_dynamic = result
+        except ValueError:
+            database, schema, identifier, relation_type = result
+            is_dynamic = "N"
+
+        try:
+            relation_type = self.Relation.get_relation_type(relation_type.lower())
+        except ValueError:
+            relation_type = self.Relation.External
+
+        if relation_type == self.Relation.Table and is_dynamic == "Y":
+            relation_type = self.Relation.DynamicTable
+
+        quote_policy = {"database": True, "schema": True, "identifier": True}
+        return self.Relation.create(
+            database=database,
+            schema=schema,
+            identifier=identifier,
+            type=relation_type,
+            quote_policy=quote_policy,
+        )
 
     def quote_seed_column(self, column: str, quote_config: Optional[bool]) -> str:
         quote_columns: bool = False
@@ -205,6 +219,10 @@ class SnowflakeAdapter(SQLAdapter):
 
         packages = parsed_model["config"].get("packages", [])
         imports = parsed_model["config"].get("imports", [])
+        external_access_integrations = parsed_model["config"].get(
+            "external_access_integrations", []
+        )
+        secrets = parsed_model["config"].get("secrets", {})
         # adding default packages we need to make python model work
         default_packages = ["snowflake-snowpark-python"]
         package_names = [package.split("==")[0] for package in packages]
@@ -213,20 +231,34 @@ class SnowflakeAdapter(SQLAdapter):
                 packages.append(default_package)
         packages = "', '".join(packages)
         imports = "', '".join(imports)
-        # we can't pass empty imports clause to snowflake
+        external_access_integrations = ", ".join(external_access_integrations)
+        secrets = ", ".join(f"'{key}' = {value}" for key, value in secrets.items())
+
+        # we can't pass empty imports, external_access_integrations or secrets clause to snowflake
         if imports:
             imports = f"IMPORTS = ('{imports}')"
+        if external_access_integrations:
+            # Black is trying to make this a tuple.
+            # fmt: off
+            external_access_integrations = f"EXTERNAL_ACCESS_INTEGRATIONS = ({external_access_integrations})"
+        if secrets:
+            secrets = f"SECRETS = ({secrets})"
 
-        snowpark_telemetry_string = "dbtLabs_dbtPython"
-        snowpark_telemetry_snippet = f"""
+        if self.config.args.SEND_ANONYMOUS_USAGE_STATS:
+            snowpark_telemetry_string = "dbtLabs_dbtPython"
+            snowpark_telemetry_snippet = f"""
 import sys
 sys._xoptions['snowflake_partner_attribution'].append("{snowpark_telemetry_string}")"""
+        else:
+            snowpark_telemetry_snippet = ""
 
         common_procedure_code = f"""
 RETURNS STRING
 LANGUAGE PYTHON
 RUNTIME_VERSION = '{python_version}'
 PACKAGES = ('{packages}')
+{external_access_integrations}
+{secrets}
 {imports}
 HANDLER = 'main'
 EXECUTE AS CALLER

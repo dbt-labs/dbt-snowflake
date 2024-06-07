@@ -10,7 +10,7 @@ from dbt.adapters.snowflake import Plugin as SnowflakePlugin
 from dbt.adapters.snowflake.column import SnowflakeColumn
 from dbt.adapters.snowflake.connections import SnowflakeCredentials
 from dbt.contracts.files import FileHash
-from dbt.context.manifest import generate_query_header_context
+from dbt.context.query_header import generate_query_header_context
 from dbt.context.providers import generate_runtime_macro_context
 from dbt.contracts.graph.manifest import ManifestStateCheck
 from dbt_common.clients import agate_helper
@@ -278,7 +278,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -305,7 +305,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=True,
                     database="test_database",
@@ -332,7 +332,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -366,7 +366,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -397,7 +397,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -428,7 +428,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -461,7 +461,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -499,7 +499,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -533,7 +533,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -562,7 +562,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -592,7 +592,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=True,
                     database="test_database",
@@ -626,7 +626,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -662,7 +662,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -907,7 +907,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_private_key_string(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",
@@ -917,7 +917,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_private_key_string_encrypted(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",
@@ -928,7 +928,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_malformed_private_key_string(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",
@@ -938,7 +938,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_invalid_private_key_string(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",
@@ -948,7 +948,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_invalid_private_key_path(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",

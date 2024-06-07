@@ -84,6 +84,8 @@ class SnowflakeColumnEqualSetup:
             ["'2013-11-03 00:00:00-07'::timestamp", "timestamp", "TIMESTAMP_NTZ"],
             ["ARRAY_CONSTRUCT('a','b','c')", "array", "ARRAY"],
             ["ARRAY_CONSTRUCT(1,2,3)", "array", "ARRAY"],
+            ["TO_GEOGRAPHY('POINT(-122.35 37.55)')", "geography", "GEOGRAPHY"],
+            ["TO_GEOMETRY('POINT(1820.12 890.56)')", "geometry", "GEOMETRY"],
             [
                 """TO_VARIANT(PARSE_JSON('{"key3": "value3", "key4": "value4"}'))""",
                 "variant",
