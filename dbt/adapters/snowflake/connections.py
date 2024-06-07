@@ -105,6 +105,7 @@ class SnowflakeCredentials(Credentials):
                     base_msg="Authenticator is not set to oauth, but an oauth-only parameter is set! Did you mean to set authenticator: oauth?"
                 )
             )
+        self.account = self.account.replace("_", "-")
 
     @property
     def type(self):
