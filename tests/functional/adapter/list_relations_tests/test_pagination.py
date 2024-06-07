@@ -121,9 +121,7 @@ class TestListRelationsWithoutCachingSingle:
         schemas = project.created_schemas
 
         for schema in schemas:
-            schema_relation = SnowflakeRelation.create(
-                database=database, schema=schema
-            )  # Updated to use SnowflakeRelation
+            schema_relation = SnowflakeRelation.create(database=database, schema=schema)
             kwargs = {"schema_relation": schema_relation.render()}
             _, log_output = run_dbt_and_capture(
                 [
@@ -171,9 +169,7 @@ class TestListRelationsWithoutCachingFull:
         schemas = project.created_schemas
 
         for schema in schemas:
-            schema_relation = SnowflakeRelation.create(
-                database=database, schema=schema
-            )  # Updated to use SnowflakeRelation
+            schema_relation = SnowflakeRelation.create(database=database, schema=schema)
             kwargs = {"schema_relation": schema_relation.render()}
             _, log_output = run_dbt_and_capture(
                 [
@@ -201,9 +197,7 @@ class TestListRelationsWithoutCachingFull:
         schemas = project.created_schemas
 
         for schema in schemas:
-            schema_relation = SnowflakeRelation.create(
-                database=database, schema=schema
-            )  # Updated to use SnowflakeRelation
+            schema_relation = SnowflakeRelation.create(database=database, schema=schema)
 
             kwargs = {"schema_relation": schema_relation.render()}
             _, log_output = run_dbt_and_capture(
