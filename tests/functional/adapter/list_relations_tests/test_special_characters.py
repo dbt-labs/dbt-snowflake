@@ -13,13 +13,13 @@ class TestSpecialCharactersInSchema:
 
     @pytest.fixture(scope="class")
     def project_config_update(self):
-        return {"quoting": {"schema": True, "identifier": True}}
+        return {"quoting": {"schema": True}}
 
     @pytest.fixture(scope="class")
     def models(self):
         return {
-            "table.sql": TABLE_BASE_SQL,
+            "my_model.sql": TABLE_BASE_SQL,
         }
 
     def test_schema_with_special_chars(self, project):
-        run_dbt(["run", "-s", "table"])
+        run_dbt(["run", "-s", "my_model"])
