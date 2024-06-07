@@ -73,7 +73,7 @@
   {% for _ in range(0, max_iter) %}
 
       {%- set paginated_sql -%}
-         show objects in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
+         show objects in {{ schema_relation }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
       {%- endset -%}
 
       {%- set paginated_result = run_query(paginated_sql) %}
