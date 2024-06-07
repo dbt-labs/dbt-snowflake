@@ -96,7 +96,7 @@
 
       {%- if loop.index == max_iter -%}
         {%- set msg -%}
-           dbt will list a maximum of {{ max_total_results }} objects in schema {{ schema_relation.database }}.{{ schema_relation.schema }}.
+           dbt will list a maximum of {{ max_total_results }} objects in schema {{ schema_relation }}.
            Your schema exceeds this limit. Please contact support@getdbt.com for troubleshooting tips,
            or review and reduce the number of objects contained.
         {%- endset -%}
@@ -124,7 +124,7 @@
   {%- set max_total_results = max_results_per_iter * max_iter -%}
 
   {%- set sql -%}
-    show objects in {{ schema_relation.database }}.{{ schema_relation.schema }} limit {{ max_results_per_iter }}
+    show objects in {{ schema_realtion }} limit {{ max_results_per_iter }}
   {%- endset -%}
 
   {%- set result = run_query(sql) -%}
