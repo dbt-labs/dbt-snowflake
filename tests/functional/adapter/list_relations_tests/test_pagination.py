@@ -1,9 +1,8 @@
 import os
-
 import pytest
-
 import json
 from dbt.tests.util import run_dbt, run_dbt_and_capture
+from dbt.adapters.snowflake import SnowflakeRelation  # Ensure this is the correct import path
 
 # Testing rationale:
 # - snowflake SHOW TERSE OBJECTS command returns at max 10K objects in a single call
@@ -122,8 +121,10 @@ class TestListRelationsWithoutCachingSingle:
         schemas = project.created_schemas
 
         for schema in schemas:
-            schema_relation = {"database": database, "schema": schema}
-            kwargs = {"schema_relation": schema_relation}
+            schema_relation = SnowflakeRelation.create(
+                database=database, schema=schema
+            )  # Updated to use SnowflakeRelation
+            kwargs = {"schema_relation": schema_relation.render()}
             _, log_output = run_dbt_and_capture(
                 [
                     "--debug",
@@ -137,7 +138,6 @@ class TestListRelationsWithoutCachingSingle:
 
             parsed_logs = parse_json_logs(log_output)
             n_relations = find_result_in_parsed_logs(parsed_logs, "n_relations")
-
             assert n_relations == "n_relations: 1"
 
 
@@ -171,8 +171,10 @@ class TestListRelationsWithoutCachingFull:
         schemas = project.created_schemas
 
         for schema in schemas:
-            schema_relation = {"database": database, "schema": schema}
-            kwargs = {"schema_relation": schema_relation}
+            schema_relation = SnowflakeRelation.create(
+                database=database, schema=schema
+            )  # Updated to use SnowflakeRelation
+            kwargs = {"schema_relation": schema_relation.render()}
             _, log_output = run_dbt_and_capture(
                 [
                     "--debug",
@@ -199,9 +201,11 @@ class TestListRelationsWithoutCachingFull:
         schemas = project.created_schemas
 
         for schema in schemas:
-            schema_relation = {"database": database, "schema": schema}
+            schema_relation = SnowflakeRelation.create(
+                database=database, schema=schema
+            )  # Updated to use SnowflakeRelation
 
-            kwargs = {"schema_relation": schema_relation}
+            kwargs = {"schema_relation": schema_relation.render()}
             _, log_output = run_dbt_and_capture(
                 [
                     "--debug",

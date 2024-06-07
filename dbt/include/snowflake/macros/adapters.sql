@@ -72,9 +72,15 @@
 
   {% for _ in range(0, max_iter) %}
 
-      {%- set paginated_sql -%}
-         show objects in {{ schema_relation.include(identifier=False) }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
-      {%- endset -%}
+      {% if schema_relation is string %}
+        {%- set paginated_sql -%}
+          show objects in {{ schema_relation }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
+        {%- endset -%}
+      {% else %}
+        {%- set paginated_sql -%}
+          show objects in {{ schema_relation.include(identifier=False) }} limit {{ max_results_per_iter }} from '{{ watermark.table_name }}'
+        {%- endset -%}
+      {% endif -%}
 
       {%- set paginated_result = run_query(paginated_sql) %}
       {%- set paginated_n = (paginated_result | length) -%}
@@ -122,10 +128,15 @@
 {% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
 
   {%- set max_total_results = max_results_per_iter * max_iter -%}
-
-  {%- set sql -%}
-    show objects in {{ schema_relation.include(identifier=False) }} limit {{ max_results_per_iter }}
-  {%- endset -%}
+  {% if schema_relation is string %}
+    {%- set sql -%}
+      show objects in {{ schema_relation }} limit {{ max_results_per_iter }}
+    {%- endset -%}
+  {% else %}
+    {%- set sql -%}
+      show objects in {{ schema_relation.include(identifier=False) }} limit {{ max_results_per_iter }}
+    {%- endset -%}
+  {% endif -%}
 
   {%- set result = run_query(sql) -%}
 
