@@ -135,5 +135,6 @@ class TestValidConfigWarehouse:
             },
         }
 
-    def test_snowflake_override_invalid(self, project):
+    def test_snowflake_warehouse_valid(self, project):
         result = run_dbt(["run", "--models", "valid_warehouse"])
+        assert "DBT_TESTING" in result[0].node.config.get("snowflake_warehouse")
