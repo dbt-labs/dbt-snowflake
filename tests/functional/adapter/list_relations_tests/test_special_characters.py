@@ -10,7 +10,6 @@ select 1 as id
 
 
 class TestSpecialCharactersInSchema:
-
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {"quoting": {"schema": True}}
