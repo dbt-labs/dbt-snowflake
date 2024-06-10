@@ -43,7 +43,7 @@ from dbt.adapters.contracts.connection import AdapterResponse, Connection, Crede
 from dbt.adapters.sql import SQLConnectionManager
 from dbt.adapters.events.logging import AdapterLogger
 from dbt_common.events.functions import warn_or_error
-from dbt.adapters.events.types import AdapterEventWarning
+from dbt.adapters.events.types import AdapterEventWarning, AdapterEventError
 from dbt_common.ui import line_wrap_message, warning_tag
 
 
@@ -70,7 +70,7 @@ class SnowflakeAdapterResponse(AdapterResponse):
 @dataclass
 class SnowflakeCredentials(Credentials):
     account: str
-    user: str
+    user: Optional[str] = None
     warehouse: Optional[str] = None
     role: Optional[str] = None
     password: Optional[str] = None
@@ -96,15 +96,29 @@ class SnowflakeCredentials(Credentials):
     reuse_connections: Optional[bool] = None
 
     def __post_init__(self):
-        if self.authenticator != "oauth" and (
-            self.oauth_client_secret or self.oauth_client_id or self.token
-        ):
+        if self.authenticator != "oauth" and (self.oauth_client_secret or self.oauth_client_id):
             # the user probably forgot to set 'authenticator' like I keep doing
             warn_or_error(
                 AdapterEventWarning(
                     base_msg="Authenticator is not set to oauth, but an oauth-only parameter is set! Did you mean to set authenticator: oauth?"
                 )
             )
+
+        if self.authenticator not in ["oauth", "jwt"]:
+            if self.token:
+                warn_or_error(
+                    AdapterEventWarning(
+                        base_msg=(
+                            "The token parameter was set, but the authenticator was "
+                            "not set to 'oauth' or 'jwt'."
+                        )
+                    )
+                )
+
+            if not self.user:
+                # The user attribute is only optional if 'authenticator' is 'jwt' or 'oauth'
+                warn_or_error(AdapterEventError(base_msg="'user' is a required property."))
+
         self.account = self.account.replace("_", "-")
 
     @property
@@ -146,6 +160,8 @@ class SnowflakeCredentials(Credentials):
         # Pull all of the optional authentication args for the connector,
         # let connector handle the actual arg validation
         result = {}
+        if self.user:
+            result["user"] = self.user
         if self.password:
             result["password"] = self.password
         if self.host:
@@ -180,6 +196,14 @@ class SnowflakeCredentials(Credentials):
                     )
 
                 result["token"] = token
+
+            elif self.authenticator == "jwt":
+                # If authenticator is 'jwt', then the 'token' value should be used
+                # unmodified. We expose this as 'jwt' in the profile, but the value
+                # passed into the snowflake.connect method should still be 'oauth'
+                result["token"] = self.token
+                result["authenticator"] = "oauth"
+
             # enable id token cache for linux
             result["client_store_temporary_credential"] = True
             # enable mfa token cache for linux
@@ -346,7 +370,6 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
             handle = snowflake.connector.connect(
                 account=creds.account,
-                user=creds.user,
                 database=creds.database,
                 schema=creds.schema,
                 warehouse=creds.warehouse,
