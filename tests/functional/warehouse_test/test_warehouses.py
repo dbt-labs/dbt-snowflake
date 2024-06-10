@@ -33,6 +33,11 @@ project_config_models__invalid_warehouse_sql = """
 select current_warehouse() as warehouse
 """
 
+project_config_models__valid_warehouse_sql = """
+{{ config(materialized='table') }}
+select current_warehouse() as warehouse
+"""
+
 
 class TestModelWarehouse:
     @pytest.fixture(scope="class")
@@ -103,12 +108,32 @@ class TestInvalidConfigWarehouse:
         return {
             "config-version": 2,
             "models": {
-                "test": {
-                    "snowflake_warehouse": "DBT_TEST_DOES_NOT_EXIST",
-                },
+                "test": {"snowflake_warehouse": "DBT_TEST_DOES_NOT_EXIST"},
             },
         }
 
     def test_snowflake_override_invalid(self, project):
         result = run_dbt(["run", "--models", "invalid_warehouse"], expect_pass=False)
         assert "Object does not exist, or operation cannot be performed" in result[0].message
+
+
+class TestValidConfigWarehouse:
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "valid_warehouse.sql": project_config_models__valid_warehouse_sql,
+        }
+
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "config-version": 2,
+            "models": {
+                "test": {
+                    "snowflake_warehouse": "DBT_TESTING",
+                },
+            },
+        }
+
+    def test_snowflake_override_invalid(self, project):
+        result = run_dbt(["run", "--models", "valid_warehouse"])
