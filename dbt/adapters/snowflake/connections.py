@@ -117,7 +117,9 @@ class SnowflakeCredentials(Credentials):
 
             if not self.user:
                 # The user attribute is only optional if 'authenticator' is 'jwt' or 'oauth'
-                warn_or_error(AdapterEventError(base_msg="'user' is a required property."))
+                warn_or_error(
+                    AdapterEventError(base_msg="Invalid profile: 'user' is a required property.")
+                )
 
         self.account = self.account.replace("_", "-")
 
