@@ -3,7 +3,6 @@ from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple
 
 import agate
 from dbt.adapters.base import BaseRelation
-
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
@@ -11,16 +10,23 @@ from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
-    GET_CATALOG_FOR_SINGLE_RELATION_NAME,
 )
-from dbt_common.contracts.metadata import TableMetadata, StatsDict, StatsItem, CatalogTable
-
-from dbt.adapters.snowflake import SnowflakeConnectionManager
-from dbt.adapters.snowflake import SnowflakeRelation
-from dbt.adapters.snowflake import SnowflakeColumn
 from dbt_common.contracts.constraints import ConstraintType
+from dbt_common.contracts.metadata import (
+    TableMetadata,
+    StatsDict,
+    StatsItem,
+    CatalogTable,
+    ColumnMetadata,
+)
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
+
+from dbt.adapters.snowflake import SnowflakeColumn
+from dbt.adapters.snowflake import SnowflakeConnectionManager
+from dbt.adapters.snowflake import SnowflakeRelation
+
+SHOW_OBJECT_METADATA_MACRO_NAME = "snowflake__show_object_metadata"
 
 
 @dataclass
@@ -133,72 +139,82 @@ class SnowflakeAdapter(SQLAdapter):
             else:
                 raise
 
-    def get_catalog_for_single_relation(self, relation: BaseRelation) -> Optional[CatalogTable]:
-        kwargs = {"relation": relation}
-        return self.execute_macro(
-            GET_CATALOG_FOR_SINGLE_RELATION_NAME, kwargs=kwargs, needs_conn=True
-        )
-
-    def get_relation_metadata(
-        self, relation: SnowflakeRelation
-    ) -> Tuple[Optional[TableMetadata], StatsDict]:
-        kwargs = {"relation": relation}
+    def _show_object_metadata(self, relation):
         try:
-            results = self.execute_macro(
-                GET_CATALOG_FOR_SINGLE_RELATION_NAME, kwargs=kwargs, needs_conn=True
-            )
+            kwargs = {"relation": relation}
+            results = self.execute_macro(SHOW_OBJECT_METADATA_MACRO_NAME, kwargs=kwargs)
         except DbtDatabaseError as exc:
             # If we don't have permissions to the object, return empty
             if "Object does not exist" in str(exc):
-                return None, {}
-
-        # If we don't get any results, return empty
-        if len(results) == 0:
-            return None, {}
-
-        row = results[0]
-
-        is_dynamic = row.get("is_dynamic")
-        kind = row.get("kind")
-
-        if is_dynamic == "YES" and kind == "BASE TABLE":
-            table_type = "DYNAMIC TABLE"
+                return None
         else:
-            table_type = kind
+            # If we don't get any results, return empty
+            if len(results) == 0:
+                return None
 
-        table_metadata = TableMetadata(
-            type=table_type,
-            schema=row.get("schema_name"),
-            name=row.get("name"),
-            database=row.get("database_name"),
-            comment=row.get("comment"),
-            owner=row.get("owner"),
-        )
-        stats_dict: StatsDict = {
-            "has_stats": StatsItem(
-                id="has_stats",
-                label="Has Stats?",
-                value=True,
-                include=False,
-                description="Indicates whether there are statistics for this table",
-            ),
-            "row_count": StatsItem(
-                id="row_count",
-                label="Row Count",
-                value=row.get("rows"),
-                include=True,
-                description="Number of rows in the table as reported by Snowflake",
-            ),
-            "bytes": StatsItem(
-                id="bytes",
-                label="Approximate Size",
-                value=row.get("bytes"),
-                include=True,
-                description="Size of the table as reported by Snowflake",
-            ),
-        }
+            return results
 
-        return table_metadata, stats_dict
+    def get_catalog_for_single_relation(self, relation: BaseRelation) -> Optional[CatalogTable]:
+        object_metadata = self._show_object_metadata(relation)
+
+        if object_metadata:
+            row = object_metadata[0]
+
+            is_dynamic = row.get("is_dynamic")
+            kind = row.get("kind")
+
+            if is_dynamic == "YES" and kind == "BASE TABLE":
+                table_type = "DYNAMIC TABLE"
+            else:
+                table_type = kind
+
+            table_metadata = TableMetadata(
+                type=table_type,
+                schema=row.get("schema_name"),
+                name=row.get("name"),
+                database=row.get("database_name"),
+                comment=row.get("comment"),
+                owner=row.get("owner"),
+            )
+
+            stats_dict: StatsDict = {
+                "has_stats": StatsItem(
+                    id="has_stats",
+                    label="Has Stats?",
+                    value=True,
+                    include=False,
+                    description="Indicates whether there are statistics for this table",
+                ),
+                "row_count": StatsItem(
+                    id="row_count",
+                    label="Row Count",
+                    value=row.get("rows"),
+                    include=True,
+                    description="Number of rows in the table as reported by Snowflake",
+                ),
+                "bytes": StatsItem(
+                    id="bytes",
+                    label="Approximate Size",
+                    value=row.get("bytes"),
+                    include=True,
+                    description="Size of the table as reported by Snowflake",
+                ),
+            }
+
+            catalog_columns = {}
+            columns_metadata = self.get_columns_in_relation(relation)
+
+            for i, c in enumerate(columns_metadata):
+                name = c.column
+                catalog_columns[name] = ColumnMetadata(type=c.dtype, index=i + 1, name=name)
+
+            return CatalogTable(
+                metadata=table_metadata,
+                columns=catalog_columns,
+                stats=stats_dict,
+            )
+        else:
+            return None
 
     def list_relations_without_caching(
         self, schema_relation: SnowflakeRelation

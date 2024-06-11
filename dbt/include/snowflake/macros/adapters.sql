@@ -47,7 +47,7 @@
   {% do return(columns) %}
 {% endmacro %}
 
-{% macro snowflake__get_relation_metadata(relation) %}
+{% macro snowflake__show_object_metadata(relation) %}
   {%- set sql -%}
     show objects like '{{ relation.identifier }}' in {{ relation.database }}.{{ relation.schema }} limit 1
   {%- endset -%}
