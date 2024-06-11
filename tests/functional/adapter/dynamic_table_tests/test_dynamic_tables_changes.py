@@ -22,6 +22,8 @@ from tests.functional.adapter.dynamic_table_tests.utils import (
     query_warehouse,
 )
 
+DT_SKIP_MESSAGE = "Dynamic tables are known to be broken in v1.6; see https://github.com/dbt-labs/dbt-snowflake/issues/1016; see https://github.com/dbt-labs/dbt-snowflake/pull/1049 for fix. Backports were determined only to be done for versions 1.7+. Users should therefore upgrade to v1.7+ for the fix."
+
 
 class SnowflakeDynamicTableChanges:
     @staticmethod
@@ -122,6 +124,7 @@ class SnowflakeDynamicTableChanges:
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs)
 
 
+@pytest.mark.skip(reason=DT_SKIP_MESSAGE)
 class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
     @pytest.fixture(scope="class")
     def project_config_update(self):
@@ -171,6 +174,7 @@ class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs)
 
 
+@pytest.mark.skip(reason=DT_SKIP_MESSAGE)
 class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
     @pytest.fixture(scope="class")
     def project_config_update(self):
@@ -213,6 +217,7 @@ class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
         assert_message_in_logs(f"Applying REPLACE to: {my_dynamic_table}", logs, False)
 
 
+@pytest.mark.skip(reason=DT_SKIP_MESSAGE)
 class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
     @pytest.fixture(scope="class")
     def project_config_update(self):
