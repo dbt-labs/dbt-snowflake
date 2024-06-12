@@ -23,3 +23,16 @@ def test_connections_does_not_set_logs_in_response_to_env_var(monkeypatch):
 
     assert log_mock.debug.call_count == 0
     assert log_mock.set_adapter_dependency_log_level.call_count == 0
+
+
+def test_connnections_credentials_replaces_underscores_with_hyphens():
+    credentials = {
+        "account": "account_id_with_underscores",
+        "user": "user",
+        "password": "password",
+        "database": "database",
+        "warehouse": "warehouse",
+        "schema": "schema",
+    }
+    creds = connections.SnowflakeCredentials(**credentials)
+    assert creds.account == "account-id-with-underscores"
