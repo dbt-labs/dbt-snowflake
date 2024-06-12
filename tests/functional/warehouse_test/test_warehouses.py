@@ -28,12 +28,7 @@ project_config_models__expected_warehouse_sql = """
 select '{{ env_var("SNOWFLAKE_TEST_ALT_WAREHOUSE", "DBT_TEST_ALT") }}' as warehouse
 """
 
-project_config_models__invalid_warehouse_sql = """
-{{ config(materialized='table') }}
-select current_warehouse() as warehouse
-"""
-
-project_config_models__valid_warehouse_sql = """
+project_config_models__warehouse_sql = """
 {{ config(materialized='table') }}
 select current_warehouse() as warehouse
 """
@@ -100,7 +95,7 @@ class TestInvalidConfigWarehouse:
     @pytest.fixture(scope="class")
     def models(self):
         return {
-            "invalid_warehouse.sql": project_config_models__invalid_warehouse_sql,
+            "invalid_warehouse.sql": project_config_models__warehouse_sql,
         }
 
     @pytest.fixture(scope="class")
@@ -121,7 +116,7 @@ class TestValidConfigWarehouse:
     @pytest.fixture(scope="class")
     def models(self):
         return {
-            "valid_warehouse.sql": project_config_models__valid_warehouse_sql,
+            "valid_warehouse.sql": project_config_models__warehouse_sql,
         }
 
     @pytest.fixture(scope="class")
