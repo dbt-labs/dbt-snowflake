@@ -9,6 +9,8 @@ from dbt.adapters.utils import classproperty
 from dbt.adapters.snowflake.relation_configs import (
     SnowflakeDynamicTableConfig,
     SnowflakeDynamicTableConfigChangeset,
+    SnowflakeDynamicTableCommentConfigChange,
+    SnowflakeDynamicTableRefreshModeConfigChange,
     SnowflakeDynamicTableTargetLagConfigChange,
     SnowflakeDynamicTableWarehouseConfigChange,
     SnowflakeQuotePolicy,
@@ -75,6 +77,18 @@ class SnowflakeRelation(BaseRelation):
                     action=RelationConfigChangeAction.alter,
                     context=new_dynamic_table.snowflake_warehouse,
                 )
+            )
+
+        if new_dynamic_table.refresh_mode != existing_dynamic_table.refresh_mode:
+            config_change_collection.refresh_mode = SnowflakeDynamicTableRefreshModeConfigChange(
+                action=RelationConfigChangeAction.create,
+                context=new_dynamic_table.refresh_mode,
+            )
+
+        if new_dynamic_table.comment != existing_dynamic_table.comment:
+            config_change_collection.comment = SnowflakeDynamicTableCommentConfigChange(
+                action=RelationConfigChangeAction.alter,
+                context=new_dynamic_table.comment,
             )
 
         if config_change_collection.has_changes:

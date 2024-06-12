@@ -5,8 +5,29 @@ import agate
 from dbt.adapters.relation_configs import RelationConfigChange, RelationResults
 from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.contracts.relation import ComponentName
+from dbt_common.dataclass_schema import StrEnum  # doesn't exist in standard library until py3.11
+from typing_extensions import Self
 
 from dbt.adapters.snowflake.relation_configs.base import SnowflakeRelationConfigBase
+
+
+class RefreshMode(StrEnum):
+    AUTO = "AUTO"
+    FULL = "FULL"
+    INCREMENTAL = "INCREMENTAL"
+
+    @classmethod
+    def default(cls) -> Self:
+        return cls("AUTO")
+
+
+class Initialize(StrEnum):
+    ON_CREATE = "ON_CREATE"
+    ON_SCHEDULE = "ON_SCHEDULE"
+
+    @classmethod
+    def default(cls) -> Self:
+        return cls("ON_CREATE")
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
@@ -20,9 +41,9 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     - query: the query behind the table
     - target_lag: the maximum amount of time that the dynamic table’s content should lag behind updates to the base tables
     - snowflake_warehouse: the name of the warehouse that provides the compute resources for refreshing the dynamic table
-    - refresh_mode: specifies the refresh type for the dynamic table.
+    - refresh_mode: specifies the refresh type for the dynamic table
     - initialize: specifies the behavior of the initial refresh of the dynamic table
-    - comment: specifies a comment for the dynamic table.
+    - comment: specifies a comment for the dynamic table
 
     There are currently no non-configurable parameters.
     """
@@ -33,8 +54,8 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     query: str
     target_lag: str
     snowflake_warehouse: str
-    refresh_mode: Optional[str] = None
-    initialize: Optional[str] = None
+    refresh_mode: Optional[RefreshMode] = RefreshMode.default()
+    initialize: Optional[Initialize] = Initialize.default()
     comment: Optional[str] = None
 
     @classmethod
@@ -65,10 +86,14 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "query": relation_config.compiled_code,
             "target_lag": relation_config.config.extra.get("target_lag"),
             "snowflake_warehouse": relation_config.config.extra.get("snowflake_warehouse"),
-            "refresh_mode": relation_config.config.extra.get("refresh_mode"),  # type: ignore
-            "initialize": relation_config.config.extra.get("initialize"),  # type: ignore
-            "comment": relation_config.config.extra.get("comment"),  # type: ignore
+            "comment": relation_config.config.extra.get("comment"),
         }
+
+        if refresh_mode := relation_config.config.extra.get("refresh_mode"):
+            config_dict.update(refresh_mode=refresh_mode.upper())
+
+        if initialize := relation_config.config.extra.get("initialize"):
+            config_dict.update(initialize=initialize.upper())
 
         return config_dict
 
@@ -84,8 +109,8 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "target_lag": dynamic_table.get("target_lag"),
             "snowflake_warehouse": dynamic_table.get("warehouse"),
             "refresh_mode": dynamic_table.get("refresh_mode"),
-            "initialize": dynamic_table.get("initialize"),
             "comment": dynamic_table.get("comment"),
+            # we don't get initialize since that's a one-time scheduler attribute, not a DT attribute
         }
 
         return config_dict
@@ -109,10 +134,30 @@ class SnowflakeDynamicTableWarehouseConfigChange(RelationConfigChange):
         return False
 
 
+@dataclass(frozen=True, eq=True, unsafe_hash=True)
+class SnowflakeDynamicTableRefreshModeConfigChange(RelationConfigChange):
+    context: Optional[str] = None
+
+    @property
+    def requires_full_refresh(self) -> bool:
+        return True
+
+
+@dataclass(frozen=True, eq=True, unsafe_hash=True)
+class SnowflakeDynamicTableCommentConfigChange(RelationConfigChange):
+    context: Optional[str] = None
+
+    @property
+    def requires_full_refresh(self) -> bool:
+        return False
+
+
 @dataclass
 class SnowflakeDynamicTableConfigChangeset:
     target_lag: Optional[SnowflakeDynamicTableTargetLagConfigChange] = None
     snowflake_warehouse: Optional[SnowflakeDynamicTableWarehouseConfigChange] = None
+    refresh_mode: Optional[SnowflakeDynamicTableRefreshModeConfigChange] = None
+    comment: Optional[SnowflakeDynamicTableCommentConfigChange] = None
 
     @property
     def requires_full_refresh(self) -> bool:
@@ -124,9 +169,11 @@ class SnowflakeDynamicTableConfigChangeset:
                     if self.snowflake_warehouse
                     else False
                 ),
+                self.refresh_mode.requires_full_refresh if self.refresh_mode else False,
+                self.comment.requires_full_refresh if self.comment else False,
             ]
         )
 
     @property
     def has_changes(self) -> bool:
-        return any([self.target_lag, self.snowflake_warehouse])
+        return any([self.target_lag, self.snowflake_warehouse, self.refresh_mode, self.comment])
