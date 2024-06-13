@@ -27,6 +27,7 @@ MY_DYNAMIC_TABLE = """
     materialized='dynamic_table',
     snowflake_warehouse='DBT_TESTING',
     target_lag='120        seconds',
+    refresh_mode='INCREMENTAL',
 ) }}
 select * from {{ ref('my_seed') }}
 """
