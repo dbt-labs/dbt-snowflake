@@ -8,10 +8,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
 from time import sleep
-from typing import Any, List, Iterable, Optional, Tuple, Union
 
-import agate
-from dbt_common.clients.agate_helper import empty_table
+from typing import Optional, Tuple, Union, Any, List, Iterable, TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -45,6 +43,9 @@ from dbt.adapters.events.logging import AdapterLogger
 from dbt_common.events.functions import warn_or_error
 from dbt.adapters.events.types import AdapterEventWarning, AdapterEventError
 from dbt_common.ui import line_wrap_message, warning_tag
+
+if TYPE_CHECKING:
+    import agate
 
 
 logger = AdapterLogger("Snowflake")
@@ -494,9 +495,11 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
     def execute(
         self, sql: str, auto_begin: bool = False, fetch: bool = False, limit: Optional[int] = None
-    ) -> Tuple[AdapterResponse, agate.Table]:
+    ) -> Tuple[AdapterResponse, "agate.Table"]:
         # don't apply the query comment here
         # it will be applied after ';' queries are split
+        from dbt_common.clients.agate_helper import empty_table
+
         _, cursor = self.add_query(sql, auto_begin)
         response = self.get_response(cursor)
         if fetch:
