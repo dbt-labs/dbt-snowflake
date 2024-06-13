@@ -1,5 +1,5 @@
 kind: Features
-body: Dynamic Table additional parameters
+body: Support refresh_mode, initialize, and comment parameters for dynamic tables
 time: 2024-01-31T12:53:18.111616Z
 custom:
   Author: HenkvanDyk
