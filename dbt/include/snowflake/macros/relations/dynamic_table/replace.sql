@@ -1,12 +1,21 @@
-{% macro snowflake__get_replace_dynamic_table_sql(relation, sql) %}
+{% macro snowflake__get_replace_dynamic_table_sql(relation, sql) -%}
+
+    {%- set dynamic_table = relation.from_config(config.model) -%}
 
     create or replace dynamic table {{ relation }}
-        target_lag = '{{ config.get("target_lag") }}'
-        warehouse = {{ config.get("snowflake_warehouse") }}
+        target_lag = '{{ dynamic_table.target_lag }}'
+        warehouse = {{ dynamic_table.snowflake_warehouse }}
+        {% if dynamic_table.refresh_mode %}
+        refresh_mode = {{ dynamic_table.refresh_mode }}
+        {% endif %}
+        {% if dynamic_table.initialize %}
+        initialize = {{ dynamic_table.initialize }}
+        {% endif %}
+        {% if dynamic_table.comment %}
+        comment = '{{ dynamic_table.comment }}'
+        {% endif %}
         as (
             {{ sql }}
         )
-    ;
-    {{ snowflake__refresh_dynamic_table(relation) }}
 
-{% endmacro %}
+{%- endmacro %}
