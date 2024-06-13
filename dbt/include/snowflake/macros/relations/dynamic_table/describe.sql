@@ -12,7 +12,6 @@
             "target_lag",
             "warehouse",
             "refresh_mode",
-            "initialize",
             "comment"
         from table(result_scan(last_query_id()))
     {%- endset %}

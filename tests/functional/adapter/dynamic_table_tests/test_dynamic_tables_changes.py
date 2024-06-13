@@ -27,7 +27,7 @@ from tests.functional.adapter.dynamic_table_tests.utils import (
 class SnowflakeDynamicTableChanges:
     @staticmethod
     def check_start_state(project, dynamic_table):
-        assert query_target_lag(project, dynamic_table) == "120 seconds"
+        assert query_target_lag(project, dynamic_table) == "2 minutes"
         assert query_warehouse(project, dynamic_table) == "DBT_TESTING"
         assert query_refresh_mode(project, dynamic_table) == "INCREMENTAL"
 
@@ -35,7 +35,7 @@ class SnowflakeDynamicTableChanges:
     def change_config_via_alter(project, dynamic_table):
         initial_model = get_model_file(project, dynamic_table)
         new_model = initial_model.replace(
-            "target_lag='120        seconds'", "target_lag='5   minutes'"
+            "target_lag='2        minutes'", "target_lag='5   minutes'"
         )
         set_model_file(project, dynamic_table, new_model)
 
@@ -43,7 +43,7 @@ class SnowflakeDynamicTableChanges:
     def change_config_via_alter_downstream(project, dynamic_table):
         initial_model = get_model_file(project, dynamic_table)
         new_model = initial_model.replace(
-            "target_lag='120        seconds'", "target_lag='downstream'"
+            "target_lag='2        minutes'", "target_lag='DOWNSTREAM'"
         )
         set_model_file(project, dynamic_table, new_model)
 
@@ -56,7 +56,7 @@ class SnowflakeDynamicTableChanges:
     @staticmethod
     def check_state_alter_change_is_applied_downstream(project, dynamic_table):
         # see above
-        assert query_target_lag(project, dynamic_table) == "downstream"
+        assert query_target_lag(project, dynamic_table) == "DOWNSTREAM"
         assert query_warehouse(project, dynamic_table) == "DBT_TESTING"
 
     @staticmethod
@@ -226,7 +226,7 @@ class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
             ["--debug", "run", "--models", my_dynamic_table.name], expect_pass=False
         )
 
-        self.check_start_state(adapter, my_dynamic_table)
+        self.check_start_state(project, my_dynamic_table)
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
             f" to `fail` for `{my_dynamic_table}`",
@@ -248,7 +248,7 @@ class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
             ["--debug", "run", "--models", my_dynamic_table.name], expect_pass=False
         )
 
-        self.check_start_state(adapter, my_dynamic_table)
+        self.check_start_state(project, my_dynamic_table)
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
             f" to `fail` for `{my_dynamic_table}`",
