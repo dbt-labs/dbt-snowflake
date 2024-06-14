@@ -32,9 +32,9 @@ integration the same, just the refresh token changed)
 """
 
 import os
-
+import yaml
 from dbt.adapters.exceptions.connection import FailedToConnectError
-from dbt.tests.util import check_relations_equal, run_dbt
+from dbt.tests.util import check_relations_equal, run_dbt, write_file
 import pytest
 
 
@@ -93,7 +93,7 @@ class TestSnowflakeOauth:
 
 
 class TestSnowflakeOAuthExpiration:
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope="class", autouse=True)
     def dbt_profile_target(self):
         return {
             "type": "snowflake",
@@ -102,7 +102,7 @@ class TestSnowflakeOAuthExpiration:
             "user": os.getenv("SNOWFLAKE_TEST_USER"),
             "oauth_client_id": os.getenv("SNOWFLAKE_TEST_OAUTH_CLIENT_ID"),
             "oauth_client_secret": os.getenv("SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET"),
-            "token": "THIS_TOKEN_DOES_NOT_EXIST",
+            "token": os.getenv("SNOWFLAKE_TEST_OAUTH_REFRESH_TOKEN"),
             "database": os.getenv("SNOWFLAKE_TEST_DATABASE"),
             "warehouse": os.getenv("SNOWFLAKE_TEST_WAREHOUSE"),
             "authenticator": "oauth",
@@ -112,6 +112,10 @@ class TestSnowflakeOAuthExpiration:
     def models(self):
         return {"model_1.sql": _MODELS__MODEL_1_SQL}
 
-    def test_token_expiration(self, project):
+    def test_token_expiration(self, project, dbt_profile_data):
+        # change token which is included in the connection_info
+        dbt_profile_data["test"]["outputs"]["default"]["token"] = "THIS_TOKEN_DOES_NOT_EXIST"
+        write_file(yaml.safe_dump(dbt_profile_data), project.profiles_dir, "profiles.yml")
+
         with pytest.raises(FailedToConnectError):
             run_dbt(["run"], expect_pass=False)
