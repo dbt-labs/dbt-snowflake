@@ -11,9 +11,6 @@
         {% if dynamic_table.initialize %}
         initialize = {{ dynamic_table.initialize }}
         {% endif %}
-        {% if dynamic_table.comment %}
-        comment = '{{ dynamic_table.comment }}'
-        {% endif %}
         as (
             {{ sql }}
         )
