@@ -26,8 +26,8 @@ from tests.functional.adapter.dynamic_table_tests.utils import (
 class SnowflakeDynamicTableChanges:
     @staticmethod
     def check_start_state(project, dynamic_table):
-        assert query_target_lag(project, dynamic_table) is None == "2 minutes"
-        assert query_warehouse(project, dynamic_table) is None == "DBT_TESTING"
+        assert query_target_lag(project, dynamic_table) == "2 minutes"
+        assert query_warehouse(project, dynamic_table) == "DBT_TESTING"
 
     @staticmethod
     def change_config_via_alter(project, dynamic_table):
@@ -41,7 +41,7 @@ class SnowflakeDynamicTableChanges:
     def change_config_via_alter_downstream(project, dynamic_table):
         initial_model = get_model_file(project, dynamic_table)
         new_model = initial_model.replace(
-            "target_lag='2        minutes'", "target_lag='downstream'"
+            "target_lag='2        minutes'", "target_lag='DOWNSTREAM'"
         )
         set_model_file(project, dynamic_table, new_model)
 
@@ -52,7 +52,7 @@ class SnowflakeDynamicTableChanges:
 
     @staticmethod
     def check_state_alter_change_is_applied_downstream(project, dynamic_table):
-        assert query_target_lag(project, dynamic_table) == "downstream"
+        assert query_target_lag(project, dynamic_table) == "DOWNSTREAM"
         assert query_warehouse(project, dynamic_table) == "DBT_TESTING"
 
     @staticmethod
