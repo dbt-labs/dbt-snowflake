@@ -10,6 +10,7 @@ from dbt.adapters.snowflake.relation_configs import (
     SnowflakeDynamicTableConfig,
     SnowflakeDynamicTableConfigChangeset,
     SnowflakeDynamicTableTargetLagConfigChange,
+    SnowflakeDynamicTableRefreshModeConfigChange,
     SnowflakeDynamicTableWarehouseConfigChange,
     SnowflakeQuotePolicy,
     SnowflakeRelationType,
@@ -75,6 +76,11 @@ class SnowflakeRelation(BaseRelation):
                     action=RelationConfigChangeAction.alter,
                     context=new_dynamic_table.snowflake_warehouse,
                 )
+            )
+
+        if new_dynamic_table.refresh_mode != existing_dynamic_table.refresh_mode:
+            config_change_collection.refresh_mode = SnowflakeDynamicTableRefreshModeConfigChange(
+                action=RelationConfigChangeAction.alter, context=new_dynamic_table.refresh_mode
             )
 
         if config_change_collection.has_changes:

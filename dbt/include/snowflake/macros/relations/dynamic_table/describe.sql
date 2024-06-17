@@ -10,6 +10,7 @@
             "database_name",
             "text",
             "target_lag",
+            "refresh_mode",
             "warehouse"
         from table(result_scan(last_query_id()))
     {%- endset %}
