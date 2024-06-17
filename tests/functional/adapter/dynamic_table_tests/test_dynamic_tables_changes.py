@@ -49,13 +49,11 @@ class SnowflakeDynamicTableChanges:
 
     @staticmethod
     def check_state_alter_change_is_applied(project, dynamic_table):
-        # see above
         assert query_target_lag(project, dynamic_table) == "5 minutes"
         assert query_warehouse(project, dynamic_table) == "DBT_TESTING"
 
     @staticmethod
     def check_state_alter_change_is_applied_downstream(project, dynamic_table):
-        # see above
         assert query_target_lag(project, dynamic_table) == "DOWNSTREAM"
         assert query_warehouse(project, dynamic_table) == "DBT_TESTING"
 
@@ -99,7 +97,9 @@ class SnowflakeDynamicTableChanges:
         # the tests touch these files, store their contents in memory
         initial_model = get_model_file(project, my_dynamic_table)
 
+        # verify the initial settings are correct in Snowflake
         self.check_start_state(project, my_dynamic_table)
+
         yield
 
         # and then reset them after the test runs
@@ -109,14 +109,19 @@ class SnowflakeDynamicTableChanges:
         project.run_sql(f"drop schema if exists {project.test_schema} cascade")
 
     def test_full_refresh_occurs_with_changes(self, project, my_dynamic_table):
+
+        # update the settings
         self.change_config_via_alter(project, my_dynamic_table)
         self.change_config_via_replace(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(
             ["--debug", "run", "--models", my_dynamic_table.identifier, "--full-refresh"]
         )
 
+        # verify the updated settings are correct in Snowflake
         self.check_state_alter_change_is_applied(project, my_dynamic_table)
         self.check_state_replace_change_is_applied(project, my_dynamic_table)
+
+        # verify the settings were changed with the correct method
         assert_message_in_logs(
             f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', ""), False
         )
@@ -131,10 +136,15 @@ class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Apply.value}}
 
     def test_change_is_applied_via_alter(self, project, my_dynamic_table):
+
+        # update the settings
         self.change_config_via_alter(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
+        # verify the updated settings are correct in Snowflake
         self.check_state_alter_change_is_applied(project, my_dynamic_table)
+
+        # verify the settings were changed with the correct method
         assert_message_in_logs(
             f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', "")
         )
@@ -145,10 +155,15 @@ class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
         )
 
     def test_change_is_applied_via_alter_downstream(self, project, my_dynamic_table):
+
+        # update the settings
         self.change_config_via_alter_downstream(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
+        # verify the updated settings are correct in Snowflake
         self.check_state_alter_change_is_applied_downstream(project, my_dynamic_table)
+
+        # verify the settings were changed with the correct method
         assert_message_in_logs(
             f"Applying ALTER to: {my_dynamic_table.render().upper()}", logs.replace('"', "")
         )
@@ -158,13 +173,21 @@ class TestSnowflakeDynamicTableChangesApply(SnowflakeDynamicTableChanges):
             False,
         )
 
+    @pytest.mark.skip(
+        "dbt-snowflake does not currently monitor any changes the trigger a full refresh"
+    )
     def test_change_is_applied_via_replace(self, project, my_dynamic_table):
+
+        # update the settings
         self.change_config_via_alter(project, my_dynamic_table)
         self.change_config_via_replace(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
+        # verify the updated settings are correct in Snowflake
         self.check_state_alter_change_is_applied(project, my_dynamic_table)
         self.check_state_replace_change_is_applied(project, my_dynamic_table)
+
+        # verify the settings were changed with the correct method
         assert_message_in_logs(
             f"Applying REPLACE to: {my_dynamic_table.render().upper()}", logs.replace('"', "")
         )
@@ -176,10 +199,15 @@ class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Continue.value}}
 
     def test_change_is_not_applied_via_alter(self, project, my_dynamic_table):
+
+        # update the settings
         self.change_config_via_alter(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
+        # verify the updated settings are correct in Snowflake
         self.check_start_state(project, my_dynamic_table)
+
+        # verify the settings were changed with the correct method
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
             f" to `continue` for `{my_dynamic_table}`",
@@ -195,11 +223,16 @@ class TestSnowflakeDynamicTableChangesContinue(SnowflakeDynamicTableChanges):
         )
 
     def test_change_is_not_applied_via_replace(self, project, my_dynamic_table):
+
+        # update the settings
         self.change_config_via_alter(project, my_dynamic_table)
         self.change_config_via_replace(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(["--debug", "run", "--models", my_dynamic_table.name])
 
+        # verify the updated settings are correct in Snowflake
         self.check_start_state(project, my_dynamic_table)
+
+        # verify the settings were changed with the correct method
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
             f" to `continue` for `{my_dynamic_table}`",
@@ -220,13 +253,18 @@ class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
     def project_config_update(self):
         return {"models": {"on_configuration_change": OnConfigurationChangeOption.Fail.value}}
 
-    def test_change_is_not_applied_via_alter(self, project, adapter, my_dynamic_table):
+    def test_change_is_not_applied_via_alter(self, project, my_dynamic_table):
+
+        # update the settings
         self.change_config_via_alter(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(
             ["--debug", "run", "--models", my_dynamic_table.name], expect_pass=False
         )
 
+        # verify the updated settings are correct in Snowflake
         self.check_start_state(project, my_dynamic_table)
+
+        # verify the settings were changed with the correct method
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
             f" to `fail` for `{my_dynamic_table}`",
@@ -241,14 +279,19 @@ class TestSnowflakeDynamicTableChangesFailMixin(SnowflakeDynamicTableChanges):
             False,
         )
 
-    def test_change_is_not_applied_via_replace(self, project, adapter, my_dynamic_table):
+    def test_change_is_not_applied_via_replace(self, project, my_dynamic_table):
+
+        # update the settings
         self.change_config_via_alter(project, my_dynamic_table)
         self.change_config_via_replace(project, my_dynamic_table)
         _, logs = run_dbt_and_capture(
             ["--debug", "run", "--models", my_dynamic_table.name], expect_pass=False
         )
 
+        # verify the updated settings are correct in Snowflake
         self.check_start_state(project, my_dynamic_table)
+
+        # verify the settings were changed with the correct method
         assert_message_in_logs(
             f"Configuration changes were identified and `on_configuration_change` was set"
             f" to `fail` for `{my_dynamic_table}`",

@@ -1,7 +1,6 @@
 from typing import Optional
 
 import agate
-from dbt.adapters.base import BaseAdapter
 from dbt.tests.util import get_connection
 
 from dbt.adapters.snowflake.relation import SnowflakeRelation

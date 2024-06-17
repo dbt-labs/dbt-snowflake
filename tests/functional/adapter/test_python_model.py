@@ -198,6 +198,11 @@ class TestSecrets:
     def models(self):
         return {"secret_python_model.py": SECRETS_MODE}
 
+    # This test can be flaky because of delays in the integration being set up before trying to use it.
+    @pytest.fixture(scope="class")
+    def profiles_config_update(self):
+        return {"retry_all": True, "connect_retries": 3}
+
     def test_secrets(self, project):
         project.run_sql(
             "create or replace secret test_secret type = generic_string secret_string='secret value';"
