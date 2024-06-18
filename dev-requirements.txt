@@ -1,8 +1,8 @@
 # install latest changes in dbt-core
 git+https://github.com/dbt-labs/dbt-core.git#egg=dbt-core&subdirectory=core
-git+https://github.com/dbt-labs/dbt-adapters.git@get_relation_metadata
-git+https://github.com/dbt-labs/dbt-adapters.git@get_relation_metadata#subdirectory=dbt-tests-adapter
-git+https://github.com/dbt-labs/dbt-common.git@main
+git+https://github.com/dbt-labs/dbt-adapters.git
+git+https://github.com/dbt-labs/dbt-adapters.git#subdirectory=dbt-tests-adapter
+git+https://github.com/dbt-labs/dbt-common.git
 
 # dev
 ipdb~=0.13.13
