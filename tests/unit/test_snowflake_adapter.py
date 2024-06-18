@@ -550,6 +550,38 @@ class TestSnowflakeAdapter(unittest.TestCase):
             ]
         )
 
+    def test_authenticator_jwt_authentication(self):
+        self.config.credentials = self.config.credentials.replace(
+            authenticator="jwt", token="my-jwt-token", user=None
+        )
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
+        conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
+
+        self.snowflake.assert_not_called()
+        conn.handle
+        self.snowflake.assert_has_calls(
+            [
+                mock.call(
+                    account="test-account",
+                    autocommit=True,
+                    client_session_keep_alive=False,
+                    database="test_database",
+                    role=None,
+                    schema="public",
+                    warehouse="test_warehouse",
+                    authenticator="oauth",
+                    token="my-jwt-token",
+                    private_key=None,
+                    application="dbt",
+                    client_request_mfa_token=True,
+                    client_store_temporary_credential=True,
+                    insecure_mode=False,
+                    session_parameters={},
+                    reuse_connections=None,
+                )
+            ]
+        )
+
     def test_query_tag(self):
         self.config.credentials = self.config.credentials.replace(
             password="test_password", query_tag="test_query_tag"
