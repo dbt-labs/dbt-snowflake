@@ -20,6 +20,7 @@ from dbt_common.contracts.metadata import (
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
 
+from dbt.adapters.snowflake.relation_configs import SnowflakeRelationType
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
@@ -162,16 +163,19 @@ class SnowflakeAdapter(SQLAdapter):
 
         row = object_metadata[0]
 
-        is_dynamic = row.get("is_dynamic")
+        is_dynamic = row.get("is_dynamic") in ("Y", "YES")
         kind = row.get("kind")
 
-        if is_dynamic == "YES" and kind == "BASE TABLE":
-            table_type = "DYNAMIC TABLE"
+        if is_dynamic and kind == str(SnowflakeRelationType.Table).upper():
+            table_type = str(SnowflakeRelationType.DynamicTable).upper()
         else:
             table_type = kind
 
         # https://docs.snowflake.com/en/sql-reference/sql/show-views#output
-        is_view = kind in ("VIEW", "MATERIALIZED_VIEW")
+        is_view = kind in (
+            str(SnowflakeRelationType.View).upper(),
+            str(SnowflakeRelationType.MaterializedView).upper(),
+        )
 
         table_metadata = TableMetadata(
             type=table_type,
