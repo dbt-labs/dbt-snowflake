@@ -172,10 +172,8 @@ class SnowflakeAdapter(SQLAdapter):
             table_type = kind
 
         # https://docs.snowflake.com/en/sql-reference/sql/show-views#output
-        is_view = kind in (
-            str(SnowflakeRelationType.View).upper(),
-            str(SnowflakeRelationType.MaterializedView).upper(),
-        )
+        # Note: we don't support materialized views in dbt-snowflake
+        is_view = kind == str(SnowflakeRelationType.View).upper()
 
         table_metadata = TableMetadata(
             type=table_type,

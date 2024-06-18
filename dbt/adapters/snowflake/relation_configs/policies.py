@@ -7,7 +7,6 @@ from dbt_common.dataclass_schema import StrEnum
 class SnowflakeRelationType(StrEnum):
     Table = "table"
     View = "view"
-    MaterializedView = "materialized_view"
     CTE = "cte"
     External = "external"
     DynamicTable = "dynamic_table"
