@@ -1,13 +1,9 @@
 from dataclasses import dataclass
 from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, TYPE_CHECKING
 
-from dbt.adapters.base import BaseRelation
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
-from dbt.adapters.snowflake import SnowflakeColumn
-from dbt.adapters.snowflake import SnowflakeConnectionManager
-from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -23,6 +19,10 @@ from dbt_common.contracts.metadata import (
 )
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
+
+from dbt.adapters.snowflake import SnowflakeColumn
+from dbt.adapters.snowflake import SnowflakeConnectionManager
+from dbt.adapters.snowflake import SnowflakeRelation
 
 if TYPE_CHECKING:
     import agate
@@ -140,22 +140,21 @@ class SnowflakeAdapter(SQLAdapter):
             else:
                 raise
 
-    def _show_object_metadata(self, relation):
+    def _show_object_metadata(self, relation: SnowflakeRelation) -> Optional[dict]:
         try:
             kwargs = {"relation": relation}
             results = self.execute_macro(SHOW_OBJECT_METADATA_MACRO_NAME, kwargs=kwargs)
-        except DbtDatabaseError as exc:
-            # If we don't have permissions to the object, return empty
-            if "Object does not exist" in str(exc):
-                return None
-        else:
-            # If we don't get any results, return empty
+
             if len(results) == 0:
                 return None
 
             return results
+        except DbtDatabaseError:
+            return None
 
-    def get_catalog_for_single_relation(self, relation: BaseRelation) -> Optional[CatalogTable]:
+    def get_catalog_for_single_relation(
+        self, relation: SnowflakeRelation
+    ) -> Optional[CatalogTable]:
         object_metadata = self._show_object_metadata(relation)
 
         if not object_metadata:
