@@ -158,67 +158,65 @@ class SnowflakeAdapter(SQLAdapter):
     def get_catalog_for_single_relation(self, relation: BaseRelation) -> Optional[CatalogTable]:
         object_metadata = self._show_object_metadata(relation)
 
-        if object_metadata:
-            row = object_metadata[0]
-
-            is_dynamic = row.get("is_dynamic")
-            kind = row.get("kind")
-
-            if is_dynamic == "YES" and kind == "BASE TABLE":
-                table_type = "DYNAMIC TABLE"
-            else:
-                table_type = kind
-
-            # https://docs.snowflake.com/en/sql-reference/sql/show-views#output
-            is_view = kind in ("VIEW", "MATERIALIZED_VIEW")
-
-            table_metadata = TableMetadata(
-                type=table_type,
-                schema=row.get("schema_name"),
-                name=row.get("name"),
-                database=row.get("database_name"),
-                comment=row.get("comment"),
-                owner=row.get("owner"),
-            )
-
-            stats_dict: StatsDict = {
-                "has_stats": StatsItem(
-                    id="has_stats",
-                    label="Has Stats?",
-                    value=True,
-                    include=False,
-                    description="Indicates whether there are statistics for this table",
-                ),
-                "row_count": StatsItem(
-                    id="row_count",
-                    label="Row Count",
-                    value=row.get("rows"),
-                    include=(not is_view),
-                    description="Number of rows in the table as reported by Snowflake",
-                ),
-                "bytes": StatsItem(
-                    id="bytes",
-                    label="Approximate Size",
-                    value=row.get("bytes"),
-                    include=(not is_view),
-                    description="Size of the table as reported by Snowflake",
-                ),
-            }
-
-            catalog_columns = {}
-            columns_metadata = self.get_columns_in_relation(relation)
-
-            for i, c in enumerate(columns_metadata):
-                name = c.column
-                catalog_columns[name] = ColumnMetadata(type=c.dtype, index=i + 1, name=name)
-
-            return CatalogTable(
-                metadata=table_metadata,
-                columns=catalog_columns,
-                stats=stats_dict,
-            )
-        else:
+        if not object_metadata:
             return None
+
+        row = object_metadata[0]
+
+        is_dynamic = row.get("is_dynamic")
+        kind = row.get("kind")
+
+        if is_dynamic == "YES" and kind == "BASE TABLE":
+            table_type = "DYNAMIC TABLE"
+        else:
+            table_type = kind
+
+        # https://docs.snowflake.com/en/sql-reference/sql/show-views#output
+        is_view = kind in ("VIEW", "MATERIALIZED_VIEW")
+
+        table_metadata = TableMetadata(
+            type=table_type,
+            schema=row.get("schema_name"),
+            name=row.get("name"),
+            database=row.get("database_name"),
+            comment=row.get("comment"),
+            owner=row.get("owner"),
+        )
+
+        stats_dict: StatsDict = {
+            "has_stats": StatsItem(
+                id="has_stats",
+                label="Has Stats?",
+                value=True,
+                include=False,
+                description="Indicates whether there are statistics for this table",
+            ),
+            "row_count": StatsItem(
+                id="row_count",
+                label="Row Count",
+                value=row.get("rows"),
+                include=(not is_view),
+                description="Number of rows in the table as reported by Snowflake",
+            ),
+            "bytes": StatsItem(
+                id="bytes",
+                label="Approximate Size",
+                value=row.get("bytes"),
+                include=(not is_view),
+                description="Size of the table as reported by Snowflake",
+            ),
+        }
+
+        catalog_columns = {
+            c.column: ColumnMetadata(type=c.dtype, index=i + 1, name=c.column)
+            for i, c in enumerate(self.get_columns_in_relation(relation))
+        }
+
+        return CatalogTable(
+            metadata=table_metadata,
+            columns=catalog_columns,
+            stats=stats_dict,
+        )
 
     def list_relations_without_caching(
         self, schema_relation: SnowflakeRelation

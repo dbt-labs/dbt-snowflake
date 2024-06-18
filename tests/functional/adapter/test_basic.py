@@ -90,9 +90,9 @@ class TestGetCatalogForSingleRelationSnowflake(BaseGetCatalogForSingleRelation):
     def expected_catalog_my_view_model(self, project, current_role):
         return CatalogTable(
             metadata=TableMetadata(
-                type=SnowflakeRelationType.View,
+                type=SnowflakeRelationType.View.upper(),
                 schema=project.test_schema.upper(),
-                name="MY_MODEL",
+                name="MY_VIEW_MODEL",
                 database=project.database,
                 comment="",
                 owner=current_role,
@@ -110,7 +110,80 @@ class TestGetCatalogForSingleRelationSnowflake(BaseGetCatalogForSingleRelation):
                     type="TIMESTAMP_NTZ", index=5, name="UPDATED_AT", comment=None
                 ),
             },
-            stats=snowflake_stats(),
+            stats={
+                "has_stats": StatsItem(
+                    id="has_stats",
+                    label="Has Stats?",
+                    value=True,
+                    include=False,
+                    description="Indicates whether there are statistics for this table",
+                ),
+                "row_count": StatsItem(
+                    id="row_count",
+                    label="Row Count",
+                    value=0,
+                    include=False,
+                    description="Number of rows in the table as reported by Snowflake",
+                ),
+                "bytes": StatsItem(
+                    id="bytes",
+                    label="Approximate Size",
+                    value=0,
+                    include=False,
+                    description="Size of the table as reported by Snowflake",
+                ),
+            },
+            unique_id=None,
+        )
+
+    @pytest.fixture(scope="class")
+    def expected_catalog_my_table_model(self, project, current_role):
+        return CatalogTable(
+            metadata=TableMetadata(
+                type=SnowflakeRelationType.Table.upper(),
+                schema=project.test_schema.upper(),
+                name="MY_TABLE_MODEL",
+                database=project.database,
+                comment="",
+                owner=current_role,
+            ),
+            columns={
+                "ID": ColumnMetadata(type="NUMBER", index=1, name="ID", comment=None),
+                "FIRST_NAME": ColumnMetadata(
+                    type="VARCHAR", index=2, name="FIRST_NAME", comment=None
+                ),
+                "EMAIL": ColumnMetadata(type="VARCHAR", index=3, name="EMAIL", comment=None),
+                "IP_ADDRESS": ColumnMetadata(
+                    type="VARCHAR", index=4, name="IP_ADDRESS", comment=None
+                ),
+                "UPDATED_AT": ColumnMetadata(
+                    type="TIMESTAMP_NTZ", index=5, name="UPDATED_AT", comment=None
+                ),
+            },
+            stats={
+                "has_stats": StatsItem(
+                    id="has_stats",
+                    label="Has Stats?",
+                    value=True,
+                    include=False,
+                    description="Indicates whether there are statistics for this table",
+                ),
+                "row_count": StatsItem(
+                    id="row_count",
+                    label="Row Count",
+                    value=1,
+                    include=True,
+                    description="Number of rows in the table as reported by Snowflake",
+                ),
+                "bytes": StatsItem(
+                    id="bytes",
+                    label="Approximate Size",
+                    value=2048,
+                    include=True,
+                    description="Size of the table as reported by Snowflake",
+                ),
+            },
+            unique_id=None,
         )
 
 
