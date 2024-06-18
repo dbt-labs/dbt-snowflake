@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple
+from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, TYPE_CHECKING
 
-import agate
 from dbt.adapters.base import BaseRelation
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
@@ -9,6 +8,7 @@ from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, 
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
+from dbt.adapters.snowflake.impl import SHOW_OBJECT_METADATA_MACRO_NAME
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -25,7 +25,8 @@ from dbt_common.contracts.metadata import (
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
 
-SHOW_OBJECT_METADATA_MACRO_NAME = "snowflake__show_object_metadata"
+if TYPE_CHECKING:
+    import agate
 
 
 @dataclass
@@ -72,8 +73,8 @@ class SnowflakeAdapter(SQLAdapter):
 
     @classmethod
     def _catalog_filter_table(
-        cls, table: agate.Table, used_schemas: FrozenSet[Tuple[str, str]]
-    ) -> agate.Table:
+        cls, table: "agate.Table", used_schemas: FrozenSet[Tuple[str, str]]
+    ) -> "agate.Table":
         # On snowflake, users can set QUOTED_IDENTIFIERS_IGNORE_CASE, so force
         # the column names to their lowercased forms.
         lowered = table.rename(column_names=[c.lower() for c in table.column_names])
@@ -239,7 +240,7 @@ class SnowflakeAdapter(SQLAdapter):
 
         return [self._parse_list_relations_result(result) for result in results.select(columns)]
 
-    def _parse_list_relations_result(self, result: agate.Row) -> SnowflakeRelation:
+    def _parse_list_relations_result(self, result: "agate.Row") -> SnowflakeRelation:
         # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
         try:
             database, schema, identifier, relation_type, is_dynamic = result
@@ -283,7 +284,7 @@ class SnowflakeAdapter(SQLAdapter):
             return column
 
     @available
-    def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
+    def standardize_grants_dict(self, grants_table: "agate.Table") -> dict:
         grants_dict: Dict[str, Any] = {}
 
         for row in grants_table:
