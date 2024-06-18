@@ -6,6 +6,9 @@ from dbt.adapters.base import BaseRelation
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
+from dbt.adapters.snowflake import SnowflakeColumn
+from dbt.adapters.snowflake import SnowflakeConnectionManager
+from dbt.adapters.snowflake import SnowflakeRelation
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -21,10 +24,6 @@ from dbt_common.contracts.metadata import (
 )
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
-
-from dbt.adapters.snowflake import SnowflakeColumn
-from dbt.adapters.snowflake import SnowflakeConnectionManager
-from dbt.adapters.snowflake import SnowflakeRelation
 
 SHOW_OBJECT_METADATA_MACRO_NAME = "snowflake__show_object_metadata"
 
@@ -168,6 +167,9 @@ class SnowflakeAdapter(SQLAdapter):
             else:
                 table_type = kind
 
+            # https://docs.snowflake.com/en/sql-reference/sql/show-views#output
+            is_view = kind in ("VIEW", "MATERIALIZED_VIEW")
+
             table_metadata = TableMetadata(
                 type=table_type,
                 schema=row.get("schema_name"),
@@ -189,14 +191,14 @@ class SnowflakeAdapter(SQLAdapter):
                     id="row_count",
                     label="Row Count",
                     value=row.get("rows"),
-                    include=True,
+                    include=(not is_view),
                     description="Number of rows in the table as reported by Snowflake",
                 ),
                 "bytes": StatsItem(
                     id="bytes",
                     label="Approximate Size",
                     value=row.get("bytes"),
-                    include=True,
+                    include=(not is_view),
                     description="Size of the table as reported by Snowflake",
                 ),
             }

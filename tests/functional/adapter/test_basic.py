@@ -17,6 +17,9 @@ from dbt.tests.adapter.basic.test_snapshot_timestamp import BaseSnapshotTimestam
 from dbt.tests.adapter.basic.test_adapter_methods import BaseAdapterMethod
 from dbt.tests.adapter.basic.test_docs_generate import BaseDocsGenerate
 from dbt.tests.adapter.basic.expected_catalog import base_expected_catalog, no_stats
+from dbt_common.contracts.metadata import CatalogTable, TableMetadata, ColumnMetadata, StatsItem
+
+from dbt.adapters.snowflake.relation_configs import SnowflakeRelationType
 from tests.functional.adapter.expected_stats import snowflake_stats
 
 
@@ -29,7 +32,86 @@ class TestSingularTestsSnowflake(BaseSingularTests):
 
 
 class TestGetCatalogForSingleRelationSnowflake(BaseGetCatalogForSingleRelation):
-    pass
+    @pytest.fixture(scope="class")
+    def current_role(self, project):
+        return project.run_sql("select current_role()", fetch="one")[0]
+
+    @pytest.fixture(scope="class")
+    def expected_catalog_my_seed(self, project, current_role):
+        return CatalogTable(
+            metadata=TableMetadata(
+                type=SnowflakeRelationType.Table.upper(),
+                schema=project.test_schema.upper(),
+                name="MY_SEED",
+                database=project.database,
+                comment="",
+                owner=current_role,
+            ),
+            columns={
+                "ID": ColumnMetadata(type="NUMBER", index=1, name="ID", comment=None),
+                "FIRST_NAME": ColumnMetadata(
+                    type="VARCHAR", index=2, name="FIRST_NAME", comment=None
+                ),
+                "EMAIL": ColumnMetadata(type="VARCHAR", index=3, name="EMAIL", comment=None),
+                "IP_ADDRESS": ColumnMetadata(
+                    type="VARCHAR", index=4, name="IP_ADDRESS", comment=None
+                ),
+                "UPDATED_AT": ColumnMetadata(
+                    type="TIMESTAMP_NTZ", index=5, name="UPDATED_AT", comment=None
+                ),
+            },
+            stats={
+                "has_stats": StatsItem(
+                    id="has_stats",
+                    label="Has Stats?",
+                    value=True,
+                    include=False,
+                    description="Indicates whether there are statistics for this table",
+                ),
+                "row_count": StatsItem(
+                    id="row_count",
+                    label="Row Count",
+                    value=1,
+                    include=True,
+                    description="Number of rows in the table as reported by Snowflake",
+                ),
+                "bytes": StatsItem(
+                    id="bytes",
+                    label="Approximate Size",
+                    value=2048,
+                    include=True,
+                    description="Size of the table as reported by Snowflake",
+                ),
+            },
+            unique_id=None,
+        )
+
+    @pytest.fixture(scope="class")
+    def expected_catalog_my_model(self, project, current_role):
+        return CatalogTable(
+            metadata=TableMetadata(
+                type=SnowflakeRelationType.View,
+                schema=project.test_schema.upper(),
+                name="MY_MODEL",
+                database=project.database,
+                comment="",
+                owner=current_role,
+            ),
+            columns={
+                "ID": ColumnMetadata(type="NUMBER", index=1, name="ID", comment=None),
+                "FIRST_NAME": ColumnMetadata(
+                    type="VARCHAR", index=2, name="FIRST_NAME", comment=None
+                ),
+                "EMAIL": ColumnMetadata(type="VARCHAR", index=3, name="EMAIL", comment=None),
+                "IP_ADDRESS": ColumnMetadata(
+                    type="VARCHAR", index=4, name="IP_ADDRESS", comment=None
+                ),
+                "UPDATED_AT": ColumnMetadata(
+                    type="TIMESTAMP_NTZ", index=5, name="UPDATED_AT", comment=None
+                ),
+            },
+            stats=snowflake_stats(),
+        )
 
 
 class TestSingularTestsEphemeralSnowflake(BaseSingularTestsEphemeral):
@@ -81,8 +163,6 @@ class TestDocsGenerateSnowflake(BaseDocsGenerate):
             time_type="TIMESTAMP_NTZ",
             view_type="VIEW",
             table_type="BASE TABLE",
-            model_stats=no_stats(),
-            seed_stats=snowflake_stats(),
             case=lambda x: x.upper(),
             case_columns=False,
         )
