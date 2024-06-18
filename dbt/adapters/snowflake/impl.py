@@ -8,7 +8,6 @@ from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, 
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
-from dbt.adapters.snowflake.impl import SHOW_OBJECT_METADATA_MACRO_NAME
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -27,6 +26,8 @@ from dbt_common.utils import filter_null_values
 
 if TYPE_CHECKING:
     import agate
+
+SHOW_OBJECT_METADATA_MACRO_NAME = "snowflake__show_object_metadata"
 
 
 @dataclass
