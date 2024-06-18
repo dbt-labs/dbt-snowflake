@@ -87,7 +87,7 @@ class TestGetCatalogForSingleRelationSnowflake(BaseGetCatalogForSingleRelation):
         )
 
     @pytest.fixture(scope="class")
-    def expected_catalog_my_model(self, project, current_role):
+    def expected_catalog_my_view_model(self, project, current_role):
         return CatalogTable(
             metadata=TableMetadata(
                 type=SnowflakeRelationType.View,
@@ -163,6 +163,8 @@ class TestDocsGenerateSnowflake(BaseDocsGenerate):
             time_type="TIMESTAMP_NTZ",
             view_type="VIEW",
             table_type="BASE TABLE",
+            model_stats=no_stats(),
+            seed_stats=snowflake_stats(),
             case=lambda x: x.upper(),
             case_columns=False,
         )
