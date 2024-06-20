@@ -17,6 +17,7 @@ from tests.functional.adapter.dynamic_table_tests.files import (
     MY_SEED,
 )
 from tests.functional.adapter.dynamic_table_tests.utils import (
+    query_refresh_mode,
     query_relation_type,
     query_target_lag,
     query_warehouse,
@@ -28,6 +29,7 @@ class SnowflakeDynamicTableChanges:
     def check_start_state(project, dynamic_table):
         assert query_target_lag(project, dynamic_table) == "2 minutes"
         assert query_warehouse(project, dynamic_table) == "DBT_TESTING"
+        assert query_refresh_mode(project, dynamic_table) == "INCREMENTAL"
 
     @staticmethod
     def change_config_via_alter(project, dynamic_table):
@@ -57,13 +59,13 @@ class SnowflakeDynamicTableChanges:
 
     @staticmethod
     def change_config_via_replace(project, dynamic_table):
-        # dbt-snowflake does not currently monitor any changes that trigger a full refresh
-        pass
+        initial_model = get_model_file(project, dynamic_table)
+        new_model = initial_model.replace("refresh_mode='INCREMENTAL'", "refresh_mode='FULL'")
+        set_model_file(project, dynamic_table, new_model)
 
     @staticmethod
     def check_state_replace_change_is_applied(project, dynamic_table):
-        # dbt-snowflake does not currently monitor any changes that trigger a full refresh
-        pass
+        assert query_refresh_mode(project, dynamic_table) == "FULL"
 
     @staticmethod
     def query_relation_type(project, relation: SnowflakeRelation) -> Optional[str]:

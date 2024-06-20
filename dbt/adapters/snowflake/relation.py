@@ -2,13 +2,19 @@ from dataclasses import dataclass, field
 from typing import FrozenSet, Optional, Type
 
 from dbt.adapters.base.relation import BaseRelation
-from dbt.adapters.relation_configs import RelationConfigChangeAction, RelationResults
+from dbt.adapters.relation_configs import (
+    RelationConfigBase,
+    RelationConfigChangeAction,
+    RelationResults,
+)
 from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.utils import classproperty
+from dbt_common.exceptions import DbtRuntimeError
 
 from dbt.adapters.snowflake.relation_configs import (
     SnowflakeDynamicTableConfig,
     SnowflakeDynamicTableConfigChangeset,
+    SnowflakeDynamicTableRefreshModeConfigChange,
     SnowflakeDynamicTableTargetLagConfigChange,
     SnowflakeDynamicTableWarehouseConfigChange,
     SnowflakeQuotePolicy,
@@ -21,6 +27,9 @@ class SnowflakeRelation(BaseRelation):
     type: Optional[SnowflakeRelationType] = None
     quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
     require_alias: bool = False
+    relation_configs = {
+        SnowflakeRelationType.DynamicTable: SnowflakeDynamicTableConfig,
+    }
     renameable_relations: FrozenSet[SnowflakeRelationType] = field(
         default_factory=lambda: frozenset(
             {
@@ -53,6 +62,17 @@ class SnowflakeRelation(BaseRelation):
         return SnowflakeRelationType
 
     @classmethod
+    def from_config(cls, config: RelationConfig) -> RelationConfigBase:
+        relation_type: str = config.config.materialized
+
+        if relation_config := cls.relation_configs.get(relation_type):
+            return relation_config.from_relation_config(config)
+
+        raise DbtRuntimeError(
+            f"from_config() is not supported for the provided relation type: {relation_type}"
+        )
+
+    @classmethod
     def dynamic_table_config_changeset(
         cls, relation_results: RelationResults, relation_config: RelationConfig
     ) -> Optional[SnowflakeDynamicTableConfigChangeset]:
@@ -75,6 +95,12 @@ class SnowflakeRelation(BaseRelation):
                     action=RelationConfigChangeAction.alter,
                     context=new_dynamic_table.snowflake_warehouse,
                 )
+            )
+
+        if new_dynamic_table.refresh_mode != existing_dynamic_table.refresh_mode:
+            config_change_collection.refresh_mode = SnowflakeDynamicTableRefreshModeConfigChange(
+                action=RelationConfigChangeAction.create,
+                context=new_dynamic_table.refresh_mode,
             )
 
         if config_change_collection.has_changes:
