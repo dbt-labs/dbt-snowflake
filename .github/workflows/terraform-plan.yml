@@ -1,0 +1,36 @@
+name: "Terraform plan"
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to run plan on"
+        type: string
+        default: main
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./.terraform
+
+jobs:
+  plan:
+    name: "Plan"
+    runs-on: ubuntu-latest
+    environment: "Snowflake: KTB38830"
+    steps:
+      - name: "Checkout `${{ inputs.branch }}`"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+      - name: "Terraform init"
+        run: terraform init
+
+      - name: "Terraform plan"
+        run: terraform plan

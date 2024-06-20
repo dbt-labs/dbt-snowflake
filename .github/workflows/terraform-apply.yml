@@ -1,0 +1,31 @@
+name: "Terraform apply"
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./.terraform
+
+jobs:
+  apply:
+    name: "Apply"
+    runs-on: ubuntu-latest
+    environment: "Snowflake: KTB38830"
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+      - name: "Terraform init"
+        run: terraform init
+
+      - name: "Terraform apply"
+        run: terraform apply -auto-approve
