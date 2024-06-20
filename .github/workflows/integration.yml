@@ -92,9 +92,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           filters: |
             snowflake:
+              - '.github/**/*.yml'
+              - '.github/**/*.sh'
               - 'dbt/**'
               - 'tests/**'
               - 'dev-requirements.txt'
+              - '*.py'
       - name: Generate integration test matrix
         id: generate-matrix
         uses: actions/github-script@v7
