@@ -39,6 +39,11 @@ def query_warehouse(project, dynamic_table: SnowflakeRelation) -> Optional[str]:
     return config.get("warehouse")
 
 
+def query_refresh_mode(project, dynamic_table: SnowflakeRelation) -> Optional[str]:
+    config = describe_dynamic_table(project, dynamic_table)
+    return config.get("refresh_mode")
+
+
 def describe_dynamic_table(project, dynamic_table: SnowflakeRelation) -> agate.Row:
     with get_connection(project.adapter):
         macro_results = project.adapter.execute_macro(
