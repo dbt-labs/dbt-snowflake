@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, TYPE_CHECKING
 
-
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
@@ -10,16 +9,26 @@ from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
-
-from dbt.adapters.snowflake import SnowflakeConnectionManager
-from dbt.adapters.snowflake import SnowflakeRelation
-from dbt.adapters.snowflake import SnowflakeColumn
 from dbt_common.contracts.constraints import ConstraintType
+from dbt_common.contracts.metadata import (
+    TableMetadata,
+    StatsDict,
+    StatsItem,
+    CatalogTable,
+    ColumnMetadata,
+)
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
 
+from dbt.adapters.snowflake.relation_configs import SnowflakeRelationType
+from dbt.adapters.snowflake import SnowflakeColumn
+from dbt.adapters.snowflake import SnowflakeConnectionManager
+from dbt.adapters.snowflake import SnowflakeRelation
+
 if TYPE_CHECKING:
     import agate
+
+SHOW_OBJECT_METADATA_MACRO_NAME = "snowflake__show_object_metadata"
 
 
 @dataclass
@@ -56,6 +65,7 @@ class SnowflakeAdapter(SQLAdapter):
             Capability.SchemaMetadataByRelations: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadataBatch: CapabilitySupport(support=Support.Full),
+            Capability.GetCatalogForSingleRelation: CapabilitySupport(support=Support.Full),
         }
     )
 
@@ -130,6 +140,84 @@ class SnowflakeAdapter(SQLAdapter):
                 return []
             else:
                 raise
+
+    def _show_object_metadata(self, relation: SnowflakeRelation) -> Optional[dict]:
+        try:
+            kwargs = {"relation": relation}
+            results = self.execute_macro(SHOW_OBJECT_METADATA_MACRO_NAME, kwargs=kwargs)
+
+            if len(results) == 0:
+                return None
+
+            return results
+        except DbtDatabaseError:
+            return None
+
+    def get_catalog_for_single_relation(
+        self, relation: SnowflakeRelation
+    ) -> Optional[CatalogTable]:
+        object_metadata = self._show_object_metadata(relation)
+
+        if not object_metadata:
+            return None
+
+        row = object_metadata[0]
+
+        is_dynamic = row.get("is_dynamic") in ("Y", "YES")
+        kind = row.get("kind")
+
+        if is_dynamic and kind == str(SnowflakeRelationType.Table).upper():
+            table_type = str(SnowflakeRelationType.DynamicTable).upper()
+        else:
+            table_type = kind
+
+        # https://docs.snowflake.com/en/sql-reference/sql/show-views#output
+        # Note: we don't support materialized views in dbt-snowflake
+        is_view = kind == str(SnowflakeRelationType.View).upper()
+
+        table_metadata = TableMetadata(
+            type=table_type,
+            schema=row.get("schema_name"),
+            name=row.get("name"),
+            database=row.get("database_name"),
+            comment=row.get("comment"),
+            owner=row.get("owner"),
+        )
+
+        stats_dict: StatsDict = {
+            "has_stats": StatsItem(
+                id="has_stats",
+                label="Has Stats?",
+                value=True,
+                include=False,
+                description="Indicates whether there are statistics for this table",
+            ),
+            "row_count": StatsItem(
+                id="row_count",
+                label="Row Count",
+                value=row.get("rows"),
+                include=(not is_view),
+                description="Number of rows in the table as reported by Snowflake",
+            ),
+            "bytes": StatsItem(
+                id="bytes",
+                label="Approximate Size",
+                value=row.get("bytes"),
+                include=(not is_view),
+                description="Size of the table as reported by Snowflake",
+            ),
+        }
+
+        catalog_columns = {
+            c.column: ColumnMetadata(type=c.dtype, index=i + 1, name=c.column)
+            for i, c in enumerate(self.get_columns_in_relation(relation))
+        }
+
+        return CatalogTable(
+            metadata=table_metadata,
+            columns=catalog_columns,
+            stats=stats_dict,
+        )
 
     def list_relations_without_caching(
         self, schema_relation: SnowflakeRelation
