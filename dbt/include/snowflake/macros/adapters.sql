@@ -47,6 +47,15 @@
   {% do return(columns) %}
 {% endmacro %}
 
+{% macro snowflake__show_object_metadata(relation) %}
+  {%- set sql -%}
+    show objects like '{{ relation.identifier }}' in {{ relation.include(identifier=False) }} limit 1
+  {%- endset -%}
+
+  {%- set result = run_query(sql) -%}
+  {{ return(result) }}
+{% endmacro %}
+
 {% macro snowflake__list_schemas(database) -%}
   {# 10k limit from here: https://docs.snowflake.net/manuals/sql-reference/sql/show-schemas.html#usage-notes #}
   {% set maximum = 10000 %}
