@@ -11,6 +11,7 @@
 
   {%- if language == 'sql' -%}
     {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
+    {%- set order_by_cluster_key = config.get('order_by_cluster_key', default=true) -%}
     {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
     {%- set copy_grants = config.get('copy_grants', default=false) -%}
 
@@ -35,7 +36,7 @@
         {% endif %}
         {% if copy_grants and not temporary -%} copy grants {%- endif %} as
         (
-          {%- if cluster_by_string is not none -%}
+          {%- if order_by_cluster_key and cluster_by_string is not none -%}
             select * from (
               {{ compiled_code }}
               ) order by ({{ cluster_by_string }})
