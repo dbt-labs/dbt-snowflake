@@ -48,8 +48,9 @@
 {% endmacro %}
 
 {% macro snowflake__show_object_metadata(relation) %}
+  {% set materialized_relation = adapter.get_relation(database=relation.database, schema=relation.schema, identifier=relation.identifier)  %}
   {%- set sql -%}
-    show objects like {{ adapter.quote(relation.identifier) }} in {{ relation.include(identifier=False) }} limit 1 starts with {{ adapter.quote(relation.identifier) }}
+    show objects like '{{ relation.identifier }}' in {{ relation.include(identifier=False) }} starts with '{{ materialized_relation.identifier }}' limit 1 from '{{ materialized_relation.identifier }}'
   {%- endset -%}
 
   {%- set result = run_query(sql) -%}
