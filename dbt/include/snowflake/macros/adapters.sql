@@ -49,7 +49,7 @@
 
 {% macro snowflake__show_object_metadata(relation) %}
   {%- set sql -%}
-    show objects like '{{ relation.identifier }}' in {{ relation.include(identifier=False) }} limit 1
+    show objects like {{ adapter.quote(relation.identifier) }} in {{ relation.include(identifier=False) }} limit 1 starts with {{ adapter.quote(relation.identifier) }}
   {%- endset -%}
 
   {%- set result = run_query(sql) -%}
