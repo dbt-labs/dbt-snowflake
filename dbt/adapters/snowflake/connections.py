@@ -266,7 +266,11 @@ class SnowflakeCredentials(Credentials):
                 f"""Did not receive valid json with access_token.
                                         Showing json response: {result_json}"""
             )
-
+        elif "access_token" not in result_json:
+            raise FailedToConnectError(
+                "This error occurs when authentication has expired. "
+                "Please reauth with your auth provider."
+            )
         return result_json["access_token"]
 
     def _get_private_key(self):
