@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
-import agate
+from typing import Any, Dict, Optional, TYPE_CHECKING
 from dbt.adapters.base.relation import Policy
 from dbt.adapters.relation_configs import (
     RelationConfigBase,
@@ -13,6 +12,10 @@ from dbt.adapters.snowflake.relation_configs.policies import (
     SnowflakeIncludePolicy,
     SnowflakeQuotePolicy,
 )
+
+if TYPE_CHECKING:
+    # Imported downfile for specific row gathering function.
+    import agate
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
@@ -45,7 +48,7 @@ class SnowflakeRelationConfigBase(RelationConfigBase):
     def from_relation_results(cls, relation_results: RelationResults):
         relation_config = cls.parse_relation_results(relation_results)
         relation = cls.from_dict(relation_config)
-        return relation  # type: ignore
+        return relation
 
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:
@@ -62,8 +65,10 @@ class SnowflakeRelationConfigBase(RelationConfigBase):
         return None
 
     @classmethod
-    def _get_first_row(cls, results: agate.Table) -> agate.Row:
+    def _get_first_row(cls, results: "agate.Table") -> "agate.Row":
         try:
             return results.rows[0]
         except IndexError:
+            import agate
+
             return agate.Row(values=set())

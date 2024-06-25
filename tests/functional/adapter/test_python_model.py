@@ -138,3 +138,83 @@ class TestCustomSchemaWorks:
     def test_custom_target(self, project):
         results = run_dbt()
         assert results[0].node.schema == f"{project.test_schema}_MY_CUSTOM_SCHEMA"
+
+
+EXTERNAL_ACCESS_INTEGRATION_MODE = """
+import pandas
+import snowflake.snowpark as snowpark
+
+def model(dbt, session: snowpark.Session):
+    dbt.config(
+        materialized="table",
+        external_access_integrations=["test_external_access_integration"],
+        packages=["httpx==0.26.0"]
+    )
+    import httpx
+    return session.create_dataframe(
+        pandas.DataFrame(
+            [{"result": httpx.get(url="https://www.google.com").status_code}]
+        )
+    )
+"""
+
+
+class TestExternalAccessIntegration:
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {"external_access_integration_python_model.py": EXTERNAL_ACCESS_INTEGRATION_MODE}
+
+    def test_external_access_integration(self, project):
+        project.run_sql(
+            "create or replace network rule test_network_rule type = host_port mode = egress value_list= ('www.google.com:443');"
+        )
+        project.run_sql(
+            "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) enabled = true;"
+        )
+        run_dbt(["run"])
+
+
+SECRETS_MODE = """
+import pandas
+import snowflake.snowpark as snowpark
+
+def model(dbt, session: snowpark.Session):
+    dbt.config(
+        materialized="table",
+        secrets={"secret_variable_name": "test_secret"},
+        external_access_integrations=["test_external_access_integration"],
+    )
+    import _snowflake
+    return session.create_dataframe(
+        pandas.DataFrame(
+            [{"secret_value": _snowflake.get_generic_secret_string('secret_variable_name')}]
+        )
+    )
+"""
+
+
+class TestSecrets:
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {"secret_python_model.py": SECRETS_MODE}
+
+    # This test can be flaky because of delays in the integration being set up before trying to use it.
+    @pytest.fixture(scope="class")
+    def profiles_config_update(self):
+        return {"retry_all": True, "connect_retries": 3}
+
+    def test_secrets(self, project):
+        project.run_sql(
+            "create or replace secret test_secret type = generic_string secret_string='secret value';"
+        )
+
+        # The secrets you specify as values must also be specified in the external access integration.
+        # See https://docs.snowflake.com/en/developer-guide/external-network-access/creating-using-external-network-access#using-the-external-access-integration-in-a-function-or-procedure
+
+        project.run_sql(
+            "create or replace network rule test_network_rule type = host_port mode = egress value_list= ('www.google.com:443');"
+        )
+        project.run_sql(
+            "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) allowed_authentication_secrets = (test_secret) enabled = true;"
+        )
+        run_dbt(["run"])
