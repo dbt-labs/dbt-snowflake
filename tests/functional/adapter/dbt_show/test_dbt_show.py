@@ -1,9 +1,17 @@
-from dbt.tests.adapter.dbt_show.test_dbt_show import BaseShowSqlHeader, BaseShowLimit
+from dbt.tests.adapter.dbt_show.test_dbt_show import (
+    BaseShowSqlHeader,
+    BaseShowLimit,
+    BaseShowDoesNotHandleDoubleLimit,
+)
 
 
-class TestBigQueryShowLimit(BaseShowLimit):
+class TestSnowflakeShowLimit(BaseShowLimit):
     pass
 
 
-class TestBigQueryShowSqlHeader(BaseShowSqlHeader):
+class TestSnowflakeShowSqlHeader(BaseShowSqlHeader):
+    pass
+
+
+class TestSnowflakeShowDoesNotHandleDoubleLimit(BaseShowDoesNotHandleDoubleLimit):
     pass
