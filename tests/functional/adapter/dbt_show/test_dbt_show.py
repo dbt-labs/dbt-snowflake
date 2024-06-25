@@ -14,4 +14,4 @@ class TestSnowflakeShowSqlHeader(BaseShowSqlHeader):
 
 
 class TestSnowflakeShowDoesNotHandleDoubleLimit(BaseShowDoesNotHandleDoubleLimit):
-    pass
+    DATABASE_ERROR_MESSAGE = "unexpected 'limit'"
