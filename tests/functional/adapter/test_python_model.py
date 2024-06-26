@@ -1,4 +1,5 @@
 import pytest
+import time
 from dbt.tests.util import run_dbt, write_file
 from dbt.tests.adapter.python_model.test_python_model import (
     BasePythonModelTests,
@@ -217,4 +218,5 @@ class TestSecrets:
         project.run_sql(
             "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) allowed_authentication_secrets = (test_secret) enabled = true;"
         )
+        time.sleep(2)
         run_dbt(["run"])
