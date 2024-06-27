@@ -218,5 +218,5 @@ class TestSecrets:
         project.run_sql(
             "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) allowed_authentication_secrets = (test_secret) enabled = true;"
         )
-        time.sleep(2)
+        time.sleep(5)
         run_dbt(["run"])
