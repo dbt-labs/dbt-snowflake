@@ -207,9 +207,12 @@ class TestSecrets:
 
     def test_secrets(self, project):
         test_run_id = uuid.uuid4().hex
+        test_secret = f"test_secret{test_run_id}"
         test_network_rule = f"test_network_rule_{test_run_id}"
+        test_external_access_integration = f"test_external_access_integration_{test_run_id}"
+
         project.run_sql(
-            "create or replace secret test_secret type = generic_string secret_string='secret value';"
+            f"create or replace secret {test_secret} type = generic_string secret_string='secret value';"
         )
 
         # The secrets you specify as values must also be specified in the external access integration.
@@ -218,11 +221,13 @@ class TestSecrets:
             f"create or replace network rule {test_network_rule} type = host_port mode = egress value_list= ('www.google.com:443');"
         )
         project.run_sql(
-            f"create or replace external access integration test_external_access_integration allowed_network_rules = ({test_network_rule}) allowed_authentication_secrets = (test_secret) enabled = true;"
+            f"create or replace external access integration {test_external_access_integration} allowed_network_rules = ({test_network_rule}) allowed_authentication_secrets = (test_secret) enabled = true;"
         )
+
         run_dbt(["run"])
-        project.run_sql(f"drop secret if exists test_secret;")
+
+        project.run_sql(f"drop secret if exists {test_secret};")
         project.run_sql(f"drop network rule if exists test_network_rule_{test_network_rule};")
         project.run_sql(
-            f"drop external access integration if exists test_external_access_integration;"
+            f"drop external access integration if exists {test_external_access_integration};"
         )
