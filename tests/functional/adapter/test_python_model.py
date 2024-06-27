@@ -1,5 +1,6 @@
 import pytest
 import time
+import uuid
 from dbt.tests.util import run_dbt, write_file
 from dbt.tests.adapter.python_model.test_python_model import (
     BasePythonModelTests,
@@ -205,18 +206,18 @@ class TestSecrets:
         return {"retry_all": True, "connect_retries": 3}
 
     def test_secrets(self, project):
+        test_run_id = uuid.uuid4().hex
+        test_network_rule = f"test_network_rule_{test_run_id}"
         project.run_sql(
             "create or replace secret test_secret type = generic_string secret_string='secret value';"
         )
 
         # The secrets you specify as values must also be specified in the external access integration.
         # See https://docs.snowflake.com/en/developer-guide/external-network-access/creating-using-external-network-access#using-the-external-access-integration-in-a-function-or-procedure
-
         project.run_sql(
-            "create or replace network rule test_network_rule type = host_port mode = egress value_list= ('www.google.com:443');"
+            f"create or replace network rule {test_network_rule} type = host_port mode = egress value_list= ('www.google.com:443');"
         )
         project.run_sql(
-            "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) allowed_authentication_secrets = (test_secret) enabled = true;"
+            f"create or replace external access integration test_external_access_integration allowed_network_rules = ({test_network_rule}) allowed_authentication_secrets = (test_secret) enabled = true;"
         )
-        time.sleep(5)
         run_dbt(["run"])
