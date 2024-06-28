@@ -1,5 +1,4 @@
 import pytest
-import time
 import uuid
 from dbt.tests.util import run_dbt, write_file
 from dbt.tests.adapter.python_model.test_python_model import (
