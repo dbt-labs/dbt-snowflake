@@ -27,14 +27,14 @@
 
 {% macro snowflake__get_columns_in_relation(relation) -%}
   {%- set sql -%}
-    describe table {{ relation }}
+    describe table {{ relation.render() }}
   {%- endset -%}
   {%- set result = run_query(sql) -%}
 
   {% set maximum = 10000 %}
   {% if (result | length) >= maximum %}
     {% set msg %}
-      Too many columns in relation {{ relation }}! dbt can only get
+      Too many columns in relation {{ relation.render() }}! dbt can only get
       information about relations with fewer than {{ maximum }} columns.
     {% endset %}
     {% do exceptions.raise_compiler_error(msg) %}
