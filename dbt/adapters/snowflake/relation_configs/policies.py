@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from dbt.adapters.base.relation import Policy
+from dbt.adapters.contracts.relation import Policy
 from dbt_common.dataclass_schema import StrEnum
 
 
@@ -10,6 +10,7 @@ class SnowflakeRelationType(StrEnum):
     CTE = "cte"
     External = "external"
     DynamicTable = "dynamic_table"
+    MaterializedView = "materialized_view"
 
 
 class SnowflakeIncludePolicy(Policy):
