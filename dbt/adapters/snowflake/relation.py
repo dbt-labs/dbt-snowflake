@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 from typing import FrozenSet, Optional, Type
 
 from dbt.adapters.base.relation import BaseRelation
-from dbt.adapters.relation_configs import (
+from dbt.adapters.contracts.relation import RelationConfig
+from dbt.adapters.relation_configs.config_base import (
     RelationConfigBase,
-    RelationConfigChangeAction,
     RelationResults,
 )
-from dbt.adapters.contracts.relation import RelationConfig
+from dbt.adapters.relation_configs.config_change import RelationConfigChangeAction
 from dbt.adapters.utils import classproperty
 from dbt_common.exceptions import DbtRuntimeError
 
@@ -53,6 +53,10 @@ class SnowflakeRelation(BaseRelation):
     def is_dynamic_table(self) -> bool:
         return self.type == SnowflakeRelationType.DynamicTable
 
+    @property
+    def is_materialized_view(self) -> bool:
+        return self.type == SnowflakeRelationType.MaterializedView
+
     @classproperty
     def DynamicTable(cls) -> str:
         return str(SnowflakeRelationType.DynamicTable)
@@ -63,7 +67,7 @@ class SnowflakeRelation(BaseRelation):
 
     @classmethod
     def from_config(cls, config: RelationConfig) -> RelationConfigBase:
-        relation_type: str = config.config.materialized
+        relation_type: str = config.config.materialized if config.config else ""
 
         if relation_config := cls.relation_configs.get(relation_type):
             return relation_config.from_relation_config(config)
