@@ -1,10 +1,17 @@
 {% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
+  {{ log('XXX: am i here?', info=True) }}
   {%- set transient = config.get('transient', default=true) -%}
+  {%- set iceberg = config.get('iceberg', default=true) -%}
+  {%- set catalog = config.get('catalog') -%}
+  {%- set external_volume = config.get('external_volume') -%}
+  {%- set base_location = config.get('base_location') -%}
 
   {% if temporary -%}
     {%- set table_type = "temporary" -%}
-  {%- elif transient -%}
-    {%- set table_type = "transient" -%}
+  {# {%- elif transient -%}
+    {%- set table_type = "transient" -%} #}
+  {%- elif iceberg -%}
+    {%- set table_type = "iceberg" -%}
   {%- else -%}
     {%- set table_type = "" -%}
   {%- endif %}
@@ -32,6 +39,11 @@
           {{ get_assert_columns_equivalent(sql) }}
           {{ get_table_columns_and_constraints() }}
           {% set compiled_code = get_select_subquery(compiled_code) %}
+        {% endif %}
+        {% if iceberg and catalog and external_volume %}
+          CATALOG="{{ catalog }}",
+          EXTERNAL_VOLUME="{{ external_volume }}",
+          BASE_LOCATION="{{ base_location }}"
         {% endif %}
         {% if copy_grants and not temporary -%} copy grants {%- endif %} as
         (
