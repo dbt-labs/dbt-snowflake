@@ -31,7 +31,7 @@ select * from {{ ref("my_seed") }}
 
 ALTER_COLUMN_TYPE = """
 {{ config(materialized="table") }}
-{{ alter_column_type(ref("my_seed"), "MY_VALUE", "string") }}
+{{ alter_column_type(ref("my_seed"), "MY_VALUE", "varchar") }}
 select * from {{ ref("my_seed") }}
 """
 
