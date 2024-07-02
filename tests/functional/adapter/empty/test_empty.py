@@ -23,8 +23,20 @@ class TestMetadataWithEmptyFlag:
         return {
             "control.sql": _models.CONTROL,
             "get_columns_in_relation.sql": _models.GET_COLUMNS_IN_RELATION,
+            "alter_column_type.sql": _models.ALTER_COLUMN_TYPE,
         }
 
-    def test_run(self, project):
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, project):
         run_dbt(["seed"])
-        run_dbt(["run", "--empty"])
+
+    @pytest.mark.parametrize(
+        "model",
+        [
+            "control",
+            "get_columns_in_relation",
+            "alter_column_type",
+        ],
+    )
+    def test_run(self, project, model):
+        run_dbt(["run", "--empty", "--select", model])

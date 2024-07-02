@@ -186,7 +186,7 @@
 
 {% macro snowflake__alter_column_type(relation, column_name, new_column_type) -%}
   {% call statement('alter_column_type') %}
-    alter table {{ relation }} alter {{ adapter.quote(column_name) }} set data type {{ new_column_type }};
+    alter table {{ relation.render() }} alter {{ adapter.quote(column_name) }} set data type {{ new_column_type }};
   {% endcall %}
 {% endmacro %}
 
@@ -196,7 +196,7 @@
     {%- else -%}
         {%- set relation_type = relation.type -%}
     {%- endif -%}
-    comment on {{ relation_type }} {{ relation }} IS $${{ relation_comment | replace('$', '[$]') }}$$;
+    comment on {{ relation_type }} {{ relation.render() }} IS $${{ relation_comment | replace('$', '[$]') }}$$;
 {% endmacro %}
 
 
@@ -207,7 +207,7 @@
     {% else -%}
         {% set relation_type = relation.type %}
     {% endif %}
-    alter {{ relation_type }} {{ relation }} alter
+    alter {{ relation_type }} {{ relation.render() }} alter
     {% for column_name in existing_columns if (column_name in existing_columns) or (column_name|lower in existing_columns) %}
         {{ get_column_comment_sql(column_name, column_dict) }} {{- ',' if not loop.last else ';' }}
     {% endfor %}
@@ -266,7 +266,7 @@
     {% if add_columns %}
 
     {% set sql -%}
-       alter {{ relation_type }} {{ relation }} add column
+       alter {{ relation_type }} {{ relation.render() }} add column
           {% for column in add_columns %}
             {{ column.name }} {{ column.data_type }}{{ ',' if not loop.last }}
           {% endfor %}
@@ -279,7 +279,7 @@
     {% if remove_columns %}
 
     {% set sql -%}
-        alter {{ relation_type }} {{ relation }} drop column
+        alter {{ relation_type }} {{ relation.render() }} drop column
             {% for column in remove_columns %}
                 {{ column.name }}{{ ',' if not loop.last }}
             {% endfor %}
@@ -312,7 +312,7 @@
 
 {% macro snowflake__truncate_relation(relation) -%}
   {% set truncate_dml %}
-    truncate table {{ relation }}
+    truncate table {{ relation.render() }}
   {% endset %}
   {% call statement('truncate_relation') -%}
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
