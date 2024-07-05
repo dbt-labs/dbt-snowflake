@@ -1,4 +1,8 @@
-from dbt.tests.adapter.empty.test_empty import BaseTestEmpty, BaseTestEmptyInlineSourceRef
+from dbt.tests.adapter.empty.test_empty import (
+    BaseTestEmpty,
+    BaseTestEmptyInlineSourceRef,
+    MetadataWithEmptyFlag,
+)
 
 
 class TestSnowflakeEmpty(BaseTestEmpty):
@@ -6,4 +10,8 @@ class TestSnowflakeEmpty(BaseTestEmpty):
 
 
 class TestSnowflakeEmptyInlineSourceRef(BaseTestEmptyInlineSourceRef):
+    pass
+
+
+class TestMetadataWithEmptyFlag(MetadataWithEmptyFlag):
     pass

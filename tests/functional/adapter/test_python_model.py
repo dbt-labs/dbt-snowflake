@@ -1,4 +1,5 @@
 import pytest
+import uuid
 from dbt.tests.util import run_dbt, write_file
 from dbt.tests.adapter.python_model.test_python_model import (
     BasePythonModelTests,
@@ -174,20 +175,24 @@ class TestExternalAccessIntegration:
         run_dbt(["run"])
 
 
-SECRETS_MODE = """
+TEST_RUN_ID = uuid.uuid4().hex
+TEST_SECRET = f"test_secret_{TEST_RUN_ID}"
+TEST_NETWORK_RULE = f"test_network_rule_{TEST_RUN_ID}"
+TEST_EXTERNAL_ACCESS_INTEGRATION = f"test_external_access_integration_{TEST_RUN_ID}"
+SECRETS_MODE = f"""
 import pandas
 import snowflake.snowpark as snowpark
 
 def model(dbt, session: snowpark.Session):
     dbt.config(
         materialized="table",
-        secrets={"secret_variable_name": "test_secret"},
-        external_access_integrations=["test_external_access_integration"],
+        secrets={{"secret_variable_name": "{TEST_SECRET}"}},
+        external_access_integrations=["{TEST_EXTERNAL_ACCESS_INTEGRATION}"],
     )
     import _snowflake
     return session.create_dataframe(
         pandas.DataFrame(
-            [{"secret_value": _snowflake.get_generic_secret_string('secret_variable_name')}]
+            [{{"secret_value": _snowflake.get_generic_secret_string('secret_variable_name')}}]
         )
     )
 """
@@ -198,23 +203,29 @@ class TestSecrets:
     def models(self):
         return {"secret_python_model.py": SECRETS_MODE}
 
-    # This test can be flaky because of delays in the integration being set up before trying to use it.
     @pytest.fixture(scope="class")
     def profiles_config_update(self):
         return {"retry_all": True, "connect_retries": 3}
 
     def test_secrets(self, project):
         project.run_sql(
-            "create or replace secret test_secret type = generic_string secret_string='secret value';"
+            f"create or replace secret {TEST_SECRET} type = generic_string secret_string='secret value';"
         )
 
-        # The secrets you specify as values must also be specified in the external access integration.
-        # See https://docs.snowflake.com/en/developer-guide/external-network-access/creating-using-external-network-access#using-the-external-access-integration-in-a-function-or-procedure
+        project.run_sql(
+            f"create or replace network rule {TEST_NETWORK_RULE} type = host_port mode = egress value_list= ('www.google.com:443');"
+        )
 
         project.run_sql(
-            "create or replace network rule test_network_rule type = host_port mode = egress value_list= ('www.google.com:443');"
+            f"create or replace external access integration {TEST_EXTERNAL_ACCESS_INTEGRATION} "
+            f"allowed_network_rules = ({TEST_NETWORK_RULE}) "
+            f"allowed_authentication_secrets = ({TEST_SECRET}) enabled = true;"
         )
-        project.run_sql(
-            "create or replace external access integration test_external_access_integration allowed_network_rules = (test_network_rule) allowed_authentication_secrets = (test_secret) enabled = true;"
-        )
+
         run_dbt(["run"])
+
+        project.run_sql(f"drop secret if exists {TEST_SECRET};")
+        project.run_sql(f"drop network rule if exists {TEST_NETWORK_RULE};")
+        project.run_sql(
+            f"drop external access integration if exists {TEST_EXTERNAL_ACCESS_INTEGRATION};"
+        )
