@@ -1,6 +1,5 @@
-from adapters.snowflake.relation_configs import SnowflakeQuotePolicy
 from dbt.adapters.snowflake.relation import SnowflakeRelation
-from dbt.adapters.snowflake.relation_configs import SnowflakeRelationType
+from dbt.adapters.snowflake.relation_configs import SnowflakeQuotePolicy
 
 
 def test_relation_as_case_sensitive_quoting_true():
