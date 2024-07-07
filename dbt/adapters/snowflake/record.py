@@ -21,12 +21,11 @@ class CursorGetSqlStateResult:
     msg: Optional[str]
 
 
+@Recorder.register_record_type
 class CursorGetSqlStateRecord(Record):
     params_cls = CursorGetSqlStateParams
     result_cls = CursorGetSqlStateResult
-
-
-Recorder.register_record_type(CursorGetSqlStateRecord)
+    group = "Database"
 
 
 @dataclasses.dataclass
@@ -39,12 +38,11 @@ class CursorGetSqfidResult:
     msg: Optional[str]
 
 
+@Recorder.register_record_type
 class CursorGetSqfidRecord(Record):
     params_cls = CursorGetSqfidParams
     result_cls = CursorGetSqfidResult
-
-
-Recorder.register_record_type(CursorGetSqfidRecord)
+    group = "Database"
 
 
 class SnowflakeRecordReplayCursor(RecordReplayCursor):
