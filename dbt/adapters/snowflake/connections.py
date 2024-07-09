@@ -94,7 +94,7 @@ class SnowflakeCredentials(Credentials):
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
-    reuse_connections: Optional[bool] = None
+    reuse_connections: Optional[bool] = True
 
     def __post_init__(self):
         if self.authenticator != "oauth" and (self.oauth_client_secret or self.oauth_client_id):
