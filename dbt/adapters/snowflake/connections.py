@@ -349,7 +349,7 @@ class SnowflakeCredentials(Credentials):
             )
         return result_json["access_token"]
 
-    def _get_private_key(self):
+    def _get_private_key(self) -> Optional[bytes]:
         return _private_key(self.private_key, self.private_key_path, self.private_key_passphrase)
 
 
