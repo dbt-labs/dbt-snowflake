@@ -15,6 +15,8 @@ from tests.functional.adapter.dynamic_table_tests.files import (
     MY_SEED,
     MY_TABLE,
     MY_VIEW,
+    MY_DYNAMIC_TABLE_WITH_DYNAMIC_WAREHOUSE,
+    GET_WAREHOUSE_MACRO,
 )
 from tests.functional.adapter.dynamic_table_tests.utils import query_relation_type
 
@@ -184,3 +186,25 @@ class TestSnowflakeDynamicTableBasic:
         # new records were inserted in the table but didn't show up in the view until it was refreshed
         assert table_start < table_mid == table_end
         assert view_start == view_mid < view_end
+
+
+class TestSnowflakeDynamicTableWithDynamicWarehouse:
+    @pytest.fixture(scope="class")
+    def macros(self):
+        return {"get_warehouse.sql": GET_WAREHOUSE_MACRO}
+
+    @pytest.fixture(scope="class", autouse=True)
+    def seeds(self):
+        return {"my_seed.csv": MY_SEED}
+
+    @pytest.fixture(scope="class", autouse=True)
+    def models(self):
+        yield {
+            "my_table.sql": MY_TABLE,
+            "my_view.sql": MY_VIEW,
+            "my_dynamic_table_with_dynamic_warehouse.sql": MY_DYNAMIC_TABLE_WITH_DYNAMIC_WAREHOUSE,
+        }
+
+    def test_dynamic_table_create(self, project):
+        run_dbt(["seed"])
+        run_dbt(["run"])
