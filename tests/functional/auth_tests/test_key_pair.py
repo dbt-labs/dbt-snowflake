@@ -16,12 +16,11 @@ class TestKeyPairAuth:
             "private_key_passphrase": os.getenv("SNOWFLAKE_TEST_PRIVATE_KEY_PASSPHRASE"),
             "database": os.getenv("SNOWFLAKE_TEST_DATABASE"),
             "warehouse": os.getenv("SNOWFLAKE_TEST_WAREHOUSE"),
-            "authenticator": "oauth",
         }
 
     @pytest.fixture(scope="class")
     def models(self):
-        return {"model.sql": "select 1 as id"}
+        return {"my_model.sql": "select 1 as id"}
 
-    def test_snowflake_basic(self, project):
+    def test_connection(self, project):
         run_dbt()
