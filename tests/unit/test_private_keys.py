@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 import pytest
 
-from dbt.adapters.snowflake.connections import private_key_from_file, private_key_from_string
+from dbt.adapters.snowflake.auth import private_key_from_file, private_key_from_string
 
 
 PASSPHRASE = "password1234"

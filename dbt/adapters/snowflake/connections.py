@@ -19,7 +19,6 @@ from time import sleep
 
 from typing import Optional, Tuple, Union, Any, List, Iterable, TYPE_CHECKING
 
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 import requests
@@ -53,6 +52,8 @@ from dbt_common.events.functions import warn_or_error
 from dbt.adapters.events.types import AdapterEventWarning, AdapterEventError
 from dbt_common.ui import line_wrap_message, warning_tag
 
+from dbt.adapters.snowflake.auth import private_key_from_file, private_key_from_string
+
 if TYPE_CHECKING:
     import agate
 
@@ -70,49 +71,6 @@ ERROR_REDACTION_PATTERNS = {
     re.compile(r"Row Values: \[(.|\n)*\]"): "Row Values: [redacted]",
     re.compile(r"Duplicate field key '(.|\n)*'"): "Duplicate field key '[redacted]'",
 }
-
-
-@cache
-def private_key_from_string(
-    private_key_string: str, passphrase: Optional[str] = None
-) -> RSAPrivateKey:
-
-    if passphrase:
-        encoded_passphrase = passphrase.encode()
-    else:
-        encoded_passphrase = None
-
-    if private_key_string.startswith("-"):
-        return serialization.load_pem_private_key(
-            data=bytes(private_key_string, "utf-8"),
-            password=encoded_passphrase,
-            backend=default_backend(),
-        )
-    return serialization.load_der_private_key(
-        data=base64.b64decode(private_key_string),
-        password=encoded_passphrase,
-        backend=default_backend(),
-    )
-
-
-@cache
-def private_key_from_file(
-    private_key_path: str, passphrase: Optional[str] = None
-) -> RSAPrivateKey:
-
-    if passphrase:
-        encoded_passphrase = passphrase.encode()
-    else:
-        encoded_passphrase = None
-
-    with open(private_key_path, "rb") as file:
-        private_key_bytes = file.read()
-
-    return serialization.load_pem_private_key(
-        data=private_key_bytes,
-        password=encoded_passphrase,
-        backend=default_backend(),
-    )
 
 
 @cache
