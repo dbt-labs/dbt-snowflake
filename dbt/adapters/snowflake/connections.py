@@ -21,7 +21,7 @@ from typing import Optional, Tuple, Union, Any, List, Iterable, TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 import requests
 import snowflake.connector
 import snowflake.connector.constants
@@ -73,69 +73,54 @@ ERROR_REDACTION_PATTERNS = {
 
 
 @cache
-def _private_key(
-    private_key: Optional[str] = None,
-    private_key_path: Optional[str] = None,
-    private_key_passphrase: Optional[str] = None,
-) -> Optional[bytes]:
-    """Get Snowflake private key by path, from a Base64 encoded DER bytestring or None."""
+def private_key_from_string(
+    private_key_string: str, passphrase: Optional[str] = None
+) -> RSAPrivateKey:
 
-    if private_key and private_key_path:
-        raise DbtConfigError("Cannot specify both `private_key`  and `private_key_path`")
-    elif private_key:
-        p_key = _private_key_from_string(private_key, private_key_passphrase)
-    elif private_key_path:
-        p_key = _private_key_from_file(private_key_path, private_key_passphrase)
-    else:
-        return None
-
-    return p_key.private_bytes(
-        encoding=serialization.Encoding.DER,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),
-    )
-
-
-@cache
-def _private_key_from_string(
-    private_key: str, private_key_passphrase: Optional[str] = None
-) -> PrivateKeyTypes:
-
-    if private_key_passphrase:
-        encoded_passphrase = private_key_passphrase.encode()
+    if passphrase:
+        encoded_passphrase = passphrase.encode()
     else:
         encoded_passphrase = None
 
-    if private_key.startswith("-"):
+    if private_key_string.startswith("-"):
         return serialization.load_pem_private_key(
-            data=bytes(private_key, "utf-8"),
+            data=bytes(private_key_string, "utf-8"),
             password=encoded_passphrase,
             backend=default_backend(),
         )
     return serialization.load_der_private_key(
-        data=base64.b64decode(private_key),
+        data=base64.b64decode(private_key_string),
         password=encoded_passphrase,
         backend=default_backend(),
     )
 
 
 @cache
-def _private_key_from_file(
-    private_key_path: str, private_key_passphrase: Optional[str] = None
-) -> Optional[bytes]:
+def private_key_from_file(
+    private_key_path: str, passphrase: Optional[str] = None
+) -> RSAPrivateKey:
 
-    if private_key_passphrase:
-        encoded_passphrase = private_key_passphrase.encode()
+    if passphrase:
+        encoded_passphrase = passphrase.encode()
     else:
         encoded_passphrase = None
 
-    with open(private_key_path, "rb") as key:
-        p_key_bytes = key.read()
+    with open(private_key_path, "rb") as file:
+        private_key_bytes = file.read()
 
     return serialization.load_pem_private_key(
-        data=p_key_bytes,
+        data=private_key_bytes,
         password=encoded_passphrase,
         backend=default_backend(),
+    )
+
+
+@cache
+def snowflake_private_key(private_key: RSAPrivateKey) -> bytes:
+    return private_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
     )
 
 
@@ -350,7 +335,16 @@ class SnowflakeCredentials(Credentials):
         return result_json["access_token"]
 
     def _get_private_key(self) -> Optional[bytes]:
-        return _private_key(self.private_key, self.private_key_path, self.private_key_passphrase)
+        """Get Snowflake private key by path, from a Base64 encoded DER bytestring or None."""
+        if self.private_key and self.private_key_path:
+            raise DbtConfigError("Cannot specify both `private_key`  and `private_key_path`")
+        elif self.private_key:
+            private_key = private_key_from_string(self.private_key, self.private_key_passphrase)
+        elif self.private_key_path:
+            private_key = private_key_from_file(self.private_key_path, self.private_key_passphrase)
+        else:
+            return None
+        return snowflake_private_key(private_key)
 
 
 class SnowflakeConnectionManager(SQLConnectionManager):
