@@ -113,6 +113,7 @@ class SnowflakeCredentials(Credentials):
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
+    # this needs to default to `None` so that we can tell if the user set it; see `__post_init__()`
     reuse_connections: Optional[bool] = None
 
     def __post_init__(self):
@@ -142,6 +143,11 @@ class SnowflakeCredentials(Credentials):
                 )
 
         self.account = self.account.replace("_", "-")
+
+        # only default `reuse_connections` to `True` if the user has not turned on `client_session_keep_alive`
+        # having both of these set to `True` could lead to hanging open connections, so it should be opt-in behavior
+        if self.client_session_keep_alive is False and self.reuse_connections is None:
+            self.reuse_connections = True
 
     @property
     def type(self):
