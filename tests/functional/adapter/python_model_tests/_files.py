@@ -46,3 +46,24 @@ MACRO__DESCRIBE_TABLES = """
     {% do return(_table) %}
 {% endmacro %}
 """
+
+
+MODEL__LOGGING = """
+import logging
+
+import snowflake.snowpark as snowpark
+import snowflake.snowpark.functions as f
+from snowflake.snowpark.functions import *
+
+
+logger = logging.getLogger("dbt_logger")
+logger.info("******Inside Logging module.******")
+
+
+def model(dbt, session):
+    session.sql(f"ALTER SESSION SET LOG_LEVEL = INFO").collect()
+    logger.info("******Logging start.******")
+    df=session.sql(f"select current_user() as session_user, current_role() as session_role")
+    logger.info("******Logging End.******")
+    return df
+"""
