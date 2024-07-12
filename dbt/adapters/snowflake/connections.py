@@ -146,7 +146,10 @@ class SnowflakeCredentials(Credentials):
 
         # only default `reuse_connections` to `True` if the user has not turned on `client_session_keep_alive`
         # having both of these set to `True` could lead to hanging open connections, so it should be opt-in behavior
+        print(f"client_session_keep_alive = {self.client_session_keep_alive}")
+        print(f"reuse_connections = {self.reuse_connections}")
         if self.client_session_keep_alive is False and self.reuse_connections is None:
+            print("Updating reuse_connections")
             self.reuse_connections = True
 
     @property

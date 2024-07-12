@@ -296,7 +296,13 @@ class TestSnowflakeAdapter(unittest.TestCase):
         )
 
     def test_client_session_keep_alive_true(self):
-        self.config.credentials = self.config.credentials.replace(client_session_keep_alive=True)
+        self.config.credentials = self.config.credentials.replace(
+            client_session_keep_alive=True,
+            # this gets defaulted via `__post_init__` when `client_session_keep_alive` comes in as `False`
+            # then when `replace` is called, `__post_init__` cannot set it back to `None` since it cannot
+            # tell the difference between set by user and set by `__post_init__`
+            reuse_connections=None,
+        )
         self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 

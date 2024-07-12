@@ -5,9 +5,9 @@ Results:
 |---------------|--------------|-------------------|--------------------------------|----------|
 | User Password |        1,000 | False             | -                              |  234.09s |
 | User Password |        1,000 | True              | -                              |   78.34s |
-| Key Pair      |        1,000 | False             | False                          |  331.75s |
+| Key Pair      |        1,000 | False             | False                          |  271.47s | x
 | Key Pair      |        1,000 | False             | True                           |  278.65s |
-| Key Pair      |        1,000 | True              | False                          |   75.42s |
+| Key Pair      |        1,000 | True              | False                          |   63.69s | x
 | Key Pair      |        1,000 | True              | True                           |   73.14s |
 
 Notes:
@@ -91,8 +91,8 @@ class Scenario:
             https://docs.snowflake.com/en/user-guide/key-pair-auth
             """
             yield {
-                "private_key": os.getenv("SNOWFLAKE_PRIVATE_KEY"),
-                "private_key_passphrase": os.getenv("SNOWFLAKE_PRIVATE_KEY_PASSPHRASE"),
+                "private_key": os.getenv("SNOWFLAKE_TEST_PRIVATE_KEY"),
+                "private_key_passphrase": os.getenv("SNOWFLAKE_TEST_PRIVATE_KEY_PASSPHRASE"),
             }
 
         else:
