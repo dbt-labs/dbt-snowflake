@@ -5,14 +5,18 @@ Results:
 |---------------|--------------|-------------------|--------------------------------|----------|
 | User Password |        1,000 | False             | -                              |  234.09s |
 | User Password |        1,000 | True              | -                              |   78.34s |
-| Key Pair      |        1,000 | False             | False                          |  271.47s | x
-| Key Pair      |        1,000 | False             | True                           |  278.65s |
-| Key Pair      |        1,000 | True              | False                          |   63.69s | x
-| Key Pair      |        1,000 | True              | True                           |   73.14s |
+| Key Pair      |        1,000 | False             | False                          |  271.47s |
+| Key Pair      |        1,000 | False             | True                           |  275.73s |
+| Key Pair      |        1,000 | True              | False                          |   63.69s |
+| Key Pair      |        1,000 | True              | True                           |   73.45s |
 
 Notes:
+- run locally on MacOS, single threaded
 - `unsafe_skip_rsa_key_validation` only applies to the Key Pair auth method
 - `unsafe_skip_rsa_key_validation=True` was tested by updating the relevant `cryptography` calls directly as it is not a user configuration
+- since the models are all views, time differences should be viewed as absolute differences, e.g.:
+    - this: (271.47s - 63.69s) / 1,000 models = 208ms improvement
+    - NOT this: 1 - (63.69s / 271.47s) = 76.7% improvement
 """
 
 from datetime import datetime
