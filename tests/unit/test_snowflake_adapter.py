@@ -317,7 +317,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     application="dbt",
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=True,
+                    reuse_connections=None,
                 )
             ]
         )
