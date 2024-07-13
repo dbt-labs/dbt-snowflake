@@ -25,6 +25,13 @@ def model(dbt, session: snowpark.Session):
 class TestPythonModelLogging:
     """
     This test case addresses bug report https://github.com/dbt-labs/dbt-snowflake/issues/846
+
+    -- before running:
+    USE ROLE ACCOUNTADMIN;
+    ALTER ACCOUNT UNSET LOG_LEVEL;
+    ALTER ACCOUNT UNSET TRACE_LEVEL;
+    GRANT MODIFY SESSION LOG LEVEL ON ACCOUNT TO ROLE <DBT_ROLE>;
+    GRANT MODIFY SESSION TRACE LEVEL ON ACCOUNT TO ROLE <DBT_ROLE>;
     """
 
     @pytest.fixture(scope="class")
