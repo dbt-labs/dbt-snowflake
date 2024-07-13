@@ -371,6 +371,7 @@ CALL {proc_name}();
         else:
             proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
             python_stored_procedure = f"""
+ALTER SESSION SET TRACE_LEVEL = ON_EVENT;
 CREATE OR REPLACE PROCEDURE {proc_name} ()
 {common_procedure_code};
 CALL {proc_name}();
