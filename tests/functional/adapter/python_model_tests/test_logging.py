@@ -11,6 +11,7 @@ from snowflake.snowpark.functions import *
 
 
 logger = logging.getLogger("dbt_logger")
+logger.setLevel(logging.INFO)
 logger.info("******Inside Logging module.******")
 
 

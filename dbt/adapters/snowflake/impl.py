@@ -363,7 +363,6 @@ $$"""
         if use_anonymous_sproc:
             proc_name = f"{identifier}__dbt_sp"
             python_stored_procedure = f"""
-ALTER SESSION SET LOG_LEVEL = INFO;
 ALTER SESSION SET TRACE_LEVEL = ON_EVENT;
 WITH {proc_name} AS PROCEDURE ()
 {common_procedure_code}
@@ -372,8 +371,6 @@ CALL {proc_name}();
         else:
             proc_name = f"{database}.{schema}.{identifier}__dbt_sp"
             python_stored_procedure = f"""
-ALTER SESSION SET LOG_LEVEL = INFO;
-ALTER SESSION SET TRACE_LEVEL = ON_EVENT;
 CREATE OR REPLACE PROCEDURE {proc_name} ()
 {common_procedure_code};
 CALL {proc_name}();
