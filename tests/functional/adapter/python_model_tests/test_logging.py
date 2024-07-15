@@ -11,7 +11,6 @@ from snowflake.snowpark.functions import *
 
 
 logger = logging.getLogger("dbt_logger")
-logger.setLevel(logging.INFO)
 logger.info("******Inside Logging module.******")
 
 
@@ -30,9 +29,7 @@ class TestPythonModelLogging:
     -- before running:
     USE ROLE ACCOUNTADMIN;
     ALTER ACCOUNT UNSET LOG_LEVEL;
-    ALTER ACCOUNT UNSET TRACE_LEVEL;
     GRANT MODIFY SESSION LOG LEVEL ON ACCOUNT TO ROLE <DBT_ROLE>;
-    GRANT MODIFY SESSION TRACE LEVEL ON ACCOUNT TO ROLE <DBT_ROLE>;
     """
 
     @pytest.fixture(scope="class")
