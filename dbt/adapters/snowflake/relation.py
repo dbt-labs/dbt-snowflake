@@ -3,11 +3,11 @@ from typing import FrozenSet, Optional, Type
 
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.contracts.relation import ComponentName, RelationConfig
-from dbt.adapters.relation_configs import (
+from dbt.adapters.relation_configs.config_base import (
     RelationConfigBase,
     RelationResults,
 )
-
+from dbt.adapters.relation_configs.config_change import RelationConfigChangeAction
 from dbt.adapters.utils import classproperty
 from dbt_common.exceptions import DbtRuntimeError
 
@@ -67,7 +67,7 @@ class SnowflakeRelation(BaseRelation):
 
     @classmethod
     def from_config(cls, config: RelationConfig) -> RelationConfigBase:
-        relation_type: str = config.config.materialized if config.config else ""
+        relation_type: str = config.config.materialized
 
         if relation_config := cls.relation_configs.get(relation_type):
             return relation_config.from_relation_config(config)
