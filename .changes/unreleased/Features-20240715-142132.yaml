@@ -1,0 +1,6 @@
+kind: Features
+body: Implement materialized views
+time: 2024-07-15T14:21:32.859737-04:00
+custom:
+    Author: jeremy-thomas-roc
+    Issue: "870"
