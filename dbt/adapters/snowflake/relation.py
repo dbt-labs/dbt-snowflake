@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 from typing import FrozenSet, Optional, Type
 
 from dbt.adapters.base.relation import BaseRelation
-from dbt.adapters.contracts.relation import RelationConfig
-from dbt.adapters.relation_configs.config_base import (
+from dbt.adapters.contracts.relation import ComponentName, RelationConfig
+from dbt.adapters.relation_configs import (
     RelationConfigBase,
     RelationResults,
 )
-from dbt.adapters.relation_configs.config_change import RelationConfigChangeAction
+
 from dbt.adapters.utils import classproperty
 from dbt_common.exceptions import DbtRuntimeError
 
@@ -110,3 +110,17 @@ class SnowflakeRelation(BaseRelation):
         if config_change_collection.has_changes:
             return config_change_collection
         return None
+
+    def as_case_sensitive(self) -> "SnowflakeRelation":
+        path_part_map = {}
+
+        for path in ComponentName:
+            if self.include_policy.get_part(path):
+                part = self.path.get_part(path)
+                if part:
+                    if self.quote_policy.get_part(path):
+                        path_part_map[path] = part
+                    else:
+                        path_part_map[path] = part.upper()
+
+        return self.replace_path(**path_part_map)

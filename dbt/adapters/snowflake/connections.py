@@ -1,6 +1,14 @@
 import base64
 import datetime
 import os
+import sys
+
+if sys.version_info < (3, 9):
+    from functools import lru_cache
+
+    cache = lru_cache(maxsize=None)
+else:
+    from functools import cache
 
 import pytz
 import re
@@ -11,8 +19,8 @@ from time import sleep
 
 from typing import Optional, Tuple, Union, Any, List, Iterable, TYPE_CHECKING
 
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 import requests
 import snowflake.connector
 import snowflake.connector.constants
@@ -44,6 +52,8 @@ from dbt_common.events.functions import warn_or_error
 from dbt.adapters.events.types import AdapterEventWarning, AdapterEventError
 from dbt_common.ui import line_wrap_message, warning_tag
 
+from dbt.adapters.snowflake.auth import private_key_from_file, private_key_from_string
+
 if TYPE_CHECKING:
     import agate
 
@@ -61,6 +71,15 @@ ERROR_REDACTION_PATTERNS = {
     re.compile(r"Row Values: \[(.|\n)*\]"): "Row Values: [redacted]",
     re.compile(r"Duplicate field key '(.|\n)*'"): "Duplicate field key '[redacted]'",
 }
+
+
+@cache
+def snowflake_private_key(private_key: RSAPrivateKey) -> bytes:
+    return private_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
 
 
 @dataclass
@@ -94,6 +113,7 @@ class SnowflakeCredentials(Credentials):
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
+    # this needs to default to `None` so that we can tell if the user set it; see `__post_init__()`
     reuse_connections: Optional[bool] = None
 
     def __post_init__(self):
@@ -123,6 +143,11 @@ class SnowflakeCredentials(Credentials):
                 )
 
         self.account = self.account.replace("_", "-")
+
+        # only default `reuse_connections` to `True` if the user has not turned on `client_session_keep_alive`
+        # having both of these set to `True` could lead to hanging open connections, so it should be opt-in behavior
+        if self.client_session_keep_alive is False and self.reuse_connections is None:
+            self.reuse_connections = True
 
     @property
     def type(self):
@@ -273,44 +298,17 @@ class SnowflakeCredentials(Credentials):
             )
         return result_json["access_token"]
 
-    def _get_private_key(self):
+    def _get_private_key(self) -> Optional[bytes]:
         """Get Snowflake private key by path, from a Base64 encoded DER bytestring or None."""
         if self.private_key and self.private_key_path:
             raise DbtConfigError("Cannot specify both `private_key`  and `private_key_path`")
-
-        if self.private_key_passphrase:
-            encoded_passphrase = self.private_key_passphrase.encode()
-        else:
-            encoded_passphrase = None
-
-        if self.private_key:
-            if self.private_key.startswith("-"):
-                p_key = serialization.load_pem_private_key(
-                    data=bytes(self.private_key, "utf-8"),
-                    password=encoded_passphrase,
-                    backend=default_backend(),
-                )
-
-            else:
-                p_key = serialization.load_der_private_key(
-                    data=base64.b64decode(self.private_key),
-                    password=encoded_passphrase,
-                    backend=default_backend(),
-                )
-
+        elif self.private_key:
+            private_key = private_key_from_string(self.private_key, self.private_key_passphrase)
         elif self.private_key_path:
-            with open(self.private_key_path, "rb") as key:
-                p_key = serialization.load_pem_private_key(
-                    key.read(), password=encoded_passphrase, backend=default_backend()
-                )
+            private_key = private_key_from_file(self.private_key_path, self.private_key_passphrase)
         else:
             return None
-
-        return p_key.private_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        )
+        return snowflake_private_key(private_key)
 
 
 class SnowflakeConnectionManager(SQLConnectionManager):
