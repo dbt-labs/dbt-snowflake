@@ -15,6 +15,8 @@ logger.info("******Inside Logging module.******")
 
 
 def model(dbt, session: snowpark.Session):
+    # To use: GRANT MODIFY SESSION LOG LEVEL ON ACCOUNT TO ROLE <DBT_ROLE>;
+    dbt.config(pre_hook = 'ALTER SESSION SET LOG_LEVEL=INFO;')
     logger.info("******Logging start.******")
     df=session.sql(f"select current_user() as session_user, current_role() as session_role")
     logger.info("******Logging End.******")
@@ -22,14 +24,14 @@ def model(dbt, session: snowpark.Session):
 """
 
 
+MACRO__LOGGING = """
+
+"""
+
+
 class TestPythonModelLogging:
     """
     This test case addresses bug report https://github.com/dbt-labs/dbt-snowflake/issues/846
-
-    -- before running:
-    USE ROLE ACCOUNTADMIN;
-    ALTER ACCOUNT UNSET LOG_LEVEL;
-    GRANT MODIFY SESSION LOG LEVEL ON ACCOUNT TO ROLE <DBT_ROLE>;
     """
 
     @pytest.fixture(scope="class")
