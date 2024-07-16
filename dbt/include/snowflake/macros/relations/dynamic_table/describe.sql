@@ -10,7 +10,8 @@
             "database_name",
             "text",
             "target_lag",
-            "warehouse"
+            "warehouse",
+            "refresh_mode"
         from table(result_scan(last_query_id()))
     {%- endset %}
     {% set _dynamic_table = run_query(_dynamic_table_sql) %}

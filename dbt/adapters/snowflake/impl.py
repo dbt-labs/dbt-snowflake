@@ -1,23 +1,34 @@
 from dataclasses import dataclass
-from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple
+from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, TYPE_CHECKING
 
-import agate
-
-from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport  # type: ignore
+from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
-from dbt.adapters.sql import SQLAdapter  # type: ignore
+from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
-
-from dbt.adapters.snowflake import SnowflakeConnectionManager
-from dbt.adapters.snowflake import SnowflakeRelation
-from dbt.adapters.snowflake import SnowflakeColumn
 from dbt_common.contracts.constraints import ConstraintType
+from dbt_common.contracts.metadata import (
+    TableMetadata,
+    StatsDict,
+    StatsItem,
+    CatalogTable,
+    ColumnMetadata,
+)
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
+
+from dbt.adapters.snowflake.relation_configs import SnowflakeRelationType
+from dbt.adapters.snowflake import SnowflakeColumn
+from dbt.adapters.snowflake import SnowflakeConnectionManager
+from dbt.adapters.snowflake import SnowflakeRelation
+
+if TYPE_CHECKING:
+    import agate
+
+SHOW_OBJECT_METADATA_MACRO_NAME = "snowflake__show_object_metadata"
 
 
 @dataclass
@@ -53,6 +64,8 @@ class SnowflakeAdapter(SQLAdapter):
         {
             Capability.SchemaMetadataByRelations: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
+            Capability.TableLastModifiedMetadataBatch: CapabilitySupport(support=Support.Full),
+            Capability.GetCatalogForSingleRelation: CapabilitySupport(support=Support.Full),
         }
     )
 
@@ -62,8 +75,8 @@ class SnowflakeAdapter(SQLAdapter):
 
     @classmethod
     def _catalog_filter_table(
-        cls, table: agate.Table, used_schemas: FrozenSet[Tuple[str, str]]
-    ) -> agate.Table:
+        cls, table: "agate.Table", used_schemas: FrozenSet[Tuple[str, str]]
+    ) -> "agate.Table":
         # On snowflake, users can set QUOTED_IDENTIFIERS_IGNORE_CASE, so force
         # the column names to their lowercased forms.
         lowered = table.rename(column_names=[c.lower() for c in table.column_names])
@@ -128,7 +141,87 @@ class SnowflakeAdapter(SQLAdapter):
             else:
                 raise
 
-    def list_relations_without_caching(self, schema_relation: SnowflakeRelation) -> List[SnowflakeRelation]:  # type: ignore
+    def _show_object_metadata(self, relation: SnowflakeRelation) -> Optional[dict]:
+        try:
+            kwargs = {"relation": relation}
+            results = self.execute_macro(SHOW_OBJECT_METADATA_MACRO_NAME, kwargs=kwargs)
+
+            if len(results) == 0:
+                return None
+
+            return results
+        except DbtDatabaseError:
+            return None
+
+    def get_catalog_for_single_relation(
+        self, relation: SnowflakeRelation
+    ) -> Optional[CatalogTable]:
+        object_metadata = self._show_object_metadata(relation.as_case_sensitive())
+
+        if not object_metadata:
+            return None
+
+        row = object_metadata[0]
+
+        is_dynamic = row.get("is_dynamic") in ("Y", "YES")
+        kind = row.get("kind")
+
+        if is_dynamic and kind == str(SnowflakeRelationType.Table).upper():
+            table_type = str(SnowflakeRelationType.DynamicTable).upper()
+        else:
+            table_type = kind
+
+        # https://docs.snowflake.com/en/sql-reference/sql/show-views#output
+        # Note: we don't support materialized views in dbt-snowflake
+        is_view = kind == str(SnowflakeRelationType.View).upper()
+
+        table_metadata = TableMetadata(
+            type=table_type,
+            schema=row.get("schema_name"),
+            name=row.get("name"),
+            database=row.get("database_name"),
+            comment=row.get("comment"),
+            owner=row.get("owner"),
+        )
+
+        stats_dict: StatsDict = {
+            "has_stats": StatsItem(
+                id="has_stats",
+                label="Has Stats?",
+                value=True,
+                include=False,
+                description="Indicates whether there are statistics for this table",
+            ),
+            "row_count": StatsItem(
+                id="row_count",
+                label="Row Count",
+                value=row.get("rows"),
+                include=(not is_view),
+                description="Number of rows in the table as reported by Snowflake",
+            ),
+            "bytes": StatsItem(
+                id="bytes",
+                label="Approximate Size",
+                value=row.get("bytes"),
+                include=(not is_view),
+                description="Size of the table as reported by Snowflake",
+            ),
+        }
+
+        catalog_columns = {
+            c.column: ColumnMetadata(type=c.dtype, index=i + 1, name=c.column)
+            for i, c in enumerate(self.get_columns_in_relation(relation))
+        }
+
+        return CatalogTable(
+            metadata=table_metadata,
+            columns=catalog_columns,
+            stats=stats_dict,
+        )
+
+    def list_relations_without_caching(
+        self, schema_relation: SnowflakeRelation
+    ) -> List[SnowflakeRelation]:
         kwargs = {"schema_relation": schema_relation}
         try:
             results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
@@ -140,26 +233,37 @@ class SnowflakeAdapter(SQLAdapter):
                 return []
             raise
 
-        relations = []
-        quote_policy = {"database": True, "schema": True, "identifier": True}
-
+        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
         columns = ["database_name", "schema_name", "name", "kind"]
-        for _database, _schema, _identifier, _type in results.select(columns):  # type: ignore
-            try:
-                _type = self.Relation.get_relation_type(_type.lower())
-            except ValueError:
-                _type = self.Relation.External
-            relations.append(
-                self.Relation.create(
-                    database=_database,
-                    schema=_schema,
-                    identifier=_identifier,
-                    quote_policy=quote_policy,
-                    type=_type,
-                )
-            )
+        if "is_dynamic" in results.column_names:
+            columns.append("is_dynamic")
 
-        return relations
+        return [self._parse_list_relations_result(result) for result in results.select(columns)]
+
+    def _parse_list_relations_result(self, result: "agate.Row") -> SnowflakeRelation:
+        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
+        try:
+            database, schema, identifier, relation_type, is_dynamic = result
+        except ValueError:
+            database, schema, identifier, relation_type = result
+            is_dynamic = "N"
+
+        try:
+            relation_type = self.Relation.get_relation_type(relation_type.lower())
+        except ValueError:
+            relation_type = self.Relation.External
+
+        if relation_type == self.Relation.Table and is_dynamic == "Y":
+            relation_type = self.Relation.DynamicTable
+
+        quote_policy = {"database": True, "schema": True, "identifier": True}
+        return self.Relation.create(
+            database=database,
+            schema=schema,
+            identifier=identifier,
+            type=relation_type,
+            quote_policy=quote_policy,
+        )
 
     def quote_seed_column(self, column: str, quote_config: Optional[bool]) -> str:
         quote_columns: bool = False
@@ -180,7 +284,7 @@ class SnowflakeAdapter(SQLAdapter):
             return column
 
     @available
-    def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
+    def standardize_grants_dict(self, grants_table: "agate.Table") -> dict:
         grants_dict: Dict[str, Any] = {}
 
         for row in grants_table:
@@ -205,6 +309,10 @@ class SnowflakeAdapter(SQLAdapter):
 
         packages = parsed_model["config"].get("packages", [])
         imports = parsed_model["config"].get("imports", [])
+        external_access_integrations = parsed_model["config"].get(
+            "external_access_integrations", []
+        )
+        secrets = parsed_model["config"].get("secrets", {})
         # adding default packages we need to make python model work
         default_packages = ["snowflake-snowpark-python"]
         package_names = [package.split("==")[0] for package in packages]
@@ -213,9 +321,18 @@ class SnowflakeAdapter(SQLAdapter):
                 packages.append(default_package)
         packages = "', '".join(packages)
         imports = "', '".join(imports)
-        # we can't pass empty imports clause to snowflake
+        external_access_integrations = ", ".join(external_access_integrations)
+        secrets = ", ".join(f"'{key}' = {value}" for key, value in secrets.items())
+
+        # we can't pass empty imports, external_access_integrations or secrets clause to snowflake
         if imports:
             imports = f"IMPORTS = ('{imports}')"
+        if external_access_integrations:
+            # Black is trying to make this a tuple.
+            # fmt: off
+            external_access_integrations = f"EXTERNAL_ACCESS_INTEGRATIONS = ({external_access_integrations})"
+        if secrets:
+            secrets = f"SECRETS = ({secrets})"
 
         if self.config.args.SEND_ANONYMOUS_USAGE_STATS:
             snowpark_telemetry_string = "dbtLabs_dbtPython"
@@ -230,6 +347,8 @@ RETURNS STRING
 LANGUAGE PYTHON
 RUNTIME_VERSION = '{python_version}'
 PACKAGES = ('{packages}')
+{external_access_integrations}
+{secrets}
 {imports}
 HANDLER = 'main'
 EXECUTE AS CALLER
