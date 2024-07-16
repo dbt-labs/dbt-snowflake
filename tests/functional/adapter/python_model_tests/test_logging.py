@@ -24,11 +24,6 @@ def model(dbt, session: snowpark.Session):
 """
 
 
-MACRO__LOGGING = """
-
-"""
-
-
 class TestPythonModelLogging:
     """
     This test case addresses bug report https://github.com/dbt-labs/dbt-snowflake/issues/846
