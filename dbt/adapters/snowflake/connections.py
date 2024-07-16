@@ -44,6 +44,7 @@ from dbt_common.exceptions import (
     DbtConfigError,
 )
 from dbt_common.exceptions import DbtDatabaseError
+from dbt_common.record import get_record_mode_from_env, RecorderMode
 from dbt.adapters.exceptions.connection import FailedToConnectError
 from dbt.adapters.contracts.connection import AdapterResponse, Connection, Credentials
 from dbt.adapters.sql import SQLConnectionManager
@@ -51,6 +52,7 @@ from dbt.adapters.events.logging import AdapterLogger
 from dbt_common.events.functions import warn_or_error
 from dbt.adapters.events.types import AdapterEventWarning, AdapterEventError
 from dbt_common.ui import line_wrap_message, warning_tag
+from dbt.adapters.snowflake.record import SnowflakeRecordReplayHandle
 
 from dbt.adapters.snowflake.auth import private_key_from_file, private_key_from_string
 
@@ -372,20 +374,32 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
             if creds.query_tag:
                 session_parameters.update({"QUERY_TAG": creds.query_tag})
+            handle = None
 
-            handle = snowflake.connector.connect(
-                account=creds.account,
-                database=creds.database,
-                schema=creds.schema,
-                warehouse=creds.warehouse,
-                role=creds.role,
-                autocommit=True,
-                client_session_keep_alive=creds.client_session_keep_alive,
-                application="dbt",
-                insecure_mode=creds.insecure_mode,
-                session_parameters=session_parameters,
-                **creds.auth_args(),
-            )
+            # In replay mode, we won't connect to a real database at all, while
+            # in record and diff modes we do, but insert an intermediate handle
+            # object which monitors native connection activity.
+            rec_mode = get_record_mode_from_env()
+            handle = None
+            if rec_mode != RecorderMode.REPLAY:
+                handle = snowflake.connector.connect(
+                    account=creds.account,
+                    database=creds.database,
+                    schema=creds.schema,
+                    warehouse=creds.warehouse,
+                    role=creds.role,
+                    autocommit=True,
+                    client_session_keep_alive=creds.client_session_keep_alive,
+                    application="dbt",
+                    insecure_mode=creds.insecure_mode,
+                    session_parameters=session_parameters,
+                    **creds.auth_args(),
+                )
+
+            if rec_mode is not None:
+                # If using the record/replay mechanism, regardless of mode, we
+                # use a wrapper.
+                handle = SnowflakeRecordReplayHandle(handle, connection)
 
             return handle
 
