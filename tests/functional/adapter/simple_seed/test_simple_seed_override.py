@@ -8,46 +8,46 @@ seeds:
 - name: seed_enabled
   columns:
   - name: birthday
-    tests:
+    data_tests:
     - column_type:
         type: character varying(16777216)
   - name: seed_id
-    tests:
+    data_tests:
     - column_type:
         type: FLOAT
 
 - name: seed_tricky
   columns:
   - name: seed_id
-    tests:
+    data_tests:
     - column_type:
         type: NUMBER(38,0)
   - name: seed_id_str
-    tests:
+    data_tests:
     - column_type:
         type: character varying(16777216)
   - name: a_bool
-    tests:
+    data_tests:
     - column_type:
         type: BOOLEAN
   - name: looks_like_a_bool
-    tests:
+    data_tests:
     - column_type:
         type: character varying(16777216)
   - name: a_date
-    tests:
+    data_tests:
     - column_type:
         type: TIMESTAMP_NTZ
   - name: looks_like_a_date
-    tests:
+    data_tests:
     - column_type:
         type: character varying(16777216)
   - name: relative
-    tests:
+    data_tests:
     - column_type:
         type: character varying(16777216)
   - name: weekday
-    tests:
+    data_tests:
     - column_type:
         type: character varying(16777216)
 """.lstrip()
