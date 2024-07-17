@@ -156,7 +156,7 @@ class SnowflakeAdapter(SQLAdapter):
     def get_catalog_for_single_relation(
         self, relation: SnowflakeRelation
     ) -> Optional[CatalogTable]:
-        object_metadata = self._show_object_metadata(relation)
+        object_metadata = self._show_object_metadata(relation.as_case_sensitive())
 
         if not object_metadata:
             return None

@@ -31,9 +31,9 @@ Update CI providers and test.env with the new values (If you kept the security
 integration the same, just the refresh token changed)
 """
 
-import pytest
 import os
-from dbt.tests.util import run_dbt, check_relations_equal
+from dbt.tests.util import check_relations_equal, run_dbt
+import pytest
 
 
 _MODELS__MODEL_1_SQL = """
