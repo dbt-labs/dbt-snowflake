@@ -1,5 +1,5 @@
 kind: Fixes
-body: Pin `setuptools` to address `71.0` release that contains a breaking change
+body: Pin `setuptools` to address pypa/setuptools#4483
 time: 2024-07-18T09:13:27.011309-04:00
 custom:
   Author: mikealfare
