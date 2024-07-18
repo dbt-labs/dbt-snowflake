@@ -1,0 +1,6 @@
+kind: "Dependencies"
+body: "Bump aurelien-baudet/workflow-dispatch from 2 to 4"
+time: 2024-06-24T12:25:38.00000Z
+custom:
+  Author: dependabot[bot]
+  PR: 1093
