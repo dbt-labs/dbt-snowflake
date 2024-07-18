@@ -1,6 +1,0 @@
-kind: Fixes
-body: Fix duplicate alias being added when running a model with inline refs and `--empty`
-time: 2024-04-18T16:02:40.488967-07:00
-custom:
-  Author: colin-rogers-dbt
-  Issue: "980"

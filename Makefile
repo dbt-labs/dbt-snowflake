@@ -11,32 +11,6 @@ dev-uninstall: ## Uninstalls all packages while maintaining the virtual environm
 	pip freeze | grep -v "^-e" | cut -d "@" -f1 | xargs pip uninstall -y
 	pip uninstall -y dbt-snowflake
 
-.PHONY: mypy
-mypy: ## Runs mypy against staged changes for static type checking.
-	@\
-	pre-commit run --hook-stage manual mypy-check | grep -v "INFO"
-
-.PHONY: flake8
-flake8: ## Runs flake8 against staged changes to enforce style guide.
-	@\
-	pre-commit run --hook-stage manual flake8-check | grep -v "INFO"
-
-.PHONY: black
-black: ## Runs black  against staged changes to enforce style guide.
-	@\
-	pre-commit run --hook-stage manual black-check -v | grep -v "INFO"
-
-.PHONY: lint
-lint: ## Runs flake8 and mypy code checks against staged changes.
-	@\
-	pre-commit run flake8-check --hook-stage manual | grep -v "INFO"; \
-	pre-commit run mypy-check --hook-stage manual | grep -v "INFO"
-
-.PHONY: linecheck
-linecheck: ## Checks for all Python lines 100 characters or more
-	@\
-	find dbt -type f -name "*.py" -exec grep -I -r -n '.\{100\}' {} \;
-
 .PHONY: unit
 unit: ## Runs unit tests with py38.
 	@\
@@ -46,9 +20,7 @@ unit: ## Runs unit tests with py38.
 test: ## Runs unit tests with py38 and code checks against staged changes.
 	@\
 	tox -p -e py38; \
-	pre-commit run black-check --hook-stage manual | grep -v "INFO"; \
-	pre-commit run flake8-check --hook-stage manual | grep -v "INFO"; \
-	pre-commit run mypy-check --hook-stage manual | grep -v "INFO"
+	pre-commit run --all-files
 
 .PHONY: integration
 integration: ## Runs snowflake integration tests with py38.

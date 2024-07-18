@@ -58,7 +58,6 @@ jobs:
           python -m pip install -r dev-requirements.txt
           python -m pip --version
           pre-commit --version
-          mypy --version
           dbt --version
 
       - name: Run pre-commit hooks

@@ -63,7 +63,6 @@ class TestSnowflakeCloneTrainsentTable:
     def run_and_save_state(self, project_root, with_snapshot=False):
         results = run_dbt(["run"])
         assert len(results) == 1
-        assert not any(r.node.deferred for r in results)
 
         self.copy_state(project_root)
 

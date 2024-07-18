@@ -278,7 +278,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -290,13 +290,19 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     application="dbt",
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=None,
+                    reuse_connections=True,
                 ),
             ]
         )
 
     def test_client_session_keep_alive_true(self):
-        self.config.credentials = self.config.credentials.replace(client_session_keep_alive=True)
+        self.config.credentials = self.config.credentials.replace(
+            client_session_keep_alive=True,
+            # this gets defaulted via `__post_init__` when `client_session_keep_alive` comes in as `False`
+            # then when `replace` is called, `__post_init__` cannot set it back to `None` since it cannot
+            # tell the difference between set by user and set by `__post_init__`
+            reuse_connections=None,
+        )
         self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
         conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
 
@@ -305,7 +311,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=True,
                     database="test_database",
@@ -332,14 +338,14 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
                     role=None,
                     schema="public",
                     user="test_user",
-                    reuse_connections=None,
+                    reuse_connections=True,
                     warehouse="test_warehouse",
                     private_key=None,
                     application="dbt",
@@ -366,7 +372,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -379,7 +385,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     application="dbt",
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=None,
+                    reuse_connections=True,
                 )
             ]
         )
@@ -397,7 +403,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -413,7 +419,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     client_store_temporary_credential=True,
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=None,
+                    reuse_connections=True,
                 )
             ]
         )
@@ -428,7 +434,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -443,7 +449,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     client_store_temporary_credential=True,
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=None,
+                    reuse_connections=True,
                 )
             ]
         )
@@ -461,7 +467,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -477,7 +483,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     client_store_temporary_credential=True,
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=None,
+                    reuse_connections=True,
                 )
             ]
         )
@@ -499,7 +505,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -511,7 +517,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     application="dbt",
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=None,
+                    reuse_connections=True,
                 )
             ]
         )
@@ -533,7 +539,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -545,7 +551,39 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     application="dbt",
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=None,
+                    reuse_connections=True,
+                )
+            ]
+        )
+
+    def test_authenticator_jwt_authentication(self):
+        self.config.credentials = self.config.credentials.replace(
+            authenticator="jwt", token="my-jwt-token", user=None
+        )
+        self.adapter = SnowflakeAdapter(self.config, get_context("spawn"))
+        conn = self.adapter.connections.set_connection_name(name="new_connection_with_new_config")
+
+        self.snowflake.assert_not_called()
+        conn.handle
+        self.snowflake.assert_has_calls(
+            [
+                mock.call(
+                    account="test-account",
+                    autocommit=True,
+                    client_session_keep_alive=False,
+                    database="test_database",
+                    role=None,
+                    schema="public",
+                    warehouse="test_warehouse",
+                    authenticator="oauth",
+                    token="my-jwt-token",
+                    private_key=None,
+                    application="dbt",
+                    client_request_mfa_token=True,
+                    client_store_temporary_credential=True,
+                    insecure_mode=False,
+                    session_parameters={},
+                    reuse_connections=True,
                 )
             ]
         )
@@ -562,7 +600,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -575,7 +613,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     application="dbt",
                     insecure_mode=False,
                     session_parameters={"QUERY_TAG": "test_query_tag"},
-                    reuse_connections=None,
+                    reuse_connections=True,
                 )
             ]
         )
@@ -592,7 +630,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=True,
                     database="test_database",
@@ -626,7 +664,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -638,7 +676,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     application="dbt",
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=None,
+                    reuse_connections=True,
                 )
             ]
         )
@@ -662,7 +700,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.snowflake.assert_has_calls(
             [
                 mock.call(
-                    account="test_account",
+                    account="test-account",
                     autocommit=True,
                     client_session_keep_alive=False,
                     database="test_database",
@@ -674,7 +712,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
                     application="dbt",
                     insecure_mode=False,
                     session_parameters={},
-                    reuse_connections=None,
+                    reuse_connections=True,
                 )
             ]
         )
@@ -907,7 +945,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_private_key_string(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",
@@ -917,7 +955,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_private_key_string_encrypted(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",
@@ -928,7 +966,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_malformed_private_key_string(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",
@@ -938,7 +976,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_invalid_private_key_string(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",
@@ -948,7 +986,7 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
 
     def test_invalid_private_key_path(self):
         creds = SnowflakeCredentials(
-            account="test_account",
+            account="test-account",
             user="test_user",
             database="test_database",
             schema="public",
