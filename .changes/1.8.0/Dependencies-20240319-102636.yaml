@@ -1,6 +1,0 @@
-kind: Dependencies
-body: hard pin ddtrace to 2.3.0
-time: 2024-03-19T10:26:36.090014-05:00
-custom:
-  Author: McKnight-42
-  PR: "932"
