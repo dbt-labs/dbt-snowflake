@@ -20,6 +20,4 @@ pytest-xdist~=3.5
 tox~=4.11
 
 # build
-bumpversion~=0.6.0
-twine~=4.0
-wheel~=0.42
+-r build-requirements.txt
