@@ -200,6 +200,7 @@ jobs:
         with:
           name: logs
           path: ./logs
+          overwrite: true
 
       - name: Get current date
         if: always()
@@ -211,6 +212,7 @@ jobs:
         with:
           name: integration_results_${{ matrix.python-version }}_${{ matrix.os }}_${{ matrix.adapter }}-${{ steps.date.outputs.date }}.csv
           path: integration_results.csv
+          overwrite: true
 
   require-label-comment:
     runs-on: ubuntu-latest
