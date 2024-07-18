@@ -266,7 +266,7 @@
     {% if add_columns %}
 
     {% set sql -%}
-       alter {{ relation_type }} {{ relation.render() }} add column
+       alter {{ relation_type }} {{ relation.render() }} add column if not exists
           {% for column in add_columns %}
             {{ column.name }} {{ column.data_type }}{{ ',' if not loop.last }}
           {% endfor %}
@@ -279,7 +279,7 @@
     {% if remove_columns %}
 
     {% set sql -%}
-        alter {{ relation_type }} {{ relation.render() }} drop column
+        alter {{ relation_type }} {{ relation.render() }} drop column if exists
             {% for column in remove_columns %}
                 {{ column.name }}{{ ',' if not loop.last }}
             {% endfor %}
