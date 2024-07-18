@@ -134,6 +134,7 @@ jobs:
           python -m pip install --user --upgrade pip
           python -m pip install --upgrade setuptools wheel twine check-wheel-contents
           python -m pip --version
+          python -m pip list
 
       - name: Build distributions
         run: ./scripts/build-dist.sh
