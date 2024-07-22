@@ -20,6 +20,8 @@
 
 name: Adapter Integration Tests
 
+run-name: Run Integration ${{ inputs.name }} by @${{ github.actor }}
+
 on:
   # pushes to release branches
   push:
@@ -38,6 +40,11 @@ on:
         description: "branch of dbt-core to use in dev-requirements.txt"
         required: false
         type: string
+      name:
+        description: "name to associate with run"
+        required: false
+        type: string
+        default: "Adapter Integration Tests"
 
 # explicitly turn off permissions for `GITHUB_TOKEN`
 permissions: read-all
