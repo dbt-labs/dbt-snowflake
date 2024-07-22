@@ -1,0 +1,51 @@
+# What?
+#
+# Tag and release an arbitrary ref. Uploads to an internal archive for further processing.
+#
+# How?
+#
+# After checking out and testing the provided ref, the image is built and uploaded.
+#
+# When?
+#
+# Manual trigger.
+
+name: "Release to Cloud"
+run-name: "Release to Cloud off of ${{ inputs.ref }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "The ref (sha or branch name) to use"
+        type: string
+        default: "main"
+        required: true
+      package_test_command:
+        description: "Package test command"
+        type: string
+        default: "python -c \"import dbt.adapters.snowflake\""
+        required: true
+      skip_tests:
+        description: "Should the tests be skipped? (default to false)"
+        type: boolean
+        required: true
+        default: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  invoke-reusable-workflow:
+    name: "Build and Release Internally"
+
+    uses: "dbt-labs/dbt-release/.github/workflows/internal-archive-release.yml@main"
+
+    with:
+      package_test_command: "${{ inputs.package_test_command }}"
+      dbms_name: "snowflake"
+      ref: "${{ inputs.ref }}"
+      skip_tests: "${{ inputs.skip_tests }}"
+
+    secrets: "inherit"

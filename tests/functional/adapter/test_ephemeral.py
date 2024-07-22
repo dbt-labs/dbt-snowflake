@@ -3,7 +3,7 @@ from dbt.tests.util import run_dbt, check_relations_equal
 
 
 class TestEphemeralMultiSnowflake(BaseEphemeralMulti):
-    def test_ephemeral_multi_snowflake(self, project):
+    def test_ephemeral_multi(self, project):
         run_dbt(["seed"])
         results = run_dbt(["run"])
         assert len(results) == 3
