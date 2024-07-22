@@ -1,0 +1,6 @@
+kind: Under the Hood
+body: Add support for Python 3.12
+time: 2024-07-22T14:31:14.024865-07:00
+custom:
+  Author: versusfacit
+  Issue: "903"
