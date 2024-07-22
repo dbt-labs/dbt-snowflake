@@ -20,7 +20,7 @@
 
 name: Adapter Integration Tests
 
-run-name: Run Integration ${{ inputs.name }} by @${{ github.actor }}
+run-name: ${{ inputs.name }} by @${{ github.actor }}
 
 on:
   # pushes to release branches
