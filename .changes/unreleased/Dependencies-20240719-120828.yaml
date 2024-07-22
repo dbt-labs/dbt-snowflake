@@ -1,0 +1,6 @@
+kind: "Dependencies"
+body: "Update tox requirement from ~=4.11 to ~=4.16"
+time: 2024-07-19T12:08:28.00000Z
+custom:
+  Author: dependabot[bot]
+  PR: 1135
