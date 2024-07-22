@@ -36,15 +36,38 @@ on:
   # manual trigger
   workflow_dispatch:
     inputs:
-      dbt-core-branch:
+      dbt_core_branch:
         description: "branch of dbt-core to use in dev-requirements.txt"
         required: false
         type: string
+        default: main
       name:
         description: "name to associate with run"
         required: false
         type: string
         default: "Adapter Integration Tests"
+      dbt_adapters_branch:
+        description: "The branch of dbt-adapters to use"
+        type: string
+        required: false
+        default: main
+  workflow_call:
+    inputs:
+      dbt_core_branch:
+        description: "branch of dbt-core to use in dev-requirements.txt"
+        required: false
+        type: string
+        default: main
+      name:
+        description: "name to associate with run"
+        required: false
+        type: string
+        default: "Adapter Integration Tests"
+      dbt_adapters_branch:
+        description: "The branch of dbt-adapters to use"
+        type: string
+        required: false
+        default: main
 
 # explicitly turn off permissions for `GITHUB_TOKEN`
 permissions: read-all
@@ -153,7 +176,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # explicity checkout the branch for the PR,
+      # explicitly checkout the branch for the PR,
       # this is necessary for the `pull_request_target` event
       - name: Check out the repository (PR)
         if: github.event_name == 'pull_request_target'
@@ -167,18 +190,19 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Update Adapters and Core branches (update dev_requirements.txt)
+        if: ${{ github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          ./.github/scripts/update_dev_packages.sh \
+            ${{ inputs.dbt_adapters_branch }} \
+            ${{ inputs.dbt_core_branch }}
+
       - name: Install python dependencies
         run: |
           python -m pip install  --user --upgrade pip
           python -m pip install tox
           python -m pip --version
           tox --version
-
-      - name: Update dev_requirements.txt
-        if: inputs.dbt-core-branch != ''
-        run: |
-          pip install bumpversion
-          ./.github/scripts/update_dbt_core_branch.sh ${{ inputs.dbt-core-branch }}
 
       - name: Run tox (snowflake)
         if: matrix.adapter == 'snowflake'
