@@ -20,12 +20,7 @@
 
 name: Adapter Integration Tests
 
-run-name: >-
-if [${{ github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' }}]; then
-"${{ inputs.name }} by @${{ github.actor }}"
-else
-"Integration tests: ${{ github.ref_name }}"
-fi
+run-name: ${{ inputs.name }} by @${{ github.actor }}
 
 on:
   # pushes to release branches
@@ -56,11 +51,6 @@ on:
         type: string
         required: false
         default: main
-      adapter_branch:
-        description: "The branch of this adapter repo to use"
-        type: string
-        required: false
-        default: main
   workflow_call:
     inputs:
       dbt_core_branch:
@@ -75,11 +65,6 @@ on:
         default: "Adapter Integration Tests"
       dbt_adapters_branch:
         description: "The branch of dbt-adapters to use"
-        type: string
-        required: false
-        default: main
-      adapter_branch:
-        description: "The branch of this adapter repo to use"
         type: string
         required: false
         default: main
@@ -110,15 +95,8 @@ jobs:
       matrix: ${{ steps.generate-matrix.outputs.result }}
 
     steps:
-      - name: Check out the repository (workflow_dispatch)
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          ref: ${{ inputs.adapter_branch }}
-
-      - name: Check out the repository (non-PR, non workflow_dispatch)
-        if: github.event_name != 'pull_request_target' && github.event_name != 'workflow_dispatch' && github.event_name != 'workflow_call'
+      - name: Check out the repository (non-PR)
+        if: github.event_name != 'pull_request_target'
         uses: actions/checkout@v4
         with:
           persist-credentials: false
