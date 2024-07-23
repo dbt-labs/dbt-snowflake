@@ -20,7 +20,7 @@
 
 name: Adapter Integration Tests
 
-run-name: ${{ inputs.name }} by @${{ github.actor }}
+run-name: "${{ contains(github.event_name, 'workflow_') && inputs.name || github.event_name }}: ${{ github.ref_name }} by @${{ github.actor }}"
 
 on:
   # pushes to release branches
