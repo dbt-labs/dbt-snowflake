@@ -1,5 +1,5 @@
 # install latest changes in dbt-core
-git+https://github.com/dbt-labs/dbt-core.git@snapshot_timestamp_data_type#egg=dbt-core&subdirectory=core
+git+https://github.com/dbt-labs/dbt-core.git@snapshot_timestamp_data_types#egg=dbt-core&subdirectory=core
 git+https://github.com/dbt-labs/dbt-adapters.git@snapshot_time_data_type
 git+https://github.com/dbt-labs/dbt-adapters.git@snapshot_time_data_type#subdirectory=dbt-tests-adapter
 git+https://github.com/dbt-labs/dbt-common.git
