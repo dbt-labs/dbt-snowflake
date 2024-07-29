@@ -20,7 +20,7 @@
 
 name: Adapter Integration Tests
 
-run-name: "${{ contains(github.event_name, 'workflow_') && inputs.name || github.event_name }}: ${{ contains(github.event_name, 'workflow_') &&  inputs.adapter_branch || github.ref_name }} by @${{ github.actor }}"
+run-name: "${{ (contains(github.event_name, 'workflow_') && inputs.name) || github.event_name }}: ${{ (contains(github.event_name, 'workflow_') &&  inputs.adapter_branch) || github.ref_name }} by @${{ github.actor }}"
 
 on:
   # pushes to release branches
@@ -36,26 +36,31 @@ on:
   # manual trigger
   workflow_dispatch:
     inputs:
-      dbt_core_branch:
-        description: "branch of dbt-core to use in dev-requirements.txt"
-        required: false
-        type: string
-        default: main
       name:
-        description: "name to associate with run"
+        description: "Name to associate with run (example: 'dbt-adapters-242')"
         required: false
         type: string
         default: "Adapter Integration Tests"
-      dbt_adapters_branch:
-        description: "The branch of dbt-adapters to use"
-        type: string
-        required: false
-        default: main
       adapter_branch:
         description: "The branch of this adapter repository to use"
         type: string
         required: false
         default: main
+      dbt_adapters_branch:
+        description: "The branch of dbt-adapters to use"
+        type: string
+        required: false
+        default: "main"
+      dbt_core_branch:
+        description: "The branch of dbt-core to use"
+        type: string
+        required: false
+        default: "main"
+      dbt_common_branch:
+        description: "The branch of dbt-common to use"
+        type: string
+        required: false
+        default: "main"
 
 # explicitly turn off permissions for `GITHUB_TOKEN`
 permissions: read-all
@@ -190,6 +195,7 @@ jobs:
         run: |
           ./.github/scripts/update_dev_packages.sh \
             ${{ inputs.dbt_adapters_branch }} \
+            ${{ inputs.dbt_core_branch }} \
             ${{ inputs.dbt_core_branch }}
           cat dev-requirements.txt
 
