@@ -193,7 +193,7 @@ jobs:
       - name: Update Adapters and Core branches (update dev_requirements.txt)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          ./.github/scripts/update_dev_packages.sh \
+          ./.github/scripts/update_dev_dependency_branches.sh \
             ${{ inputs.dbt_adapters_branch }} \
             ${{ inputs.dbt_core_branch }} \
             ${{ inputs.dbt_core_branch }}
