@@ -196,7 +196,7 @@ jobs:
           ./.github/scripts/update_dev_dependency_branches.sh \
             ${{ inputs.dbt_adapters_branch }} \
             ${{ inputs.dbt_core_branch }} \
-            ${{ inputs.dbt_core_branch }}
+            ${{ inputs.dbt_common_branch }}
           cat dev-requirements.txt
 
       - name: Install python dependencies
