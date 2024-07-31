@@ -1,0 +1,6 @@
+kind: Under the Hood
+body: Remove `freezegun` as a testing dependency; this package is no longer used
+time: 2024-07-19T12:56:18.957049-04:00
+custom:
+  Author: mikealfare
+  Issue: "1136"
