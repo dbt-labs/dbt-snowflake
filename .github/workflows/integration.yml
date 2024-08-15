@@ -20,6 +20,8 @@
 
 name: Adapter Integration Tests
 
+run-name: "${{ (contains(github.event_name, 'workflow_') && inputs.name) || github.event_name }}: ${{ (contains(github.event_name, 'workflow_') &&  inputs.adapter_branch) || github.ref_name }} by @${{ github.actor }}"
+
 on:
   # pushes to release branches
   push:
@@ -34,10 +36,31 @@ on:
   # manual trigger
   workflow_dispatch:
     inputs:
-      dbt-core-branch:
-        description: "branch of dbt-core to use in dev-requirements.txt"
+      name:
+        description: "Name to associate with run (example: 'dbt-adapters-242')"
         required: false
         type: string
+        default: "Adapter Integration Tests"
+      adapter_branch:
+        description: "The branch of this adapter repository to use"
+        type: string
+        required: false
+        default: "main"
+      dbt_adapters_branch:
+        description: "The branch of dbt-adapters to use"
+        type: string
+        required: false
+        default: "main"
+      dbt_core_branch:
+        description: "The branch of dbt-core to use"
+        type: string
+        required: false
+        default: "main"
+      dbt_common_branch:
+        description: "The branch of dbt-common to use"
+        type: string
+        required: false
+        default: "main"
 
 # explicitly turn off permissions for `GITHUB_TOKEN`
 permissions: read-all
@@ -141,12 +164,19 @@ jobs:
 
     steps:
       - name: Check out the repository
-        if: github.event_name != 'pull_request_target'
+        if: github.event_name == 'push'
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      # explicity checkout the branch for the PR,
+      - name: Check out the repository (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.adapter_branch }}
+
+      # explicitly checkout the branch for the PR,
       # this is necessary for the `pull_request_target` event
       - name: Check out the repository (PR)
         if: github.event_name == 'pull_request_target'
@@ -160,18 +190,21 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Update Adapters and Core branches (update dev_requirements.txt)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          ./.github/scripts/update_dev_dependency_branches.sh \
+            ${{ inputs.dbt_adapters_branch }} \
+            ${{ inputs.dbt_core_branch }} \
+            ${{ inputs.dbt_common_branch }}
+          cat dev-requirements.txt
+
       - name: Install python dependencies
         run: |
           python -m pip install  --user --upgrade pip
           python -m pip install tox
           python -m pip --version
           tox --version
-
-      - name: Update dev_requirements.txt
-        if: inputs.dbt-core-branch != ''
-        run: |
-          pip install bumpversion
-          ./.github/scripts/update_dbt_core_branch.sh ${{ inputs.dbt-core-branch }}
 
       - name: Run tox (snowflake)
         if: matrix.adapter == 'snowflake'
