@@ -3,11 +3,11 @@ from typing import FrozenSet, Optional, Type
 
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.contracts.relation import ComponentName, RelationConfig
-from dbt.adapters.relation_configs import (
+from dbt.adapters.relation_configs.config_base import (
     RelationConfigBase,
-    RelationConfigChangeAction,
     RelationResults,
 )
+from dbt.adapters.relation_configs.config_change import RelationConfigChangeAction
 from dbt.adapters.utils import classproperty
 from dbt_common.exceptions import DbtRuntimeError
 
@@ -52,6 +52,10 @@ class SnowflakeRelation(BaseRelation):
     @property
     def is_dynamic_table(self) -> bool:
         return self.type == SnowflakeRelationType.DynamicTable
+
+    @property
+    def is_materialized_view(self) -> bool:
+        return self.type == SnowflakeRelationType.MaterializedView
 
     @classproperty
     def DynamicTable(cls) -> str:
