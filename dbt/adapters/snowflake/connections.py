@@ -1,6 +1,14 @@
 import base64
 import datetime
 import os
+import sys
+
+if sys.version_info < (3, 9):
+    from functools import lru_cache
+
+    cache = lru_cache(maxsize=None)
+else:
+    from functools import cache
 
 import pytz
 import re
@@ -8,13 +16,11 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
 from time import sleep
-from typing import Optional, Tuple, Union, Any, List
 
-import agate
-from dbt_common.clients.agate_helper import empty_table
+from typing import Optional, Tuple, Union, Any, List, Iterable, TYPE_CHECKING
 
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 import requests
 import snowflake.connector
 import snowflake.connector.constants
@@ -38,13 +44,20 @@ from dbt_common.exceptions import (
     DbtConfigError,
 )
 from dbt_common.exceptions import DbtDatabaseError
+from dbt_common.record import get_record_mode_from_env, RecorderMode
 from dbt.adapters.exceptions.connection import FailedToConnectError
 from dbt.adapters.contracts.connection import AdapterResponse, Connection, Credentials
-from dbt.adapters.sql import SQLConnectionManager  # type: ignore
-from dbt.adapters.events.logging import AdapterLogger  # type: ignore
+from dbt.adapters.sql import SQLConnectionManager
+from dbt.adapters.events.logging import AdapterLogger
 from dbt_common.events.functions import warn_or_error
-from dbt.adapters.events.types import AdapterEventWarning
+from dbt.adapters.events.types import AdapterEventWarning, AdapterEventError
 from dbt_common.ui import line_wrap_message, warning_tag
+from dbt.adapters.snowflake.record import SnowflakeRecordReplayHandle
+
+from dbt.adapters.snowflake.auth import private_key_from_file, private_key_from_string
+
+if TYPE_CHECKING:
+    import agate
 
 
 logger = AdapterLogger("Snowflake")
@@ -62,6 +75,15 @@ ERROR_REDACTION_PATTERNS = {
 }
 
 
+@cache
+def snowflake_private_key(private_key: RSAPrivateKey) -> bytes:
+    return private_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+
 @dataclass
 class SnowflakeAdapterResponse(AdapterResponse):
     query_id: str = ""
@@ -70,7 +92,7 @@ class SnowflakeAdapterResponse(AdapterResponse):
 @dataclass
 class SnowflakeCredentials(Credentials):
     account: str
-    user: str
+    user: Optional[str] = None
     warehouse: Optional[str] = None
     role: Optional[str] = None
     password: Optional[str] = None
@@ -93,18 +115,41 @@ class SnowflakeCredentials(Credentials):
     retry_on_database_errors: bool = False
     retry_all: bool = False
     insecure_mode: Optional[bool] = False
+    # this needs to default to `None` so that we can tell if the user set it; see `__post_init__()`
     reuse_connections: Optional[bool] = None
 
     def __post_init__(self):
-        if self.authenticator != "oauth" and (
-            self.oauth_client_secret or self.oauth_client_id or self.token
-        ):
+        if self.authenticator != "oauth" and (self.oauth_client_secret or self.oauth_client_id):
             # the user probably forgot to set 'authenticator' like I keep doing
             warn_or_error(
                 AdapterEventWarning(
                     base_msg="Authenticator is not set to oauth, but an oauth-only parameter is set! Did you mean to set authenticator: oauth?"
                 )
             )
+
+        if self.authenticator not in ["oauth", "jwt"]:
+            if self.token:
+                warn_or_error(
+                    AdapterEventWarning(
+                        base_msg=(
+                            "The token parameter was set, but the authenticator was "
+                            "not set to 'oauth' or 'jwt'."
+                        )
+                    )
+                )
+
+            if not self.user:
+                # The user attribute is only optional if 'authenticator' is 'jwt' or 'oauth'
+                warn_or_error(
+                    AdapterEventError(base_msg="Invalid profile: 'user' is a required property.")
+                )
+
+        self.account = self.account.replace("_", "-")
+
+        # only default `reuse_connections` to `True` if the user has not turned on `client_session_keep_alive`
+        # having both of these set to `True` could lead to hanging open connections, so it should be opt-in behavior
+        if self.client_session_keep_alive is False and self.reuse_connections is None:
+            self.reuse_connections = True
 
     @property
     def type(self):
@@ -125,7 +170,6 @@ class SnowflakeCredentials(Credentials):
             "role",
             "schema",
             "authenticator",
-            "private_key_path",
             "oauth_client_id",
             "query_tag",
             "client_session_keep_alive",
@@ -146,6 +190,8 @@ class SnowflakeCredentials(Credentials):
         # Pull all of the optional authentication args for the connector,
         # let connector handle the actual arg validation
         result = {}
+        if self.user:
+            result["user"] = self.user
         if self.password:
             result["password"] = self.password
         if self.host:
@@ -180,6 +226,14 @@ class SnowflakeCredentials(Credentials):
                     )
 
                 result["token"] = token
+
+            elif self.authenticator == "jwt":
+                # If authenticator is 'jwt', then the 'token' value should be used
+                # unmodified. We expose this as 'jwt' in the profile, but the value
+                # passed into the snowflake.connect method should still be 'oauth'
+                result["token"] = self.token
+                result["authenticator"] = "oauth"
+
             # enable id token cache for linux
             result["client_store_temporary_credential"] = True
             # enable mfa token cache for linux
@@ -239,47 +293,24 @@ class SnowflakeCredentials(Credentials):
                 f"""Did not receive valid json with access_token.
                                         Showing json response: {result_json}"""
             )
-
+        elif "access_token" not in result_json:
+            raise FailedToConnectError(
+                "This error occurs when authentication has expired. "
+                "Please reauth with your auth provider."
+            )
         return result_json["access_token"]
 
-    def _get_private_key(self):
+    def _get_private_key(self) -> Optional[bytes]:
         """Get Snowflake private key by path, from a Base64 encoded DER bytestring or None."""
         if self.private_key and self.private_key_path:
             raise DbtConfigError("Cannot specify both `private_key`  and `private_key_path`")
-
-        if self.private_key_passphrase:
-            encoded_passphrase = self.private_key_passphrase.encode()
-        else:
-            encoded_passphrase = None
-
-        if self.private_key:
-            if self.private_key.startswith("-"):
-                p_key = serialization.load_pem_private_key(
-                    data=bytes(self.private_key, "utf-8"),
-                    password=encoded_passphrase,
-                    backend=default_backend(),
-                )
-
-            else:
-                p_key = serialization.load_der_private_key(
-                    data=base64.b64decode(self.private_key),
-                    password=encoded_passphrase,
-                    backend=default_backend(),
-                )
-
+        elif self.private_key:
+            private_key = private_key_from_string(self.private_key, self.private_key_passphrase)
         elif self.private_key_path:
-            with open(self.private_key_path, "rb") as key:
-                p_key = serialization.load_pem_private_key(
-                    key.read(), password=encoded_passphrase, backend=default_backend()
-                )
+            private_key = private_key_from_file(self.private_key_path, self.private_key_passphrase)
         else:
             return None
-
-        return p_key.private_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        )
+        return snowflake_private_key(private_key)
 
 
 class SnowflakeConnectionManager(SQLConnectionManager):
@@ -343,21 +374,32 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
             if creds.query_tag:
                 session_parameters.update({"QUERY_TAG": creds.query_tag})
+            handle = None
 
-            handle = snowflake.connector.connect(
-                account=creds.account,
-                user=creds.user,
-                database=creds.database,
-                schema=creds.schema,
-                warehouse=creds.warehouse,
-                role=creds.role,
-                autocommit=True,
-                client_session_keep_alive=creds.client_session_keep_alive,
-                application="dbt",
-                insecure_mode=creds.insecure_mode,
-                session_parameters=session_parameters,
-                **creds.auth_args(),
-            )
+            # In replay mode, we won't connect to a real database at all, while
+            # in record and diff modes we do, but insert an intermediate handle
+            # object which monitors native connection activity.
+            rec_mode = get_record_mode_from_env()
+            handle = None
+            if rec_mode != RecorderMode.REPLAY:
+                handle = snowflake.connector.connect(
+                    account=creds.account,
+                    database=creds.database,
+                    schema=creds.schema,
+                    warehouse=creds.warehouse,
+                    role=creds.role,
+                    autocommit=True,
+                    client_session_keep_alive=creds.client_session_keep_alive,
+                    application="dbt",
+                    insecure_mode=creds.insecure_mode,
+                    session_parameters=session_parameters,
+                    **creds.auth_args(),
+                )
+
+            if rec_mode is not None:
+                # If using the record/replay mechanism, regardless of mode, we
+                # use a wrapper.
+                handle = SnowflakeRecordReplayHandle(handle, connection)
 
             return handle
 
@@ -416,7 +458,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
             rows_affected=cursor.rowcount,
             code=code,
             query_id=cursor.sfqid,
-        )  # type: ignore
+        )
 
     # disable transactional logic by default on Snowflake
     # except for DML statements where explicitly defined
@@ -444,31 +486,36 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         split_query = snowflake.connector.util_text.split_statements(sql_buf)
         return [part[0] for part in split_query]
 
-    @classmethod
-    def process_results(cls, column_names, rows):
-        # Override for Snowflake. The datetime objects returned by
-        # snowflake-connector-python are not pickleable, so we need
-        # to replace them with sane timezones
-        fixed = []
+    @staticmethod
+    def _fix_rows(rows: Iterable[Iterable]) -> Iterable[Iterable]:
+        # See note in process_results().
         for row in rows:
             fixed_row = []
             for col in row:
                 if isinstance(col, datetime.datetime) and col.tzinfo:
                     offset = col.utcoffset()
+                    assert offset is not None
                     offset_seconds = offset.total_seconds()
-                    new_timezone = pytz.FixedOffset(offset_seconds // 60)
+                    new_timezone = pytz.FixedOffset(int(offset_seconds // 60))
                     col = col.astimezone(tz=new_timezone)
                 fixed_row.append(col)
 
-            fixed.append(fixed_row)
+            yield fixed_row
 
-        return super().process_results(column_names, fixed)
+    @classmethod
+    def process_results(cls, column_names, rows):
+        # Override for Snowflake. The datetime objects returned by
+        # snowflake-connector-python are not pickleable, so we need
+        # to replace them with sane timezones.
+        return super().process_results(column_names, cls._fix_rows(rows))
 
     def execute(
         self, sql: str, auto_begin: bool = False, fetch: bool = False, limit: Optional[int] = None
-    ) -> Tuple[AdapterResponse, agate.Table]:
+    ) -> Tuple[AdapterResponse, "agate.Table"]:
         # don't apply the query comment here
         # it will be applied after ';' queries are split
+        from dbt_common.clients.agate_helper import empty_table
+
         _, cursor = self.add_query(sql, auto_begin)
         response = self.get_response(cursor)
         if fetch:
@@ -488,7 +535,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         auto_begin: bool = True,
         bindings: Optional[Any] = None,
         abridge_sql_log: bool = False,
-    ) -> Tuple[Connection, Any]:  # type: ignore
+    ) -> Tuple[Connection, Any]:
         if bindings:
             # The snowflake connector is stricter than, e.g., psycopg2 -
             # which allows any iterable thing to be passed as a binding.
@@ -514,7 +561,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         if cursor is None:
             self._raise_cursor_not_found_error(sql)
 
-        return connection, cursor  # type: ignore
+        return connection, cursor
 
     def _stripped_queries(self, sql: str) -> List[str]:
         def strip_query(query):
@@ -581,7 +628,7 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         """Reuse connections by deferring release until adapter context manager in core
         resets adapters. This cleanup_all happens before Python teardown. Idle connections
         incur no costs while waiting in the connection pool."""
-        if self.profile.credentials.reuse_connections:  # type: ignore
+        if self.profile.credentials.reuse_connections:
             return
         super().release()
 

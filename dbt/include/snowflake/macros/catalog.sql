@@ -41,7 +41,10 @@
         table_catalog as "table_database",
         table_schema as "table_schema",
         table_name as "table_name",
-        coalesce(table_type, 'DYNAMIC TABLE') as "table_type",
+        case
+            when is_dynamic = 'YES' and table_type = 'BASE TABLE' THEN 'DYNAMIC TABLE'
+            else table_type
+        end as "table_type",
         comment as "table_comment",
 
         -- note: this is the _role_ that owns the table
@@ -92,9 +95,14 @@
 {%- endmacro %}
 
 
+{% macro snowflake__catalog_equals(field, value) %}
+    "{{ field }}" ilike '{{ value }}' and upper("{{ field }}") = upper('{{ value }}')
+{% endmacro %}
+
+
 {% macro snowflake__get_catalog_schemas_where_clause_sql(schemas) -%}
     where ({%- for schema in schemas -%}
-        upper("table_schema") = upper('{{ schema }}'){%- if not loop.last %} or {% endif -%}
+        ({{ snowflake__catalog_equals('table_schema', schema) }}){%- if not loop.last %} or {% endif -%}
     {%- endfor -%})
 {%- endmacro %}
 
@@ -104,12 +112,12 @@
         {%- for relation in relations -%}
             {% if relation.schema and relation.identifier %}
                 (
-                    upper("table_schema") = upper('{{ relation.schema }}')
-                    and upper("table_name") = upper('{{ relation.identifier }}')
+                    {{ snowflake__catalog_equals('table_schema', relation.schema) }}
+                    and {{ snowflake__catalog_equals('table_name', relation.identifier) }}
                 )
             {% elif relation.schema %}
                 (
-                    upper("table_schema") = upper('{{ relation.schema }}')
+                    {{ snowflake__catalog_equals('table_schema', relation.schema) }}
                 )
             {% else %}
                 {% do exceptions.raise_compiler_error(
