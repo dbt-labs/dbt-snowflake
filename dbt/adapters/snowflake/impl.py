@@ -44,6 +44,11 @@ class SnowflakeConfig(AdapterConfig):
     merge_update_columns: Optional[str] = None
     target_lag: Optional[str] = None
 
+    # extended formats
+    object_format: Optional[str] = None
+    external_volume: Optional[str] = None
+    base_location: Optional[str] = None
+
 
 class SnowflakeAdapter(SQLAdapter):
     Relation = SnowflakeRelation

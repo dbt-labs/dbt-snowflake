@@ -25,7 +25,6 @@
 
 
 {% macro dynamic_table_get_build_sql(existing_relation, target_relation) %}
-
     {% set full_refresh_mode = should_full_refresh() %}
 
     -- determine the scenario we're in: create, full_refresh, alter, refresh data
