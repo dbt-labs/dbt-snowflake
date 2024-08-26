@@ -10,12 +10,6 @@
     {% do exceptions.raise_compiler_error("Iceberg format relations cannot be transient. Please remove either the transient or iceberg parameters from %s" % this) %}
   {%- endif %}
 
-  {# Configure for extended Object Format #}
-  {% if iceberg -%}
-    {%- set object_format = 'iceberg' -%}
-  {%- else -%}
-    {%- set object_format = '' -%}
-  {%- endif -%}
 
   {# Configure for plain Table materialization #}
   {% if temporary -%}
@@ -26,6 +20,7 @@
     {%- set table_type = "" -%}
   {%- endif %}
 
+  {%- set object_format = 'iceberg' -%}
   {%- set materialization_prefix = object_format or table_type -%}
   {%- set alter_statement_format_prefix = object_format -%}
 
@@ -49,9 +44,11 @@
 
         create or replace {{ materialization_prefix }} table {{ relation }}
         {%- if iceberg %}
-        external_volume = {{ config.get('external_volume') }}
-        catalog = 'snowflake'
-        base_location = {{ config.get('base_location') }}
+          {#
+            Valid DDL in CTAS statements. Plain create statements have a different order.
+            https://docs.snowflake.com/en/sql-reference/sql/create-iceberg-table
+          #}
+          {{ render_iceberg_ddl(relation) }}
         {%- endif -%}
 
         {%- set contract_config = config.get('contract') -%}
@@ -86,4 +83,15 @@
       {% do exceptions.raise_compiler_error("snowflake__create_table_as macro didn't get supported language, it got %s" % language) %}
   {%- endif -%}
 
+{% endmacro %}
+
+{% macro render_iceberg_ddl(relation) -%}
+  {%- set external_volume = config.get('external_volume') -%}
+  {# S3 treats subpaths with or without a trailing '/' as functionally equivalent #}
+  {%- set subpath = config.get('base_location_subpath') -%}
+  {%- set base_location = '_dbt/' ~ relation.schema ~ '/' ~ relation.name ~ (('/' ~ subpath) if subpath else '') -%}
+
+  external_volume = '{{ external_volume }}'
+  catalog = 'snowflake'
+  base_location = '{{ base_location }}'
 {% endmacro %}

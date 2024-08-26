@@ -318,3 +318,10 @@
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
   {%- endcall %}
 {% endmacro %}
+
+
+{% macro snowflake__show_iceberg_relations(schema_relation) %}
+  {%- set sql = 'show objects in ' ~ schema_relation ~ ';' %}
+  {%- set result = run_query(sql) -%}
+  {%- do return(result) -%}
+{% endmacro %}

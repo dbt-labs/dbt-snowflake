@@ -20,7 +20,10 @@ from dbt_common.contracts.metadata import (
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
 
-from dbt.adapters.snowflake.relation_configs import SnowflakeRelationType
+from dbt.adapters.snowflake.relation_configs import (
+    SnowflakeRelationType,
+    SnowflakeObjectFormat,
+)
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
@@ -29,6 +32,7 @@ if TYPE_CHECKING:
     import agate
 
 SHOW_OBJECT_METADATA_MACRO_NAME = "snowflake__show_object_metadata"
+LIST_ICEBERG_RELATIONS_MACRO_NAME = "snowflake__show_iceberg_relations"
 
 
 @dataclass
@@ -47,7 +51,7 @@ class SnowflakeConfig(AdapterConfig):
     # extended formats
     object_format: Optional[str] = None
     external_volume: Optional[str] = None
-    base_location: Optional[str] = None
+    base_location_subpath: Optional[str] = None
 
 
 class SnowflakeAdapter(SQLAdapter):
@@ -228,8 +232,35 @@ class SnowflakeAdapter(SQLAdapter):
         self, schema_relation: SnowflakeRelation
     ) -> List[SnowflakeRelation]:
         kwargs = {"schema_relation": schema_relation}
+
+        def check_is_iceberg(row, table2):
+            for match_row in table2.rows:
+                if (
+                    row["name"] == match_row["name"]
+                    and row["database_name"] == match_row["database_name"]
+                    and row["schema_name"] == match_row["schema_name"]
+                ):
+                    return "Y"
+            return "N"
+
         try:
-            results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
+            schema_objects = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
+            iceberg_table_results = self.execute_macro(
+                LIST_ICEBERG_RELATIONS_MACRO_NAME, kwargs=kwargs
+            )
+            import agate
+
+            # this only seems to only inflate runtime 16%; TODO: stress test
+            results = schema_objects.compute(
+                [
+                    (
+                        "is_iceberg",
+                        agate.Formula(
+                            agate.Text(), lambda row: check_is_iceberg(row, iceberg_table_results)
+                        ),
+                    )
+                ]
+            )
         except DbtDatabaseError as exc:
             # if the schema doesn't exist, we just want to return.
             # Alternatively, we could query the list of schemas before we start
@@ -242,16 +273,19 @@ class SnowflakeAdapter(SQLAdapter):
         columns = ["database_name", "schema_name", "name", "kind"]
         if "is_dynamic" in results.column_names:
             columns.append("is_dynamic")
+        if "is_iceberg" in results.column_names:
+            columns.append("is_iceberg")
 
         return [self._parse_list_relations_result(result) for result in results.select(columns)]
 
     def _parse_list_relations_result(self, result: "agate.Row") -> SnowflakeRelation:
         # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
         try:
-            database, schema, identifier, relation_type, is_dynamic = result
+            database, schema, identifier, relation_type, is_dynamic, is_iceberg = result
         except ValueError:
             database, schema, identifier, relation_type = result
             is_dynamic = "N"
+            is_iceberg = "N"
 
         try:
             relation_type = self.Relation.get_relation_type(relation_type.lower())
@@ -261,12 +295,16 @@ class SnowflakeAdapter(SQLAdapter):
         if relation_type == self.Relation.Table and is_dynamic == "Y":
             relation_type = self.Relation.DynamicTable
 
+        object_format: str = (
+            SnowflakeObjectFormat.ICEBERG if is_iceberg == "Y" else SnowflakeObjectFormat.DEFAULT
+        )
         quote_policy = {"database": True, "schema": True, "identifier": True}
         return self.Relation.create(
             database=database,
             schema=schema,
             identifier=identifier,
             type=relation_type,
+            object_format=object_format,
             quote_policy=quote_policy,
         )
 
