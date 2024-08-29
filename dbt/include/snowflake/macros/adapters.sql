@@ -321,7 +321,9 @@
 
 
 {% macro snowflake__show_iceberg_relations(schema_relation) %}
-  {%- set sql = 'show iceberg tables in ' ~ schema_relation ~ ';' %}
+  {%- set sql -%}
+    show iceberg tables in {{ schema_relation }}
+  {%- endset -%}
   {%- set result = run_query(sql) -%}
   {%- do return(result) -%}
 {% endmacro %}

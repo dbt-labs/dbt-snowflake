@@ -84,22 +84,27 @@
 
   {%- set is_iceberg   = _is_iceberg_relation() -%}
   {%- set is_temporary = temporary -%}
-  {%- set is_transient = config.get('transient', default=False) -%}
-
-  {%- if is_transient and is_iceberg -%}
-    {{ exceptions.warn("Iceberg format relations cannot be transient. Please remove either the transient or iceberg parameters from %s. If left unmodified, dbt will ignore 'transient'." % this) }}
-  {%- endif %}
-
-  {%- if is_temporary and is_iceberg -%}
-    {{ exceptions.warn("Iceberg format relations cannot be temporary. Please remove either the transient or iceberg parameters from %s. If left unmodified, dbt will ignore 'transient'." % this) }}
-  {%- endif %}
 
   {%- if is_iceberg -%}
+      {# -- Check if user supplied a transient model config of True. #}
+      {%- if config.get('transient') == True -%}
+        {{ exceptions.warn("Iceberg format relations cannot be transient. Please remove either the transient or iceberg parameters from %s. If left unmodified, dbt will ignore 'transient'." % this) }}
+      {%- endif %}
+
+      {# -- Check if runtime is trying to create a Temporary Iceberg table. #}
+      {%- if is_temporary -%}
+	{{ exceptions.raise_compiler_error("Iceberg format relations cannot be temporary. Temporary is being inserted into an Iceberg format table while materializing %s." % this) }}
+      {%- endif %}
+
     {{ return('iceberg') }}
+
   {%- elif is_temporary -%}
     {{ return('temporary') }}
-  {%- elif is_transient -%}
+
+  {# -- Always supply transient on table create DDL unless user specifically sets transient to false. #}
+  {%- elif config.get('transient', default=true) -%}
     {{ return('transient') }}
+
   {%- else -%}
     {{ return('') }}
   {%- endif -%}
