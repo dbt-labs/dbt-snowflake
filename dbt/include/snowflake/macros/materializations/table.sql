@@ -8,9 +8,13 @@
   {% set grant_config = config.get('grants') %}
 
   {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
-  {%- set target_relation = api.Relation.create(identifier=identifier,
-                                                schema=schema,
-                                                database=database, type='table') -%}
+  {%- set target_relation = api.Relation.create(
+	identifier=identifier,
+	schema=schema,
+	database=database,
+	type='table',
+	object_format=config.get('object_format', 'default')
+    ) -%}
 
   {{ run_hooks(pre_hooks) }}
 
@@ -83,29 +87,31 @@ def main(session):
 
 
 {% macro drop_old_relation_as_needed(old_relation, target_relation) %}
+  {% if old_relation is none %}
+      {{ return('') }}
+  {% endif %}
+
   {#
     -- Each of these will cause some latency, but it shoudl be a relatively infrequent occurrence.
 
-    -- An existing view must be dropped for model to "converT" into a table"
+    -- An existing view must be dropped for model to "convert" into a table"
   #}
-  {% if old_relation is not none and not old_relation.is_table %}
+  {% if not old_relation.is_table %}
     {{ log("Dropping relation " ~ old_relation ~ " because it is of type " ~ old_relation.type) }}
     {{ drop_relation_if_exists(old_relation) }}
-  {% endif %}
 
   {#
     -- An existing Iceberg table must be dropped for model to "convert" into a table.
   #}
-  {% if old_relation is not none and old_relation.is_iceberg_format %}
-    {{ log("Dropping relation " ~ old_relation ~ " because it is an Iceberg format table " ~ old_relation.object_format) }}
+  {% elif old_relation.is_iceberg_format and not target_relation.is_iceberg_format %}
+    {{ log("Dropping relation " ~ old_relation ~ " because it is an Iceberg format table and target relation " ~ target_relation ~ " is a default format table.") }}
     {{ drop_relation_if_exists(old_relation) }}
-  {% endif %}
 
   {#
     -- An existing table must be dropped for model to "convert" into an Iceberg table.
   #}
-  {% if old_relation is not none and old_relation.is_table and target_relation.is_iceberg_format %}
-    {{ log("Dropping relation " ~ old_relation ~ " because it is a table and target relation is Iceberg format") }}
+  {% elif old_relation.is_table and not old_relation.is_iceberg_format and target_relation.is_iceberg_format %}
+    {{ log("Dropping relation " ~ old_relation ~ " because it is a default format table and target relation is an Iceberg format table.") }}
     {{ drop_relation_if_exists(old_relation) }}
   {% endif %}
 {% endmacro %}
