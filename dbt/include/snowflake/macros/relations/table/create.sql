@@ -57,7 +57,7 @@
     {%- if iceberg -%}
       {% do exceptions.raise_compiler_error('Iceberg is incompatible with Python models. Please use a SQL model for the iceberg format.') %}
     {%- endif %}
-    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, table_type=table_type) }}
+    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, table_type=get_create_ddl_prefix(temporary)) }}
   {%- else -%}
       {% do exceptions.raise_compiler_error("snowflake__create_table_as macro didn't get supported language, it got %s" % language) %}
   {%- endif -%}
@@ -102,7 +102,7 @@
     {{ return('temporary') }}
 
   {# -- Always supply transient on table create DDL unless user specifically sets transient to false or None. #}
-  {%- elif config.get('transient', default=True) -%}
+  {%- elif config.get('transient', default=true) -%}
     {{ return('transient') }}
 
   {%- else -%}
