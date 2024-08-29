@@ -1,28 +1,6 @@
 {% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
-  {%- set transient = config.get('transient', default=true) -%}
-  {%- set iceberg = config.get('object_format', default='') == 'iceberg' -%}
-
-  {%- if transient and iceberg -%}
-    {% do exceptions.raise_compiler_error("Iceberg format relations cannot be transient. Please remove either the transient or iceberg parameters from %s" % this) %}
-  {%- endif %}
-
-  {%- if transient and iceberg -%}
-    {% do exceptions.raise_compiler_error("Iceberg format relations cannot be transient. Please remove either the transient or iceberg parameters from %s" % this) %}
-  {%- endif %}
-
-
-  {# Configure for plain Table materialization #}
-  {% if temporary -%}
-    {%- set table_type = "temporary" -%}
-  {%- elif transient -%}
-    {%- set table_type = "transient" -%}
-  {%- else -%}
-    {%- set table_type = "" -%}
-  {%- endif %}
-
-  {%- set object_format = 'iceberg' -%}
-  {%- set materialization_prefix = object_format or table_type -%}
-  {%- set alter_statement_format_prefix = object_format -%}
+  {%- set materialization_prefix = get_create_ddl_prefix(temporary) -%}
+  {%- set alter_prefix = get_alter_ddl_prefix() -%}
 
   {# Generate DDL/DML #}
   {%- if language == 'sql' -%}
@@ -43,12 +21,13 @@
     {{ sql_header if sql_header is not none }}
 
         create or replace {{ materialization_prefix }} table {{ relation }}
-        {%- if iceberg %}
+        {%- if _is_iceberg_relation() %}
           {#
             Valid DDL in CTAS statements. Plain create statements have a different order.
             https://docs.snowflake.com/en/sql-reference/sql/create-iceberg-table
           #}
           {{ render_iceberg_ddl(relation) }}
+        {% else %}
         {%- endif -%}
 
         {%- set contract_config = config.get('contract') -%}
@@ -68,10 +47,10 @@
           {%- endif %}
         );
       {% if cluster_by_string is not none and not temporary -%}
-        alter {{ alter_statement_format_prefix }} table {{relation}} cluster by ({{cluster_by_string}});
+        alter {{ alter_prefix }} table {{relation}} cluster by ({{cluster_by_string}});
       {%- endif -%}
-      {% if enable_automatic_clustering and cluster_by_string is not none and not temporary  -%}
-        alter {{ alter_statement_format_prefix }} table {{relation}} resume recluster;
+      {% if enable_automatic_clustering and cluster_by_string is not none and not temporary %}
+        alter {{ alter_prefix }} table {{relation}} resume recluster;
       {%- endif -%}
 
   {%- elif language == 'python' -%}
@@ -84,6 +63,68 @@
   {%- endif -%}
 
 {% endmacro %}
+
+
+{#
+ # Helper Macros
+ #}
+
+{% macro get_create_ddl_prefix(temporary) %}
+  {#
+    This macro generates the appropriate DDL prefix for creating a table in Snowflake,
+    considering the mutually exclusive nature of certain table types:
+
+    - ICEBERG: A specific storage format that requires a distinct DDL layout.
+    - TEMPORARY: Indicates a table that exists only for the duration of the session.
+    - TRANSIENT: A type of table that is similar to a permanent table but without fail-safe.
+
+    Note: If ICEBERG is specified, transient=true throws a warning because ICEBERG
+      does not support transient tables.
+  #}
+
+  {%- set is_iceberg   = _is_iceberg_relation() -%}
+  {%- set is_temporary = temporary -%}
+  {%- set is_transient = config.get('transient', default=true) -%}
+
+  {%- if is_transient and is_iceberg -%}
+    {{ exceptions.warn("Iceberg format relations cannot be transient. Please remove either the transient or iceberg parameters from %s. If left unmodified, dbt will ignore 'transient'." % this) }}
+  {%- endif %}
+
+  {%- if is_temporary and is_iceberg -%}
+    {{ exceptions.warn("Iceberg format relations cannot be temporary. Please remove either the transient or iceberg parameters from %s. If left unmodified, dbt will ignore 'transient'." % this) }}
+  {%- endif %}
+
+  {%- if is_iceberg -%}
+    {{ return('iceberg') }}
+  {%- elif is_temporary -%}
+    {{ return('temporary') }}
+  {%- elif is_transient -%}
+    {{ return('transient') }}
+  {%- else -%}
+    {{ return('') }}
+  {%- endif -%}
+{% endmacro %}
+
+
+{% macro get_alter_ddl_prefix() %}
+  {# All ALTER statements on Iceberg tables require an ICEBERG prefix #}
+  {%- if _get_relation_object_format() == 'iceberg' -%}
+    {{ return('iceberg') }}
+  {%- else -%}
+    {{ return('') }}
+  {%- endif -%}
+{% endmacro %}
+
+
+{% macro _get_relation_object_format() %}
+  {{ return(config.get('object_format', default='')) }}
+{% endmacro %}
+
+
+{% macro _is_iceberg_relation() %}
+  {{ return(_get_relation_object_format() == 'iceberg') }}
+{% endmacro %}
+
 
 {% macro render_iceberg_ddl(relation) -%}
   {%- set external_volume = config.get('external_volume') -%}
