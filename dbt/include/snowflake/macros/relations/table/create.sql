@@ -101,8 +101,8 @@
   {%- elif is_temporary -%}
     {{ return('temporary') }}
 
-  {# -- Always supply transient on table create DDL unless user specifically sets transient to false. #}
-  {%- elif config.get('transient', default=true) -%}
+  {# -- Always supply transient on table create DDL unless user specifically sets transient to false or None. #}
+  {%- elif config.get('transient') is not defined or config.get('transient') == True -%}
     {{ return('transient') }}
 
   {%- else -%}
