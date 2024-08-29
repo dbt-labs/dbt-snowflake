@@ -14,12 +14,7 @@
 
   {{ run_hooks(pre_hooks) }}
 
-  {#-- Drop the relation if it was a view to "convert" it in a table. This may lead to
-    -- downtime, but it should be a relatively infrequent occurrence  #}
-  {% if old_relation is not none and not old_relation.is_table %}
-    {{ log("Dropping relation " ~ old_relation ~ " because it is of type " ~ old_relation.type) }}
-    {{ drop_relation_if_exists(old_relation) }}
-  {% endif %}
+  {{ drop_old_relation_as_needed(old_relation, target_relation) }}
 
   {% call statement('main', language=language) -%}
       {{ create_table_as(False, target_relation, compiled_code, language) }}
@@ -85,3 +80,32 @@ def main(session):
 # dbt = dbtObj(session.table)
 # df = model(dbt, session)
 {%endmacro%}
+
+
+{% macro drop_old_relation_as_needed(old_relation, target_relation) %}
+  {#
+    -- Each of these will cause some latency, but it shoudl be a relatively infrequent occurrence.
+
+    -- An existing view must be dropped for model to "converT" into a table"
+  #}
+  {% if old_relation is not none and not old_relation.is_table %}
+    {{ log("Dropping relation " ~ old_relation ~ " because it is of type " ~ old_relation.type) }}
+    {{ drop_relation_if_exists(old_relation) }}
+  {% endif %}
+
+  {#
+    -- An existing Iceberg table must be dropped for model to "convert" into a table.
+  #}
+  {% if old_relation is not none and old_relation.is_iceberg_format %}
+    {{ log("Dropping relation " ~ old_relation ~ " because it is an Iceberg format table " ~ old_relation.object_format) }}
+    {{ drop_relation_if_exists(old_relation) }}
+  {% endif %}
+
+  {#
+    -- An existing table must be dropped for model to "convert" into an Iceberg table.
+  #}
+  {% if old_relation is not none and old_relation.is_table and target_relation.is_iceberg_format %}
+    {{ log("Dropping relation " ~ old_relation ~ " because it is a table and target relation is Iceberg format") }}
+    {{ drop_relation_if_exists(old_relation) }}
+  {% endif %}
+{% endmacro %}

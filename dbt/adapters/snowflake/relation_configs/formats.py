@@ -4,3 +4,6 @@ from dbt_common.dataclass_schema import StrEnum  # doesn't exist in standard lib
 class SnowflakeObjectFormat(StrEnum):
     DEFAULT = "default"
     ICEBERG = "iceberg"
+
+    def __str__(self):
+        return self.value

@@ -84,7 +84,7 @@
 
   {%- set is_iceberg   = _is_iceberg_relation() -%}
   {%- set is_temporary = temporary -%}
-  {%- set is_transient = config.get('transient', default=true) -%}
+  {%- set is_transient = config.get('transient', default=False) -%}
 
   {%- if is_transient and is_iceberg -%}
     {{ exceptions.warn("Iceberg format relations cannot be transient. Please remove either the transient or iceberg parameters from %s. If left unmodified, dbt will ignore 'transient'." % this) }}

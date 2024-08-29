@@ -57,7 +57,7 @@ class SnowflakeRelation(BaseRelation):
 
     @property
     def is_iceberg_format(self) -> bool:
-        return self.object_format == SnowflakeRelationType.ICEBERG
+        return self.object_format == SnowflakeObjectFormat.ICEBERG
 
     @classproperty
     def DynamicTable(cls) -> str:
