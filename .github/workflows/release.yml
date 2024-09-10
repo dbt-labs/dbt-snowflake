@@ -60,50 +60,6 @@ on:
         type: boolean
         default: false
         required: false
-  workflow_call:
-    inputs:
-      sha:
-        description: "The last commit sha in the release"
-        type: string
-        required: true
-      target_branch:
-        description: "The branch to release from"
-        type: string
-        required: true
-      version_number:
-        description: "The release version number (i.e. 1.0.0b1)"
-        type: string
-        required: true
-      build_script_path:
-        description: "Build script path"
-        type: string
-        default: "scripts/build-dist.sh"
-        required: true
-      env_setup_script_path:
-        description: "Environment setup script path"
-        type: string
-        default: "scripts/env-setup.sh"
-        required: false
-      s3_bucket_name:
-        description: "AWS S3 bucket name"
-        type: string
-        default: "core-team-artifacts"
-        required: true
-      package_test_command:
-        description: "Package test command"
-        type: string
-        default: "dbt --version"
-        required: true
-      test_run:
-        description: "Test run (Publish release as draft)"
-        type: boolean
-        default: true
-        required: false
-      nightly_release:
-        description: "Nightly release to dev environment"
-        type: boolean
-        default: false
-        required: false
 
 permissions:
   contents: write # this is the permission that allows creating a new release
