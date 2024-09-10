@@ -51,8 +51,8 @@
 
 
 {% macro snowflake__get_incremental_microbatch_sql(target, source, unique_key, dest_columns, incremental_predicates) %}
-    {% do predicates.append(model.config.event_time ~ " >= " ~ model.config.event_time_start) %}
-    {% do predicates.append(model.config.event_time ~ " < " ~ model.config.event_time_end) %}
+    {% do incremental_predicates.append(model.config.event_time ~ " >= " ~ model.config.event_time_start) %}
+    {% do incremental_predicates.append(model.config.event_time ~ " < " ~ model.config.event_time_end) %}
     {% set dml = default__get_delete_insert_merge_sql(target, source, unique_key, dest_columns, incremental_predicates) %}
     {% do return(snowflake_dml_explicit_transaction(dml)) %}
 {% endmacro %}
