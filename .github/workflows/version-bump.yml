@@ -26,8 +26,6 @@ on:
        description: 'Creates a draft PR to allow testing instead of committing to a branch'
        required: true
        default: 'true'
-  repository_dispatch:
-    types: [version-bump]
 
 jobs:
   bump:
