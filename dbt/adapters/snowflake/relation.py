@@ -26,7 +26,7 @@ from dbt.adapters.snowflake.relation_configs import (
 @dataclass(frozen=True, eq=False, repr=False)
 class SnowflakeRelation(BaseRelation):
     type: Optional[SnowflakeRelationType] = None
-    object_format: str = SnowflakeObjectFormat.DEFAULT
+    table_format: str = SnowflakeObjectFormat.DEFAULT
     quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
     require_alias: bool = False
     relation_configs = {
@@ -57,7 +57,7 @@ class SnowflakeRelation(BaseRelation):
 
     @property
     def is_iceberg_format(self) -> bool:
-        return self.object_format == SnowflakeObjectFormat.ICEBERG
+        return self.table_format == SnowflakeObjectFormat.ICEBERG
 
     @classproperty
     def DynamicTable(cls) -> str:

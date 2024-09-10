@@ -49,7 +49,7 @@ class SnowflakeConfig(AdapterConfig):
     target_lag: Optional[str] = None
 
     # extended formats
-    object_format: Optional[str] = None
+    table_format: Optional[str] = None
     external_volume: Optional[str] = None
     base_location_subpath: Optional[str] = None
 
@@ -295,7 +295,7 @@ class SnowflakeAdapter(SQLAdapter):
         if relation_type == self.Relation.Table and is_dynamic == "Y":
             relation_type = self.Relation.DynamicTable
 
-        object_format: str = (
+        table_format: str = (
             SnowflakeObjectFormat.ICEBERG if is_iceberg == "Y" else SnowflakeObjectFormat.DEFAULT
         )
         quote_policy = {"database": True, "schema": True, "identifier": True}
@@ -304,7 +304,7 @@ class SnowflakeAdapter(SQLAdapter):
             schema=schema,
             identifier=identifier,
             type=relation_type,
-            object_format=object_format,
+            table_format=table_format,
             quote_policy=quote_policy,
         )
 

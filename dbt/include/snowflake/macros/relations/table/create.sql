@@ -113,7 +113,7 @@
 
 {% macro get_alter_ddl_prefix() %}
   {# All ALTER statements on Iceberg tables require an ICEBERG prefix #}
-  {%- if _get_relation_object_format() == 'iceberg' -%}
+  {%- if _get_relation_table_format() == 'iceberg' -%}
     {{ return('iceberg') }}
   {%- else -%}
     {{ return('') }}
@@ -121,13 +121,13 @@
 {% endmacro %}
 
 
-{% macro _get_relation_object_format() %}
-  {{ return(config.get('object_format', default='')) }}
+{% macro _get_relation_table_format() %}
+  {{ return(config.get('table_format', default='')) }}
 {% endmacro %}
 
 
 {% macro _is_iceberg_relation() %}
-  {{ return(_get_relation_object_format() == 'iceberg') }}
+  {{ return(_get_relation_table_format() == 'iceberg') }}
 {% endmacro %}
 
 

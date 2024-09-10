@@ -13,7 +13,7 @@
 	schema=schema,
 	database=database,
 	type='table',
-	object_format=config.get('object_format', 'default')
+	table_format=config.get('table_format', 'default')
     ) -%}
 
   {{ run_hooks(pre_hooks) }}
