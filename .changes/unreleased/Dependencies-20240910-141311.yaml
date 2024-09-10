@@ -1,0 +1,7 @@
+kind: Dependencies
+body: Use snowflake-connector-python 3+ for Python 3.10 compatibility.
+time: 2024-09-10T14:13:11.243092-04:00
+custom:
+  Author: peterallenwebb
+  Issue: "1178"
+  PR: "1178"
