@@ -139,11 +139,19 @@
   {%- set max_total_results = max_results_per_iter * max_iter -%}
   {% if schema_relation is string %}
     {%- set sql -%}
-      show objects in {{ schema_relation }} limit {{ max_results_per_iter }}
+      show objects in {{ schema_relation }} limit {{ max_results_per_iter }};
+      select all_objects.*, is_iceberg as "is_iceberg"
+      from table(result_scan(last_query_id(-1))) all_objects
+      left join INFORMATION_SCHEMA.tables as all_tables
+        on all_tables.TABLE_NAME = all_objects."name"
     {%- endset -%}
   {% else %}
     {%- set sql -%}
-      show objects in {{ schema_relation.include(identifier=False) }} limit {{ max_results_per_iter }}
+      show objects in {{ schema_relation.include(identifier=False) }} limit {{ max_results_per_iter }};
+      select all_objects.*, is_iceberg as "is_iceberg"
+      from table(result_scan(last_query_id(-1))) all_objects
+      left join INFORMATION_SCHEMA.tables as all_tables
+        on all_tables.TABLE_NAME = all_objects."name"
     {%- endset -%}
   {% endif -%}
 
@@ -317,13 +325,4 @@
   {% call statement('truncate_relation') -%}
     {{ snowflake_dml_explicit_transaction(truncate_dml) }}
   {%- endcall %}
-{% endmacro %}
-
-
-{% macro snowflake__show_iceberg_relations(schema_relation) %}
-  {%- set sql -%}
-    show iceberg tables in {{ schema_relation }}
-  {%- endset -%}
-  {%- set result = run_query(sql) -%}
-  {%- do return(result) -%}
 {% endmacro %}
