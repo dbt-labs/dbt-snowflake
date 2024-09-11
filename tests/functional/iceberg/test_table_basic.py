@@ -2,8 +2,7 @@ import pytest
 
 from pathlib import Path
 
-from dbt.tests.util import run_dbt
-
+from dbt.tests.util import run_dbt, rm_file
 
 _MODEL_BASIC_TABLE_MODEL = """
 {{
