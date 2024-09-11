@@ -1,7 +1,7 @@
 import textwrap
 
 from dataclasses import dataclass, field
-from typing import FrozenSet, Optional, Type, TYPE_CHECKING
+from typing import FrozenSet, Optional, Type
 
 
 from dbt.adapters.base.relation import BaseRelation
@@ -26,9 +26,6 @@ from dbt.adapters.snowflake.relation_configs import (
     SnowflakeQuotePolicy,
     SnowflakeRelationType,
 )
-
-if TYPE_CHECKING:
-    from dbt.artifacts.resources.v1.model import ModelConfig
 
 
 @dataclass(frozen=True, eq=False, repr=False)
@@ -135,7 +132,7 @@ class SnowflakeRelation(BaseRelation):
 
         return self.replace_path(**path_part_map)
 
-    def get_ddl_prefix_for_create(self, config: "ModelConfig", temporary: bool):
+    def get_ddl_prefix_for_create(self, config: RelationConfig, temporary: bool):
         """
         This macro renders the appropriate DDL prefix during the create_table_as
         macro. It decides based on mutually exclusive table configuration options:
@@ -187,7 +184,7 @@ class SnowflakeRelation(BaseRelation):
         else:
             return ""
 
-    def render_iceberg_ddl(self, config: "ModelConfig"):
+    def render_iceberg_ddl(self, config: RelationConfig):
         base_location: str = f"_dbt/{self.schema}/{self.name}"
 
         if subpath := config.get("base_location_subpath"):
