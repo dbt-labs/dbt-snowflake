@@ -143,7 +143,9 @@
       select all_objects.*, is_iceberg as "is_iceberg"
       from table(result_scan(last_query_id(-1))) all_objects
       left join INFORMATION_SCHEMA.tables as all_tables
-        on all_tables.TABLE_NAME = all_objects."name"
+        on all_tables.table_name = all_objects."name"
+        and all_tables.table_schema = all_objects."schema_name"
+        and all_tables.table_catalog = all_objects."database_name"
     {%- endset -%}
   {% else %}
     {%- set sql -%}
@@ -151,7 +153,9 @@
       select all_objects.*, is_iceberg as "is_iceberg"
       from table(result_scan(last_query_id(-1))) all_objects
       left join INFORMATION_SCHEMA.tables as all_tables
-        on all_tables.TABLE_NAME = all_objects."name"
+        on all_tables.table_name = all_objects."name"
+        and all_tables.table_schema = all_objects."schema_name"
+        and all_tables.table_catalog = all_objects."database_name"
     {%- endset -%}
   {% endif -%}
 
