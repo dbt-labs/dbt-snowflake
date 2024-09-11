@@ -33,7 +33,6 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, eq=False, repr=False)
 class SnowflakeRelation(BaseRelation):
-    transient: Optional[bool] = None
     type: Optional[SnowflakeRelationType] = None
     table_format: str = SnowflakeObjectFormat.DEFAULT
     quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
@@ -175,7 +174,7 @@ class SnowflakeRelation(BaseRelation):
             return "iceberg"
 
         # Always supply transient on table create DDL unless user specifically sets
-        # transient to false or unset.
+        # transient to false or unset. Might as well update the object attribute too!
         elif transient_explicitly_set_true or config.get("transient") is None:
             return "transient"
         else:
