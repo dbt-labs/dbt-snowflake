@@ -172,7 +172,7 @@ class SnowflakeRelation(BaseRelation):
 
         # Always supply transient on table create DDL unless user specifically sets
         # transient to false or unset. Might as well update the object attribute too!
-        elif transient_explicitly_set_true or config.get("transient") is None:
+        elif transient_explicitly_set_true or config.get("transient", True):
             return "transient"
         else:
             return ""
