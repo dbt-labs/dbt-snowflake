@@ -54,10 +54,10 @@
       {%- endif -%}
 
   {%- elif language == 'python' -%}
-    {%- if iceberg -%}
+    {%- if relation.is_iceberg_format %}
       {% do exceptions.raise_compiler_error('Iceberg is incompatible with Python models. Please use a SQL model for the iceberg format.') %}
     {%- endif %}
-    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, table_type=get_create_ddl_prefix(temporary)) }}
+    {{ py_write_table(compiled_code=compiled_code, target_relation=relation, table_type=relation.get_ddl_prefix_for_create(config.model.config, temporary) }}
   {%- else -%}
       {% do exceptions.raise_compiler_error("snowflake__create_table_as macro didn't get supported language, it got %s" % language) %}
   {%- endif -%}
