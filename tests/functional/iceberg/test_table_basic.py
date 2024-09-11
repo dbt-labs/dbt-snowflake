@@ -1,5 +1,7 @@
 import pytest
 
+from pathlib import Path
+
 from dbt.tests.util import run_dbt
 
 
