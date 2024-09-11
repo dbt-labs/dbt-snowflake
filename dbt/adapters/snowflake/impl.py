@@ -299,6 +299,7 @@ class SnowflakeAdapter(SQLAdapter):
             SnowflakeObjectFormat.ICEBERG if is_iceberg == "Y" else SnowflakeObjectFormat.DEFAULT
         )
         quote_policy = {"database": True, "schema": True, "identifier": True}
+
         return self.Relation.create(
             database=database,
             schema=schema,
