@@ -50,9 +50,19 @@
 {% endmacro %}
 
 
-{% macro snowflake__get_incremental_microbatch_sql(target, source, unique_key, dest_columns, incremental_predicates) %}
-    {% do incremental_predicates.append(model.config.event_time ~ " >= " ~ model.config.event_time_start) %}
-    {% do incremental_predicates.append(model.config.event_time ~ " < " ~ model.config.event_time_end) %}
-    {% set dml = default__get_delete_insert_merge_sql(target, source, unique_key, dest_columns, incremental_predicates) %}
-    {% do return(snowflake_dml_explicit_transaction(dml)) %}
+{% macro snowflake__get_incremental_microbatch_sql(arg_dict) %}
+    {% set incremental_predicates = [] if arg_dict.get('incremental_predicates') is none else  arg_dict.get('incremental_predicates') %}
+    {#-- Add additional incremental_predicates if it is safe to do so --#}
+    {% if model.config.event_time -%}
+        {% if model.config.event_time_start -%}
+            {% do incremental_predicates.append("DBT_INTERNAL_DEST" ~ "." ~ model.config.event_time ~ " >= " ~ model.config.event_time_start) %}
+        {% endif %}
+        {% if model.config.event_time_start -%}
+            {% do incremental_predicates.append("DBT_INTERNAL_DEST" ~ "." ~ model.config.event_time ~ " < " ~ model.config.event_time_end) %}
+        {% endif %}
+    {% endif %}
+    {% do arg_dict.update({'incremental_predicates': incremental_predicates}) %}
+
+    {% set dml = default__get_incremental_delete_insert_sql(arg_dict) %}
+    {% do return(dml) %}
 {% endmacro %}
