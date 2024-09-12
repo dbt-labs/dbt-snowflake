@@ -261,9 +261,9 @@ class SnowflakeAdapter(SQLAdapter):
         # this can be reduced to always including `is_iceberg` once Snowflake adds it to show objects
         try:
             if self.behavior.enable_iceberg_materializations.no_warn:
-                database, schema, identifier, relation_type, is_dynamic = result
-            else:
                 database, schema, identifier, relation_type, is_dynamic, is_iceberg = result
+            else:
+                database, schema, identifier, relation_type, is_dynamic = result
         except ValueError:
             database, schema, identifier, relation_type = result
             is_dynamic = "N"
