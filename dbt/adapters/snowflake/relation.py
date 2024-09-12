@@ -1,7 +1,7 @@
 import textwrap
 
 from dataclasses import dataclass, field
-from typing import FrozenSet, Optional, Type, Self, Iterator
+from typing import FrozenSet, Optional, Type, Iterator, Tuple
 
 
 from dbt.adapters.base.relation import BaseRelation
@@ -197,7 +197,7 @@ class SnowflakeRelation(BaseRelation):
         """
         return textwrap.indent(textwrap.dedent(iceberg_ddl_predicates), " " * 10)
 
-    def __drop_conditions(self, old_relation: Self) -> Iterator[tuple[bool, str]]:
+    def __drop_conditions(self, old_relation: "SnowflakeRelation") -> Iterator[Tuple[bool, str]]:
         drop_view_message: str = (
             f"Dropping relation {old_relation} because it is a view and target relation {self} "
             f"is of type {self.type}."
@@ -230,7 +230,7 @@ class SnowflakeRelation(BaseRelation):
             drop_iceberg_for_table_message,
         )
 
-    def needs_to_drop(self, old_relation: Optional[Self]) -> bool:
+    def needs_to_drop(self, old_relation: Optional["SnowflakeRelation"]) -> bool:
         """
         To convert between Iceberg and non-Iceberg relations, a preemptive drop is
         required.
