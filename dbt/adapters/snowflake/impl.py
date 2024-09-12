@@ -9,6 +9,7 @@ from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
+from dbt_common.behavior_flags import BehaviorFlag
 from dbt_common.contracts.constraints import ConstraintType
 from dbt_common.contracts.metadata import (
     TableMetadata,
@@ -76,6 +77,10 @@ class SnowflakeAdapter(SQLAdapter):
             Capability.GetCatalogForSingleRelation: CapabilitySupport(support=Support.Full),
         }
     )
+
+    @property
+    def _behavior_flags(self) -> List[BehaviorFlag]:
+        return [{"name": "enable_iceberg_materializations", "default": False}]
 
     @classmethod
     def date_function(cls):
@@ -253,12 +258,17 @@ class SnowflakeAdapter(SQLAdapter):
 
     def _parse_list_relations_result(self, result: "agate.Row") -> SnowflakeRelation:
         # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
+        # this can be reduced to always including `is_iceberg` once Snowflake adds it to show objects
         try:
-            database, schema, identifier, relation_type, is_dynamic, is_iceberg = result
+            if self.behavior.enable_iceberg_materializations.no_warn:
+                database, schema, identifier, relation_type, is_dynamic = result
+            else:
+                database, schema, identifier, relation_type, is_dynamic, is_iceberg = result
         except ValueError:
             database, schema, identifier, relation_type = result
             is_dynamic = "N"
-            is_iceberg = "N"
+            if self.behavior.enable_iceberg_materializations.no_warn:
+                is_iceberg = "N"
 
         try:
             relation_type = self.Relation.get_relation_type(relation_type.lower())
@@ -268,8 +278,12 @@ class SnowflakeAdapter(SQLAdapter):
         if relation_type == self.Relation.Table and is_dynamic == "Y":
             relation_type = self.Relation.DynamicTable
 
+        # This line is the main gate on supporting Iceberg materializations. Pass forward a default
+        # table format, and no downstream table macros can build iceberg relations.
         table_format: str = (
-            TableFormat.ICEBERG if is_iceberg in ("Y", "YES") else TableFormat.DEFAULT
+            TableFormat.ICEBERG
+            if self.behavior.enable_iceberg_materializations.no_warn and is_iceberg in ("Y", "YES")
+            else TableFormat.DEFAULT
         )
         quote_policy = {"database": True, "schema": True, "identifier": True}
 

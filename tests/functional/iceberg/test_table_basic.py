@@ -66,6 +66,10 @@ select 1 as id
 
 class TestIcebergTableBuilds:
     @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"flags": {"enable_iceberg_materializations": True}}
+
+    @pytest.fixture(scope="class")
     def models(self):
         return {
             "first_table.sql": _MODEL_BASIC_TABLE_MODEL,
@@ -79,10 +83,13 @@ class TestIcebergTableBuilds:
 
 
 class TestIcebergTableTypeBuildsOnExistingTable:
-    model_name = "my_model.sql"
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"flags": {"enable_iceberg_materializations": True}}
 
     @pytest.mark.parametrize("start_model", [_MODEL_TABLE_BEFORE_SWAP, _MODEL_VIEW_BEFORE_SWAP])
     def test_changing_model_types(self, project, start_model):
+        model_name = "my_model.sql"
         model_file = project.project_root / Path("models") / Path(self.model_name)
 
         write_file(start_model, model_file)
