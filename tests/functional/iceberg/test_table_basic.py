@@ -89,8 +89,7 @@ class TestIcebergTableTypeBuildsOnExistingTable:
 
     @pytest.mark.parametrize("start_model", [_MODEL_TABLE_BEFORE_SWAP, _MODEL_VIEW_BEFORE_SWAP])
     def test_changing_model_types(self, project, start_model):
-        model_name = "my_model.sql"
-        model_file = project.project_root / Path("models") / Path(self.model_name)
+        model_file = project.project_root / Path("models") / Path("my_model.sql")
 
         write_file(start_model, model_file)
         run_results = run_dbt()
