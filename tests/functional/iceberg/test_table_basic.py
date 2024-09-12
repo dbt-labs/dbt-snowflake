@@ -2,7 +2,7 @@ import pytest
 
 from pathlib import Path
 
-from dbt.tests.util import run_dbt, rm_file
+from dbt.tests.util import run_dbt, rm_file, write_file
 
 _MODEL_BASIC_TABLE_MODEL = """
 {{
@@ -12,7 +12,7 @@ _MODEL_BASIC_TABLE_MODEL = """
   )
 }}
 select 1 as id
-""".strip()
+"""
 
 _MODEL_BASIC_ICEBERG_MODEL = """
 {{
@@ -27,7 +27,7 @@ _MODEL_BASIC_ICEBERG_MODEL = """
 }}
 
 select * from {{ ref('first_table') }}
-""".strip()
+"""
 
 _MODEL_BUILT_ON_ICEBERG_TABLE = """
 {{
@@ -36,7 +36,7 @@ _MODEL_BUILT_ON_ICEBERG_TABLE = """
   )
 }}
 select * from {{ ref('iceberg_table') }}
-""".strip()
+"""
 
 _MODEL_TABLE_FOR_SWAP = """
 {{
@@ -45,7 +45,7 @@ _MODEL_TABLE_FOR_SWAP = """
   )
 }}
 select 1 as id
-""".strip()
+"""
 
 _MODEL_TABLE_FOR_SWAP_ICEBERG = """
 {{
@@ -57,7 +57,7 @@ _MODEL_TABLE_FOR_SWAP_ICEBERG = """
   )
 }}
 select 1 as id
-""".strip()
+"""
 
 
 class TestIcebergTableBuilds:
