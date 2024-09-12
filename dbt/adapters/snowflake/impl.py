@@ -22,7 +22,7 @@ from dbt_common.utils import filter_null_values
 
 from dbt.adapters.snowflake.relation_configs import (
     SnowflakeRelationType,
-    SnowflakeObjectFormat,
+    TableFormat,
 )
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.adapters.snowflake import SnowflakeConnectionManager
@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     import agate
 
 SHOW_OBJECT_METADATA_MACRO_NAME = "snowflake__show_object_metadata"
-LIST_ICEBERG_RELATIONS_MACRO_NAME = "snowflake__show_iceberg_relations"
 
 
 @dataclass
@@ -270,9 +269,7 @@ class SnowflakeAdapter(SQLAdapter):
             relation_type = self.Relation.DynamicTable
 
         table_format: str = (
-            SnowflakeObjectFormat.ICEBERG
-            if is_iceberg in ("Y", "YES")
-            else SnowflakeObjectFormat.DEFAULT
+            TableFormat.ICEBERG if is_iceberg in ("Y", "YES") else TableFormat.DEFAULT
         )
         quote_policy = {"database": True, "schema": True, "identifier": True}
 

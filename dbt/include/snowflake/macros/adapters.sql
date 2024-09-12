@@ -137,27 +137,19 @@
 {% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
 
   {%- set max_total_results = max_results_per_iter * max_iter -%}
-  {% if schema_relation is string %}
-    {%- set sql -%}
+  {%- set sql -%}
+    {% if schema_relation is string %}
       show objects in {{ schema_relation }} limit {{ max_results_per_iter }};
-      select all_objects.*, is_iceberg as "is_iceberg"
-      from table(result_scan(last_query_id(-1))) all_objects
-      left join INFORMATION_SCHEMA.tables as all_tables
-        on all_tables.table_name = all_objects."name"
-        and all_tables.table_schema = all_objects."schema_name"
-        and all_tables.table_catalog = all_objects."database_name"
-    {%- endset -%}
-  {% else %}
-    {%- set sql -%}
+    {% else %}
       show objects in {{ schema_relation.include(identifier=False) }} limit {{ max_results_per_iter }};
+    {% endif -%}
       select all_objects.*, is_iceberg as "is_iceberg"
       from table(result_scan(last_query_id(-1))) all_objects
       left join INFORMATION_SCHEMA.tables as all_tables
         on all_tables.table_name = all_objects."name"
         and all_tables.table_schema = all_objects."schema_name"
         and all_tables.table_catalog = all_objects."database_name"
-    {%- endset -%}
-  {% endif -%}
+  {%- endset -%}
 
   {%- set result = run_query(sql) -%}
 

@@ -26,8 +26,7 @@
             Valid DDL in CTAS statements. Plain create statements have a different order.
             https://docs.snowflake.com/en/sql-reference/sql/create-iceberg-table
           #}
-          {{ relation.render_iceberg_ddl(config.model.config) }}
-        {% else %}
+          {{ relation.get_iceberg_ddl_options(config.model.config) }}
         {%- endif -%}
 
         {%- set contract_config = config.get('contract') -%}

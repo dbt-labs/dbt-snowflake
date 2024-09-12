@@ -1,12 +1,12 @@
 import textwrap
 
 from dataclasses import dataclass, field
-from typing import FrozenSet, Optional, Type
+from typing import FrozenSet, Optional, Type, Self, Iterator
 
 
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.contracts.relation import ComponentName, RelationConfig
-from dbt.adapters.events.types import AdapterEventWarning
+from dbt.adapters.events.types import AdapterEventWarning, AdapterEventDebug
 from dbt.adapters.relation_configs import (
     RelationConfigBase,
     RelationConfigChangeAction,
@@ -14,7 +14,7 @@ from dbt.adapters.relation_configs import (
 )
 from dbt.adapters.utils import classproperty
 from dbt_common.exceptions import DbtRuntimeError
-from dbt_common.events.functions import warn_or_error
+from dbt_common.events.functions import fire_event, warn_or_error
 
 from dbt.adapters.snowflake.relation_configs import (
     SnowflakeDynamicTableConfig,
@@ -22,7 +22,7 @@ from dbt.adapters.snowflake.relation_configs import (
     SnowflakeDynamicTableRefreshModeConfigChange,
     SnowflakeDynamicTableTargetLagConfigChange,
     SnowflakeDynamicTableWarehouseConfigChange,
-    SnowflakeObjectFormat,
+    TableFormat,
     SnowflakeQuotePolicy,
     SnowflakeRelationType,
 )
@@ -31,7 +31,7 @@ from dbt.adapters.snowflake.relation_configs import (
 @dataclass(frozen=True, eq=False, repr=False)
 class SnowflakeRelation(BaseRelation):
     type: Optional[SnowflakeRelationType] = None
-    table_format: str = SnowflakeObjectFormat.DEFAULT
+    table_format: str = TableFormat.DEFAULT
     quote_policy: SnowflakeQuotePolicy = field(default_factory=lambda: SnowflakeQuotePolicy())
     require_alias: bool = False
     relation_configs = {
@@ -62,7 +62,7 @@ class SnowflakeRelation(BaseRelation):
 
     @property
     def is_iceberg_format(self) -> bool:
-        return self.table_format == SnowflakeObjectFormat.ICEBERG
+        return self.table_format == TableFormat.ICEBERG
 
     @classproperty
     def DynamicTable(cls) -> str:
@@ -132,7 +132,7 @@ class SnowflakeRelation(BaseRelation):
 
         return self.replace_path(**path_part_map)
 
-    def get_ddl_prefix_for_create(self, config: RelationConfig, temporary: bool):
+    def get_ddl_prefix_for_create(self, config: RelationConfig, temporary: bool) -> str:
         """
         This macro renders the appropriate DDL prefix during the create_table_as
         macro. It decides based on mutually exclusive table configuration options:
@@ -177,14 +177,14 @@ class SnowflakeRelation(BaseRelation):
         else:
             return ""
 
-    def get_ddl_prefix_for_alter(self):
+    def get_ddl_prefix_for_alter(self) -> str:
         """All ALTER statements on Iceberg tables require an ICEBERG prefix"""
         if self.is_iceberg_format:
             return "iceberg"
         else:
             return ""
 
-    def render_iceberg_ddl(self, config: RelationConfig):
+    def get_iceberg_ddl_options(self, config: RelationConfig) -> str:
         base_location: str = f"_dbt/{self.schema}/{self.name}"
 
         if subpath := config.get("base_location_subpath"):
@@ -196,3 +196,57 @@ class SnowflakeRelation(BaseRelation):
         base_location = '{base_location}'
         """
         return textwrap.indent(textwrap.dedent(iceberg_ddl_predicates), " " * 10)
+
+    def __drop_conditions(self, old_relation: Self) -> Iterator[tuple[bool, str]]:
+        drop_view_message: str = (
+            f"Dropping relation {old_relation} because it is a view and target relation {self} "
+            f"is of type {self.type}."
+        )
+
+        drop_table_for_iceberg_message: str = (
+            f"Dropping relation {old_relation} because it is a default format table "
+            f"and target relation {self} is an Iceberg format table."
+        )
+
+        drop_iceberg_for_table_message: str = (
+            f"Dropping relation {old_relation} because it is an Iceberg format table "
+            f"and target relation {self} is a default format table."
+        )
+
+        # An existing view must be dropped for model to build into a table".
+        yield (not old_relation.is_table, drop_view_message)
+        # An existing table must be dropped for model to build into an Iceberg table.
+        yield (
+            old_relation.is_table
+            and not old_relation.is_iceberg_format
+            and self.is_iceberg_format,
+            drop_table_for_iceberg_message,
+        )
+        # existing Iceberg table must be dropped for model to build into a table.
+        yield (
+            old_relation.is_table
+            and old_relation.is_iceberg_format
+            and not self.is_iceberg_format,
+            drop_iceberg_for_table_message,
+        )
+
+    def needs_to_drop(self, old_relation: Optional[Self]) -> bool:
+        """
+        To convert between Iceberg and non-Iceberg relations, a preemptive drop is
+        required.
+
+        drops cause latency, but it should be a relatively infrequent occurrence.
+
+        Some Boolean expression below are logically redundant, but this is done for easier
+        readability.
+        """
+
+        if old_relation is None:
+            return False
+
+        for condition, message in self.__drop_conditions(old_relation):
+            if condition:
+                fire_event(AdapterEventDebug(base_msg=message))
+                return True
+
+        return False
