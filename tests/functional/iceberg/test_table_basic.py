@@ -38,12 +38,16 @@ _MODEL_BUILT_ON_ICEBERG_TABLE = """
 select * from {{ ref('iceberg_table') }}
 """
 
-_MODEL_TABLE_FOR_SWAP = """
+_MODEL_TABLE_BEFORE_SWAP = """
 {{
   config(
     materialized = "table",
   )
 }}
+select 1 as id
+"""
+
+_MODEL_VIEW_BEFORE_SWAP = """
 select 1 as id
 """
 
@@ -77,13 +81,11 @@ class TestIcebergTableBuilds:
 class TestIcebergTableTypeBuildsOnExistingTable:
     model_name = "my_model.sql"
 
-    @pytest.fixture(scope="class")
-    def models(self):
-        return {self.model_name: _MODEL_TABLE_FOR_SWAP}
-
-    def test_changing_model_types(self, project):
+    @pytest.mark.parametrize("start_model", [_MODEL_TABLE_BEFORE_SWAP, _MODEL_VIEW_BEFORE_SWAP])
+    def test_changing_model_types(self, project, start_model):
         model_file = project.project_root / Path("models") / Path(self.model_name)
 
+        write_file(start_model, model_file)
         run_results = run_dbt()
         assert len(run_results) == 1
 
@@ -93,6 +95,6 @@ class TestIcebergTableTypeBuildsOnExistingTable:
         assert len(run_results) == 1
 
         rm_file(model_file)
-        write_file(_MODEL_TABLE_FOR_SWAP, model_file)
+        write_file(start_model, model_file)
         run_results = run_dbt()
         assert len(run_results) == 1
