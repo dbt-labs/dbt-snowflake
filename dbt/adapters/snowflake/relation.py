@@ -62,7 +62,11 @@ class SnowflakeRelation(BaseRelation):
 
     @property
     def is_iceberg_format(self) -> bool:
-        return self.table_format == TableFormat.ICEBERG
+        # this is a hack to minimize exposure of the iceberg behavior flag warning
+        return (
+            self.table_format == TableFormat.ICEBERG
+            and self.behavior.enable_iceberg_materializations
+        )
 
     @classproperty
     def DynamicTable(cls) -> str:

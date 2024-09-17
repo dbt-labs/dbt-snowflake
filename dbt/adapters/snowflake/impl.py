@@ -78,6 +78,12 @@ class SnowflakeAdapter(SQLAdapter):
         }
     )
 
+    def __init__(self, config, mp_context):
+        super().__init__(config, mp_context)
+        # Patch to pass behavior through to Relation. This is ideally not how we should do this
+        # but the ideal solution requires patches to dbt-adapters.
+        self.Relation.behavior = self.behavior
+
     @property
     def _behavior_flags(self) -> List[BehaviorFlag]:
         return [{"name": "enable_iceberg_materializations", "default": False}]
