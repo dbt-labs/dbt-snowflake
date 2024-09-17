@@ -40,6 +40,7 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
     external_volume: Optional[str] = None
     base_location: Optional[str] = None
 
+    @property
     def validation_rules(self) -> Set[RelationConfigValidationRule]:
         return {
             RelationConfigValidationRule(
