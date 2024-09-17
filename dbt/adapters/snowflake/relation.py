@@ -17,6 +17,7 @@ from dbt_common.exceptions import DbtRuntimeError
 from dbt_common.events.functions import fire_event, warn_or_error
 
 from dbt.adapters.snowflake.relation_configs import (
+    SnowflakeCatalogConfigChange,
     SnowflakeDynamicTableConfig,
     SnowflakeDynamicTableConfigChangeset,
     SnowflakeDynamicTableRefreshModeConfigChange,
@@ -112,6 +113,12 @@ class SnowflakeRelation(BaseRelation):
             config_change_collection.refresh_mode = SnowflakeDynamicTableRefreshModeConfigChange(
                 action=RelationConfigChangeAction.create,
                 context=new_dynamic_table.refresh_mode,
+            )
+
+        if new_dynamic_table.catalog.table_format != existing_dynamic_table.catalog.table_format:
+            config_change_collection.catalog = SnowflakeCatalogConfigChange(
+                action=RelationConfigChangeAction.create,
+                context=new_dynamic_table.catalog,
             )
 
         if config_change_collection.has_changes:
