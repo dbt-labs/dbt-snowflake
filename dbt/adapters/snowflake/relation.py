@@ -62,9 +62,10 @@ class SnowflakeRelation(BaseRelation):
 
     @property
     def is_iceberg_format(self) -> bool:
-        # this is a hack to minimize exposure of the iceberg behavior flag warning
         return (
             self.table_format == TableFormat.ICEBERG
+            # this is a bit of a hack to log a user-facing warning that the iceberg behavior flag
+            # needs to be set
             and self.behavior.enable_iceberg_materializations
         )
 
