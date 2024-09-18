@@ -94,6 +94,9 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
         if catalog_results is None or len(catalog_results) == 0:
             return {"table_format": "default"}
 
+        # for now, if we get catalog results, it's because this is an iceberg table
+        # this is because we only run `show iceberg tables` to get catalog metadata
+        # this will need to be updated once this is in `show objects`
         catalog: "agate.Row" = catalog_results.rows[0]
         config_dict = {"table_format": "iceberg"}
 
@@ -111,7 +114,7 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
 class SnowflakeCatalogConfigChange(RelationConfigChange):
-    context: Optional[str] = None
+    context: Optional[SnowflakeCatalogConfig] = None
 
     @property
     def requires_full_refresh(self) -> bool:

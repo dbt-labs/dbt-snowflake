@@ -115,7 +115,7 @@ class SnowflakeRelation(BaseRelation):
                 context=new_dynamic_table.refresh_mode,
             )
 
-        if new_dynamic_table.catalog.table_format != existing_dynamic_table.catalog.table_format:
+        if new_dynamic_table.catalog != existing_dynamic_table.catalog:
             config_change_collection.catalog = SnowflakeCatalogConfigChange(
                 action=RelationConfigChangeAction.create,
                 context=new_dynamic_table.catalog,
