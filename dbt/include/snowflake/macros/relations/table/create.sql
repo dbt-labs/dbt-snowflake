@@ -1,4 +1,9 @@
 {% macro snowflake__create_table_as(temporary, relation, compiled_code, language='sql') -%}
+
+  {%- if relation.is_iceberg_format and not adapter.behavior.enable_iceberg_materializations.no_warn %}
+    {% do exceptions.raise_compiler_error('Was unable to create model as Iceberg Table Format. Please set the `enable_iceberg_materializations` behavior flag to True in your dbt_project.yml. For more information, go to <url pending>.') %}
+  {%- endif %}
+
   {%- set materialization_prefix = relation.get_ddl_prefix_for_create(config.model.config, temporary) -%}
   {%- set alter_prefix = relation.get_ddl_prefix_for_alter() -%}
 
