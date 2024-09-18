@@ -16,7 +16,7 @@ from table(result_scan(last_query_id()))
 {%- endset %}
 {% set _dynamic_table = run_query(_dynamic_table_sql) %}
 
-{% if adapter.behavior.enable_iceberg_materializations %}
+{% if adapter.behavior.enable_iceberg_materializations.no_warn %}
 {%- set _catalog_sql -%}
 show iceberg tables
     like '{{ relation.identifier }}'

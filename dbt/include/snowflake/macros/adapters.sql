@@ -137,6 +137,7 @@
 {% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
 
   {%- set max_total_results = max_results_per_iter * max_iter -%}
+
   {%- set sql -%}
     {% if schema_relation is string %}
       show objects in {{ schema_relation }} limit {{ max_results_per_iter }};
