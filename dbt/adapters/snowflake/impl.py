@@ -281,15 +281,17 @@ class SnowflakeAdapter(SQLAdapter):
         if relation_type == self.Relation.Table and is_dynamic == "Y":
             relation_type = self.Relation.DynamicTable
 
+        table_format = TableFormat.ICEBERG if is_iceberg in ("Y", "YES") else TableFormat.DEFAULT
+
+        quote_policy = ({"database": True, "schema": True, "identifier": True},)
+
         return self.Relation.create(
             database=database,
             schema=schema,
             identifier=identifier,
             type=relation_type,
-            table_format=(
-                TableFormat.ICEBERG if is_iceberg in ("Y", "YES") else TableFormat.DEFAULT
-            ),
-            quote_policy={"database": True, "schema": True, "identifier": True},
+            table_format=table_format,
+            quote_policy=quote_policy,
         )
 
     def quote_seed_column(self, column: str, quote_config: Optional[bool]) -> str:
