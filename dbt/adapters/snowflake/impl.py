@@ -247,28 +247,19 @@ class SnowflakeAdapter(SQLAdapter):
                 return []
             raise
 
-        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
-        columns = ["database_name", "schema_name", "name", "kind"]
-        if "is_dynamic" in schema_objects.column_names:
-            columns.append("is_dynamic")
-        if "is_iceberg" in schema_objects.column_names:
-            columns.append("is_iceberg")
-
-        return [self._parse_list_relations_result(obj) for obj in schema_objects.select(columns)]
+        return [self._parse_list_relations_result(obj) for obj in schema_objects]
 
     def _parse_list_relations_result(self, result: "agate.Row") -> SnowflakeRelation:
-        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
-        # this can be reduced to always including `is_iceberg` once Snowflake adds it to show objects
-        try:
-            if self.behavior.enable_iceberg_materializations.no_warn:
-                database, schema, identifier, relation_type, is_dynamic, is_iceberg = result
-            else:
-                database, schema, identifier, relation_type, is_dynamic = result
-        except ValueError:
-            database, schema, identifier, relation_type = result
-            is_dynamic = "N"
-            if self.behavior.enable_iceberg_materializations.no_warn:
-                is_iceberg = "N"
+        # this can be collapsed once Snowflake adds is_iceberg to show objects
+        if self.behavior.enable_iceberg_materializations:
+            columns = ["database_name", "schema_name", "name", "kind", "is_dynamic", "is_iceberg"]
+            database, schema, identifier, relation_type, is_dynamic, is_iceberg = result.select(
+                columns
+            )
+        else:
+            columns = ["database_name", "schema_name", "name", "kind", "is_dynamic"]
+            database, schema, identifier, relation_type, is_dynamic = result.select(columns)
+            is_iceberg = "NO"
 
         try:
             relation_type = self.Relation.get_relation_type(relation_type.lower())
@@ -278,22 +269,15 @@ class SnowflakeAdapter(SQLAdapter):
         if relation_type == self.Relation.Table and is_dynamic == "Y":
             relation_type = self.Relation.DynamicTable
 
-        # This line is the main gate on supporting Iceberg materializations. Pass forward a default
-        # table format, and no downstream table macros can build iceberg relations.
-        table_format: str = (
-            TableFormat.ICEBERG
-            if self.behavior.enable_iceberg_materializations.no_warn and is_iceberg in ("Y", "YES")
-            else TableFormat.DEFAULT
-        )
-        quote_policy = {"database": True, "schema": True, "identifier": True}
-
         return self.Relation.create(
             database=database,
             schema=schema,
             identifier=identifier,
             type=relation_type,
-            table_format=table_format,
-            quote_policy=quote_policy,
+            table_format=(
+                TableFormat.ICEBERG if is_iceberg in ("Y", "YES") else TableFormat.DEFAULT
+            ),
+            quote_policy={"database": True, "schema": True, "identifier": True},
         )
 
     def quote_seed_column(self, column: str, quote_config: Optional[bool]) -> str:
