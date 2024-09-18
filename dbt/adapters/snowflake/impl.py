@@ -80,7 +80,18 @@ class SnowflakeAdapter(SQLAdapter):
 
     @property
     def _behavior_flags(self) -> List[BehaviorFlag]:
-        return [{"name": "enable_iceberg_materializations", "default": False}]
+        return [
+            {
+                "name": "enable_iceberg_materializations",
+                "default": False,
+                "description": (
+                    "Enabling Iceberg materializations introduces latency to metadata queries, "
+                    "specifically within the list_relations_without_caching macro. Since Iceberg "
+                    "benefits only those actively using it, we've made this behavior opt-in to "
+                    "prevent unnecessary latency for other users."
+                ),
+            }
+        ]
 
     @classmethod
     def date_function(cls):
