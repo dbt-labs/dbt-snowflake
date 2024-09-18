@@ -258,19 +258,20 @@ class SnowflakeAdapter(SQLAdapter):
                 return []
             raise
 
-        return [self._parse_list_relations_result(obj) for obj in schema_objects]
+        # this can be collapsed once Snowflake adds is_iceberg to show objects
+        columns = ["database_name", "schema_name", "name", "kind", "is_dynamic"]
+        if self.behavior.enable_iceberg_materializations.no_warn:
+            columns.append("is_iceberg")
+
+        return [self._parse_list_relations_result(obj) for obj in schema_objects.select(columns)]
 
     def _parse_list_relations_result(self, result: "agate.Row") -> SnowflakeRelation:
         # this can be collapsed once Snowflake adds is_iceberg to show objects
-        if self.behavior.enable_iceberg_materializations:
-            columns = ["database_name", "schema_name", "name", "kind", "is_dynamic", "is_iceberg"]
-            database, schema, identifier, relation_type, is_dynamic, is_iceberg = result.select(
-                columns
-            )
+        if self.behavior.enable_iceberg_materializations.no_warn:
+            database, schema, identifier, relation_type, is_dynamic, is_iceberg = result
         else:
-            columns = ["database_name", "schema_name", "name", "kind", "is_dynamic"]
-            database, schema, identifier, relation_type, is_dynamic = result.select(columns)
-            is_iceberg = "NO"
+            database, schema, identifier, relation_type, is_dynamic = result
+            is_iceberg = "N"
 
         try:
             relation_type = self.Relation.get_relation_type(relation_type.lower())
