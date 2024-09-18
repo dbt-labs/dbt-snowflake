@@ -1,5 +1,5 @@
 {% macro snowflake__refresh_dynamic_table(relation) -%}
-{{- log('Applying REFRESH to: ' ~ relation) -}}
+    {{- log('Applying REFRESH to: ' ~ relation) -}}
 
-alter dynamic table {{ relation }} refresh
+    alter dynamic table {{ relation }} refresh
 {%- endmacro %}
