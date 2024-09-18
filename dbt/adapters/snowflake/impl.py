@@ -283,7 +283,7 @@ class SnowflakeAdapter(SQLAdapter):
 
         table_format = TableFormat.ICEBERG if is_iceberg in ("Y", "YES") else TableFormat.DEFAULT
 
-        quote_policy = ({"database": True, "schema": True, "identifier": True},)
+        quote_policy = {"database": True, "schema": True, "identifier": True}
 
         return self.Relation.create(
             database=database,
