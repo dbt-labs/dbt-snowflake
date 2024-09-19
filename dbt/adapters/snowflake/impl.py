@@ -83,7 +83,7 @@ class SnowflakeAdapter(SQLAdapter):
         return [
             {
                 "name": "enable_iceberg_materializations",
-                "default": False,
+                "default": True,
                 "description": (
                     "Enabling Iceberg materializations introduces latency to metadata queries, "
                     "specifically within the list_relations_without_caching macro. Since Iceberg "
