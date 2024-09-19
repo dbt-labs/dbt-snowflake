@@ -75,7 +75,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "query": config_dict.get("query"),
             "target_lag": config_dict.get("target_lag"),
             "snowflake_warehouse": config_dict.get("snowflake_warehouse"),
-            "catalog": SnowflakeCatalogConfig.from_dict(config_dict),
+            "catalog": SnowflakeCatalogConfig.from_dict(config_dict["catalog"]),
             "refresh_mode": config_dict.get("refresh_mode"),
             "initialize": config_dict.get("initialize"),
         }
