@@ -81,7 +81,7 @@ def main(session):
 #     df = model(dbt, session)
 #     return df.collect()
 
-# to run this in local notebook, you need to create a session following examples https://github.com/Snowflake-Labs/sfguide-getting-started-snowpark-python
+# to run this in local notebook, you need to create a session connected to Snowpark
 # then you can do the following to run model
 # dbt = dbtObj(session.table)
 # df = model(dbt, session)
