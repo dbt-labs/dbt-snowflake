@@ -13,13 +13,13 @@
         A valid DDL statement which will result in a new dynamic table.
 -#}
 
-{%- set dynamic_table = relation.from_config(config.model) -%}
+    {%- set dynamic_table = relation.from_config(config.model) -%}
 
-{%- if dynamic_table.catalog.table_format == 'iceberg' -%}
-{{ _get_create_dynamic_iceberg_table_as_sql(dynamic_table, relation, sql) }}
-{%- else -%}
-{{ _get_create_dynamic_standard_table_as_sql(dynamic_table, relation, sql) }}
-{%- endif -%}
+    {%- if dynamic_table.catalog.table_format == 'iceberg' -%}
+        {{ _get_create_dynamic_iceberg_table_as_sql(dynamic_table, relation, sql) }}
+    {%- else -%}
+        {{ _get_create_dynamic_standard_table_as_sql(dynamic_table, relation, sql) }}
+    {%- endif -%}
 
 {%- endmacro %}
 
@@ -41,14 +41,14 @@
         A valid DDL statement which will result in a new dynamic standard table.
 -#}
 
-create dynamic table {{ relation }}
-    target_lag = '{{ dynamic_table.target_lag }}'
-    warehouse = {{ dynamic_table.snowflake_warehouse }}
-    {{ optional('refresh_mode', dynamic_table.refresh_mode) }}
-    {{ optional('initialize', dynamic_table.initialize) }}
-    as (
-        {{ sql }}
-    )
+    create dynamic table {{ relation }}
+        target_lag = '{{ dynamic_table.target_lag }}'
+        warehouse = {{ dynamic_table.snowflake_warehouse }}
+        {{ optional('refresh_mode', dynamic_table.refresh_mode) }}
+        {{ optional('initialize', dynamic_table.initialize) }}
+        as (
+            {{ sql }}
+        )
 
 {%- endmacro %}
 
@@ -70,16 +70,16 @@ create dynamic table {{ relation }}
         A valid DDL statement which will result in a new dynamic iceberg table.
 -#}
 
-create dynamic iceberg table {{ relation }}
-    target_lag = '{{ dynamic_table.target_lag }}'
-    warehouse = {{ dynamic_table.snowflake_warehouse }}
-    {{ optional('external_volume', dynamic_table.catalog.external_volume) }}
-    {{ optional('catalog', dynamic_table.catalog.name) }}
-    base_location = {{ dynamic_table.catalog.base_location }}
-    {{ optional('refresh_mode', dynamic_table.refresh_mode) }}
-    {{ optional('initialize', dynamic_table.initialize) }}
-    as (
-        {{ sql }}
-    )
+    create dynamic iceberg table {{ relation }}
+        target_lag = '{{ dynamic_table.target_lag }}'
+        warehouse = {{ dynamic_table.snowflake_warehouse }}
+        {{ optional('external_volume', dynamic_table.catalog.external_volume) }}
+        {{ optional('catalog', dynamic_table.catalog.name) }}
+        base_location = {{ dynamic_table.catalog.base_location }}
+        {{ optional('refresh_mode', dynamic_table.refresh_mode) }}
+        {{ optional('initialize', dynamic_table.initialize) }}
+        as (
+            {{ sql }}
+        )
 
 {%- endmacro %}
