@@ -17,6 +17,8 @@ class Changes:
         yield {
             "dynamic_table_alter.sql": models.DYNAMIC_TABLE,
             "dynamic_table_replace.sql": models.DYNAMIC_TABLE,
+            "dynamic_table_iceberg_alter.sql": models.DYNAMIC_ICEBERG_TABLE,
+            "dynamic_table_iceberg_replace.sql": models.DYNAMIC_ICEBERG_TABLE,
         }
 
     @pytest.fixture(scope="function", autouse=True)
@@ -33,11 +35,17 @@ class Changes:
 
         update_model(project, "dynamic_table_alter", models.DYNAMIC_TABLE_ALTER)
         update_model(project, "dynamic_table_replace", models.DYNAMIC_TABLE_REPLACE)
+        update_model(project, "dynamic_table_iceberg_alter", models.DYNAMIC_ICEBERG_TABLE_ALTER)
+        update_model(
+            project, "dynamic_table_iceberg_replace", models.DYNAMIC_ICEBERG_TABLE_REPLACE
+        )
 
         yield
 
         update_model(project, "dynamic_table_alter", models.DYNAMIC_TABLE)
         update_model(project, "dynamic_table_replace", models.DYNAMIC_TABLE)
+        update_model(project, "dynamic_table_iceberg_alter", models.DYNAMIC_ICEBERG_TABLE)
+        update_model(project, "dynamic_table_iceberg_replace", models.DYNAMIC_ICEBERG_TABLE)
 
     @staticmethod
     def assert_changes_are_applied(project):
@@ -51,6 +59,16 @@ class Changes:
         assert replaced.target_lag == "2 minutes"
         assert replaced.refresh_mode == "FULL"  # this updated
 
+        altered_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_alter")
+        assert altered_iceberg.snowflake_warehouse == "DBT_TESTING"
+        assert altered_iceberg.target_lag == "5 minutes"  # this updated
+        assert altered_iceberg.refresh_mode == "INCREMENTAL"
+
+        replaced_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_replace")
+        assert replaced_iceberg.snowflake_warehouse == "DBT_TESTING"
+        assert replaced_iceberg.target_lag == "2 minutes"
+        assert replaced_iceberg.refresh_mode == "FULL"  # this updated
+
     @staticmethod
     def assert_changes_are_not_applied(project):
         altered = describe_dynamic_table(project, "dynamic_table_alter")
@@ -62,6 +80,18 @@ class Changes:
         assert replaced.snowflake_warehouse == "DBT_TESTING"
         assert replaced.target_lag == "2 minutes"
         assert replaced.refresh_mode == "INCREMENTAL"  # this would have updated, but didn't
+
+        altered_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_alter")
+        assert altered_iceberg.snowflake_warehouse == "DBT_TESTING"
+        assert altered_iceberg.target_lag == "2 minutes"  # this would have updated, but didn't
+        assert altered_iceberg.refresh_mode == "INCREMENTAL"
+
+        replaced_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_replace")
+        assert replaced_iceberg.snowflake_warehouse == "DBT_TESTING"
+        assert replaced_iceberg.target_lag == "2 minutes"
+        assert (
+            replaced_iceberg.refresh_mode == "INCREMENTAL"
+        )  # this would have updated, but didn't
 
     def test_full_refresh_is_always_successful(self, project):
         # this always passes and always changes the configuration, regardless of on_configuration_change
