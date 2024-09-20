@@ -9,6 +9,7 @@ from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
+from dbt_common.behavior_flags import BehaviorFlag
 from dbt_common.contracts.constraints import ConstraintType
 from dbt_common.contracts.metadata import (
     TableMetadata,
@@ -20,7 +21,10 @@ from dbt_common.contracts.metadata import (
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
 
-from dbt.adapters.snowflake.relation_configs import SnowflakeRelationType
+from dbt.adapters.snowflake.relation_configs import (
+    SnowflakeRelationType,
+    TableFormat,
+)
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
@@ -43,6 +47,11 @@ class SnowflakeConfig(AdapterConfig):
     tmp_relation_type: Optional[str] = None
     merge_update_columns: Optional[str] = None
     target_lag: Optional[str] = None
+
+    # extended formats
+    table_format: Optional[str] = None
+    external_volume: Optional[str] = None
+    base_location_subpath: Optional[str] = None
 
 
 class SnowflakeAdapter(SQLAdapter):
@@ -68,6 +77,21 @@ class SnowflakeAdapter(SQLAdapter):
             Capability.GetCatalogForSingleRelation: CapabilitySupport(support=Support.Full),
         }
     )
+
+    @property
+    def _behavior_flags(self) -> List[BehaviorFlag]:
+        return [
+            {
+                "name": "enable_iceberg_materializations",
+                "default": False,
+                "description": (
+                    "Enabling Iceberg materializations introduces latency to metadata queries, "
+                    "specifically within the list_relations_without_caching macro. Since Iceberg "
+                    "benefits only those actively using it, we've made this behavior opt-in to "
+                    "prevent unnecessary latency for other users."
+                ),
+            }
+        ]
 
     @classmethod
     def date_function(cls):
@@ -223,8 +247,9 @@ class SnowflakeAdapter(SQLAdapter):
         self, schema_relation: SnowflakeRelation
     ) -> List[SnowflakeRelation]:
         kwargs = {"schema_relation": schema_relation}
+
         try:
-            results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
+            schema_objects = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
         except DbtDatabaseError as exc:
             # if the schema doesn't exist, we just want to return.
             # Alternatively, we could query the list of schemas before we start
@@ -235,18 +260,26 @@ class SnowflakeAdapter(SQLAdapter):
 
         # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
         columns = ["database_name", "schema_name", "name", "kind"]
-        if "is_dynamic" in results.column_names:
+        if "is_dynamic" in schema_objects.column_names:
             columns.append("is_dynamic")
+        if "is_iceberg" in schema_objects.column_names:
+            columns.append("is_iceberg")
 
-        return [self._parse_list_relations_result(result) for result in results.select(columns)]
+        return [self._parse_list_relations_result(obj) for obj in schema_objects.select(columns)]
 
     def _parse_list_relations_result(self, result: "agate.Row") -> SnowflakeRelation:
         # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
+        # this can be reduced to always including `is_iceberg` once Snowflake adds it to show objects
         try:
-            database, schema, identifier, relation_type, is_dynamic = result
+            if self.behavior.enable_iceberg_materializations.no_warn:
+                database, schema, identifier, relation_type, is_dynamic, is_iceberg = result
+            else:
+                database, schema, identifier, relation_type, is_dynamic = result
         except ValueError:
             database, schema, identifier, relation_type = result
             is_dynamic = "N"
+            if self.behavior.enable_iceberg_materializations.no_warn:
+                is_iceberg = "N"
 
         try:
             relation_type = self.Relation.get_relation_type(relation_type.lower())
@@ -256,12 +289,21 @@ class SnowflakeAdapter(SQLAdapter):
         if relation_type == self.Relation.Table and is_dynamic == "Y":
             relation_type = self.Relation.DynamicTable
 
+        # This line is the main gate on supporting Iceberg materializations. Pass forward a default
+        # table format, and no downstream table macros can build iceberg relations.
+        table_format: str = (
+            TableFormat.ICEBERG
+            if self.behavior.enable_iceberg_materializations.no_warn and is_iceberg in ("Y", "YES")
+            else TableFormat.DEFAULT
+        )
         quote_policy = {"database": True, "schema": True, "identifier": True}
+
         return self.Relation.create(
             database=database,
             schema=schema,
             identifier=identifier,
             type=relation_type,
+            table_format=table_format,
             quote_policy=quote_policy,
         )
 
@@ -385,7 +427,7 @@ CALL {proc_name}();
         return response
 
     def valid_incremental_strategies(self):
-        return ["append", "merge", "delete+insert"]
+        return ["append", "merge", "delete+insert", "microbatch"]
 
     def debug_query(self):
         """Override for DebugTask method"""
