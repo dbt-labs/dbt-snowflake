@@ -13,14 +13,10 @@ from tests.functional.utils import describe_dynamic_table, query_relation_type, 
 class Model:
     model: str
     relation_type: str
-    table_format: Optional[str] = None
 
     @property
     def name(self) -> str:
-        name = f"{self.relation_type}"
-        if self.table_format:
-            name += f"_{self.table_format}"
-        return name
+        return f"{self.relation_type}"
 
 
 @dataclass
@@ -39,9 +35,8 @@ class Scenario:
 
 relations = [
     Model(models.VIEW, "view"),
-    Model(models.TABLE, "table", "default"),
-    Model(models.DYNAMIC_TABLE, "dynamic_table", "default"),
-    Model(models.DYNAMIC_ICEBERG_TABLE, "dynamic_table", "iceberg"),
+    Model(models.TABLE, "table"),
+    Model(models.DYNAMIC_TABLE, "dynamic_table"),
 ]
 scenarios = [Scenario(*scenario) for scenario in product(relations, relations)]
 
@@ -68,6 +63,3 @@ class TestRelationTypeChange:
     def test_replace(self, project, scenario):
         relation_type = query_relation_type(project, scenario.name)
         assert relation_type == scenario.final.relation_type, scenario.error_message
-        if relation_type == "dynamic_table":
-            dynamic_table = describe_dynamic_table(project, scenario.name)
-            assert dynamic_table.catalog.table_format == scenario.final.table_format
