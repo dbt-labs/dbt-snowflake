@@ -7,6 +7,7 @@ from tests.functional.utils import describe_dynamic_table, update_model
 
 
 class Changes:
+    iceberg: bool = False
 
     @pytest.fixture(scope="class", autouse=True)
     def seeds(self):
@@ -14,12 +15,18 @@ class Changes:
 
     @pytest.fixture(scope="class", autouse=True)
     def models(self):
-        yield {
+        my_models = {
             "dynamic_table_alter.sql": models.DYNAMIC_TABLE,
             "dynamic_table_replace.sql": models.DYNAMIC_TABLE,
-            "dynamic_table_iceberg_alter.sql": models.DYNAMIC_ICEBERG_TABLE,
-            "dynamic_table_iceberg_replace.sql": models.DYNAMIC_ICEBERG_TABLE,
         }
+        if self.iceberg:
+            my_models.update(
+                {
+                    "dynamic_table_iceberg_alter.sql": models.DYNAMIC_ICEBERG_TABLE,
+                    "dynamic_table_iceberg_replace.sql": models.DYNAMIC_ICEBERG_TABLE,
+                }
+            )
+        yield my_models
 
     @pytest.fixture(scope="function", autouse=True)
     def setup_class(self, project):
@@ -35,20 +42,23 @@ class Changes:
 
         update_model(project, "dynamic_table_alter", models.DYNAMIC_TABLE_ALTER)
         update_model(project, "dynamic_table_replace", models.DYNAMIC_TABLE_REPLACE)
-        update_model(project, "dynamic_table_iceberg_alter", models.DYNAMIC_ICEBERG_TABLE_ALTER)
-        update_model(
-            project, "dynamic_table_iceberg_replace", models.DYNAMIC_ICEBERG_TABLE_REPLACE
-        )
+        if self.iceberg:
+            update_model(
+                project, "dynamic_table_iceberg_alter", models.DYNAMIC_ICEBERG_TABLE_ALTER
+            )
+            update_model(
+                project, "dynamic_table_iceberg_replace", models.DYNAMIC_ICEBERG_TABLE_REPLACE
+            )
 
         yield
 
         update_model(project, "dynamic_table_alter", models.DYNAMIC_TABLE)
         update_model(project, "dynamic_table_replace", models.DYNAMIC_TABLE)
-        update_model(project, "dynamic_table_iceberg_alter", models.DYNAMIC_ICEBERG_TABLE)
-        update_model(project, "dynamic_table_iceberg_replace", models.DYNAMIC_ICEBERG_TABLE)
+        if self.iceberg:
+            update_model(project, "dynamic_table_iceberg_alter", models.DYNAMIC_ICEBERG_TABLE)
+            update_model(project, "dynamic_table_iceberg_replace", models.DYNAMIC_ICEBERG_TABLE)
 
-    @staticmethod
-    def assert_changes_are_applied(project):
+    def assert_changes_are_applied(self, project):
         altered = describe_dynamic_table(project, "dynamic_table_alter")
         assert altered.snowflake_warehouse == "DBT_TESTING"
         assert altered.target_lag == "5 minutes"  # this updated
@@ -59,18 +69,18 @@ class Changes:
         assert replaced.target_lag == "2 minutes"
         assert replaced.refresh_mode == "FULL"  # this updated
 
-        altered_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_alter")
-        assert altered_iceberg.snowflake_warehouse == "DBT_TESTING"
-        assert altered_iceberg.target_lag == "5 minutes"  # this updated
-        assert altered_iceberg.refresh_mode == "INCREMENTAL"
+        if self.iceberg:
+            altered_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_alter")
+            assert altered_iceberg.snowflake_warehouse == "DBT_TESTING"
+            assert altered_iceberg.target_lag == "5 minutes"  # this updated
+            assert altered_iceberg.refresh_mode == "INCREMENTAL"
 
-        replaced_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_replace")
-        assert replaced_iceberg.snowflake_warehouse == "DBT_TESTING"
-        assert replaced_iceberg.target_lag == "2 minutes"
-        assert replaced_iceberg.refresh_mode == "FULL"  # this updated
+            replaced_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_replace")
+            assert replaced_iceberg.snowflake_warehouse == "DBT_TESTING"
+            assert replaced_iceberg.target_lag == "2 minutes"
+            assert replaced_iceberg.refresh_mode == "FULL"  # this updated
 
-    @staticmethod
-    def assert_changes_are_not_applied(project):
+    def assert_changes_are_not_applied(self, project):
         altered = describe_dynamic_table(project, "dynamic_table_alter")
         assert altered.snowflake_warehouse == "DBT_TESTING"
         assert altered.target_lag == "2 minutes"  # this would have updated, but didn't
@@ -81,17 +91,18 @@ class Changes:
         assert replaced.target_lag == "2 minutes"
         assert replaced.refresh_mode == "INCREMENTAL"  # this would have updated, but didn't
 
-        altered_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_alter")
-        assert altered_iceberg.snowflake_warehouse == "DBT_TESTING"
-        assert altered_iceberg.target_lag == "2 minutes"  # this would have updated, but didn't
-        assert altered_iceberg.refresh_mode == "INCREMENTAL"
+        if self.iceberg:
+            altered_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_alter")
+            assert altered_iceberg.snowflake_warehouse == "DBT_TESTING"
+            assert altered_iceberg.target_lag == "2 minutes"  # this would have updated, but didn't
+            assert altered_iceberg.refresh_mode == "INCREMENTAL"
 
-        replaced_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_replace")
-        assert replaced_iceberg.snowflake_warehouse == "DBT_TESTING"
-        assert replaced_iceberg.target_lag == "2 minutes"
-        assert (
-            replaced_iceberg.refresh_mode == "INCREMENTAL"
-        )  # this would have updated, but didn't
+            replaced_iceberg = describe_dynamic_table(project, "dynamic_table_iceberg_replace")
+            assert replaced_iceberg.snowflake_warehouse == "DBT_TESTING"
+            assert replaced_iceberg.target_lag == "2 minutes"
+            assert (
+                replaced_iceberg.refresh_mode == "INCREMENTAL"
+            )  # this would have updated, but didn't
 
     def test_full_refresh_is_always_successful(self, project):
         # this always passes and always changes the configuration, regardless of on_configuration_change
@@ -111,6 +122,17 @@ class TestChangesApply(Changes):
         self.assert_changes_are_applied(project)
 
 
+class TestChangesApplyIcebergOn(TestChangesApply):
+    iceberg = True
+
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "models": {"on_configuration_change": "apply"},
+            "flags": {"enable_iceberg_materializations": True},
+        }
+
+
 class TestChangesContinue(Changes):
     @pytest.fixture(scope="class")
     def project_config_update(self):
@@ -122,6 +144,17 @@ class TestChangesContinue(Changes):
         self.assert_changes_are_not_applied(project)
 
 
+class TestChangesContinueIcebergOn(TestChangesContinue):
+    iceberg = True
+
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "models": {"on_configuration_change": "continue"},
+            "flags": {"enable_iceberg_materializations": True},
+        }
+
+
 class TestChangesFail(Changes):
     @pytest.fixture(scope="class")
     def project_config_update(self):
@@ -131,3 +164,14 @@ class TestChangesFail(Changes):
         # this fails and does not change the configuration
         run_dbt(["run"], expect_pass=False)
         self.assert_changes_are_not_applied(project)
+
+
+class TestChangesFailIcebergOn(TestChangesFail):
+    iceberg = True
+
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "models": {"on_configuration_change": "fail"},
+            "flags": {"enable_iceberg_materializations": True},
+        }

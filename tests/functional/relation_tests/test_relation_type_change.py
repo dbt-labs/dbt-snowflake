@@ -48,26 +48,52 @@ scenarios = [Scenario(*scenario) for scenario in product(relations, relations)]
 
 class TestRelationTypeChange:
 
+    @staticmethod
+    def include(scenario) -> bool:
+        return (
+            scenario.initial.table_format != "iceberg" and scenario.final.table_format != "iceberg"
+        )
+
     @pytest.fixture(scope="class", autouse=True)
     def seeds(self):
         return {"my_seed.csv": models.SEED}
 
     @pytest.fixture(scope="class", autouse=True)
     def models(self):
-        yield {f"{scenario.name}.sql": scenario.initial.model for scenario in scenarios}
+        yield {
+            f"{scenario.name}.sql": scenario.initial.model
+            for scenario in scenarios
+            if self.include(scenario)
+        }
 
     @pytest.fixture(scope="class", autouse=True)
     def setup(self, project):
         run_dbt(["seed"])
         run_dbt(["run"])
         for scenario in scenarios:
-            update_model(project, scenario.name, scenario.final.model)
+            if self.include(scenario):
+                update_model(project, scenario.name, scenario.final.model)
         run_dbt(["run"])
 
     @pytest.mark.parametrize("scenario", scenarios, ids=[scenario.name for scenario in scenarios])
     def test_replace(self, project, scenario):
-        relation_type = query_relation_type(project, scenario.name)
-        assert relation_type == scenario.final.relation_type, scenario.error_message
-        if relation_type == "dynamic_table":
-            dynamic_table = describe_dynamic_table(project, scenario.name)
-            assert dynamic_table.catalog.table_format == scenario.final.table_format
+        if self.include(scenario):
+            relation_type = query_relation_type(project, scenario.name)
+            assert relation_type == scenario.final.relation_type, scenario.error_message
+            if relation_type == "dynamic_table":
+                dynamic_table = describe_dynamic_table(project, scenario.name)
+                assert dynamic_table.catalog.table_format == scenario.final.table_format
+        else:
+            pytest.skip()
+
+
+class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"flags": {"enable_iceberg_materializations": True}}
+
+    @staticmethod
+    def include(scenario) -> bool:
+        return (
+            scenario.initial.table_format == "iceberg" or scenario.final.table_format == "iceberg"
+        )
