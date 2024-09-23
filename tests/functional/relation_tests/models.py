@@ -1,4 +1,4 @@
-MY_SEED = """
+SEED = """
 id,value
 1,100
 2,200
@@ -6,7 +6,7 @@ id,value
 """.strip()
 
 
-MY_TABLE = """
+TABLE = """
 {{ config(
     materialized='table',
 ) }}
@@ -14,7 +14,7 @@ select * from {{ ref('my_seed') }}
 """
 
 
-MY_VIEW = """
+VIEW = """
 {{ config(
     materialized='view',
 ) }}
@@ -22,11 +22,11 @@ select * from {{ ref('my_seed') }}
 """
 
 
-MY_DYNAMIC_TABLE = """
+DYNAMIC_TABLE = """
 {{ config(
     materialized='dynamic_table',
     snowflake_warehouse='DBT_TESTING',
-    target_lag='2        minutes',
+    target_lag='1 minute',
     refresh_mode='INCREMENTAL',
 ) }}
 select * from {{ ref('my_seed') }}
