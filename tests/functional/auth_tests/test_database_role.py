@@ -18,7 +18,7 @@ class TestDatabaseRole:
 
     @pytest.fixture(scope="class")
     def project_config_update(self):
-        return {"models": {"copy_grants": True}}
+        return {"models": {"+copy_grants": True}}
 
     def test_database_role(self, project):
         run_dbt(["run"])
