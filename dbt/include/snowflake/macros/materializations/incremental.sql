@@ -109,8 +109,7 @@
 
   {% elif target_relation.table_format != existing_relation.table_format %}
     {% do exceptions.raise_compiler_error(
-        "Unable to convert a " ~ existing_relation.table_format ~ " format table to " ~
-        target_relation.table_format ~ " without specifying --full-refresh."
+        "Was unable to create incremental model '" ~ target_relation.identifier  ~ "' as " ~ target_relation.table_format ~ " table format. Cannot convert a " ~ existing_relation.table_format ~ " format table to " ~ target_relation.table_format ~ " without specifying --full-refresh."
       )
     %}
 
