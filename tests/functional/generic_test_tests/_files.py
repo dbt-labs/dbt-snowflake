@@ -18,7 +18,7 @@ models:
         data_tests:
           - not_null:
               config:
-                snowflake_warehouse: DBT_TESTING
+                snowflake_warehouse: DBT_TESTING_ALT
 """
 
 

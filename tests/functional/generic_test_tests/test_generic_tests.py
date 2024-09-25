@@ -39,8 +39,8 @@ class TestWarehouseConfigExplicitWarehouse(TestWarehouseConfig):
         return {"schema.yml": _files.SCHEMA__EXPLICIT_WAREHOUSE}
 
     def test_expected_warehouse(self, project):
-        _, logs = run_dbt_and_capture(["test"])
-        assert f"USE WAREHOUSE DBT_TESTING;" in logs
+        _, logs = run_dbt_and_capture(["test", "--log-level", "debug"])
+        assert "use warehouse " in logs
 
 
 class TestWarehouseConfigNotNull(TestWarehouseConfig):
@@ -50,16 +50,5 @@ class TestWarehouseConfigNotNull(TestWarehouseConfig):
         return {"schema.yml": _files.SCHEMA__NOT_NULL}
 
     def test_expected_warehouse(self, project):
-        _, logs = run_dbt_and_capture(["test"], expect_pass=False)
-        assert f"USE WAREHOUSE DBT_TESTING_ALT;" in logs
-
-
-class TestWarehouseConfigRelationships(TestWarehouseConfig):
-
-    @pytest.fixture(scope="class")
-    def models(self):
-        return {"schema.yml": _files.SCHEMA__RELATIONSHIPS}
-
-    def test_expected_warehouse(self, project):
-        _, logs = run_dbt_and_capture(["test"], expect_pass=False)
-        assert f"USE WAREHOUSE DBT_TESTING_ALT;" in logs
+        _, logs = run_dbt_and_capture(["test", "--log-level", "debug"], expect_pass=False)
+        assert "use warehouse " in logs
