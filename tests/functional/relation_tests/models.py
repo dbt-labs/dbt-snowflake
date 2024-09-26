@@ -46,7 +46,6 @@ DYNAMIC_ICEBERG_TABLE = """
 select * from {{ ref('my_seed') }}
 """
 
-
 ICEBERG_TABLE = """
 {{ config(
     materialized='table',
