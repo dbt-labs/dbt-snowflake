@@ -72,7 +72,7 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
     def parse_relation_config(cls, relation_config: RelationConfig) -> Dict[str, Any]:
 
         if relation_config.config.extra.get("table_format") is None:
-            return {"table_format": "default"}
+            return {}
 
         config_dict = {
             "table_format": relation_config.config.extra.get("table_format"),
@@ -89,25 +89,24 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
 
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:
-        catalog_results: "agate.Table" = relation_results["catalog"]
+        try:
+            catalog_results: "agate.Table" = relation_results["catalog"]
+        except KeyError:
+            return {}
 
-        if catalog_results is None or len(catalog_results) == 0:
-            return {"table_format": "default"}
+        if len(catalog_results) == 0:
+            return {}
 
         # for now, if we get catalog results, it's because this is an iceberg table
         # this is because we only run `show iceberg tables` to get catalog metadata
         # this will need to be updated once this is in `show objects`
         catalog: "agate.Row" = catalog_results.rows[0]
-        config_dict = {"table_format": "iceberg"}
-
-        if name := catalog.get("catalog_name"):
-            config_dict["name"] = name
-
-        if external_volume := catalog.get("external_volume_name"):
-            config_dict["external_volume"] = external_volume
-
-        if base_location := catalog.get("base_location"):
-            config_dict["base_location"] = base_location
+        config_dict = {
+            "table_format": "iceberg",
+            "name": catalog.get("catalog_name"),
+            "external_volume": catalog.get("external_volume_name"),
+            "base_location": catalog.get("base_location"),
+        }
 
         return config_dict
 

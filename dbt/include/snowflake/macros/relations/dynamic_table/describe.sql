@@ -24,15 +24,13 @@
             "refresh_mode"
         from table(result_scan(last_query_id()))
     {%- endset %}
-    {% set _dynamic_table = run_query(_dynamic_table_sql) %}
+    {% set results = {'dynamic_table': run_query(_dynamic_table_sql)} %}
 
     {% if adapter.behavior.enable_iceberg_materializations.no_warn %}
-        {% set _catalog = run_query(_get_describe_iceberg_catalog_sql(relation)) %}
-    {% else %}
-        {% set _catalog = none %}
+        {% set _ = results.update({'catalog': run_query(_get_describe_iceberg_catalog_sql(relation))}) %}
     {% endif %}
 
-    {% do return({'dynamic_table': _dynamic_table, 'catalog': _catalog}) %}
+    {% do return(results) %}
 {% endmacro %}
 
 
