@@ -61,8 +61,9 @@
 
   {#-- Set vars --#}
   {%- set full_refresh_mode = (should_full_refresh()) -%}
-  {%- set identifier = model['alias'] -%}
   {%- set language = model['language'] -%}
+
+  {%- set identifier = this.name -%}
 
   {%- set target_relation = api.Relation.create(
 	identifier=identifier,
