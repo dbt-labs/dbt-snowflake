@@ -28,7 +28,7 @@ _MODEL_INCREMENTAL_ICEBERG_BASE = """
   config(
     materialized='incremental',
     table_format='iceberg',
-	incremental_strategy='{strategy}',
+    incremental_strategy='{strategy}',
     unique_key="world_id",
     external_volume = "s3_iceberg_snow",
   )
