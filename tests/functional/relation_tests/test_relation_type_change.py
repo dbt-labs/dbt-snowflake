@@ -14,6 +14,7 @@ class Model:
     model: str
     relation_type: str
     table_format: Optional[str] = None
+    incremental: Optional[bool] = None
 
     @property
     def name(self) -> str:
@@ -44,7 +45,7 @@ relations = [
     # Model(models.DYNAMIC_TABLE, "dynamic_table", "default"),
     # Model(models.DYNAMIC_ICEBERG_TABLE, "dynamic_table", "iceberg"),
     Model(models.ICEBERG_TABLE, "table", "iceberg"),
-    Model(models.ICEBERG_INCREMENTAL_TABLE, "table", "iceberg"),
+    Model(models.ICEBERG_INCREMENTAL_TABLE, "table", "iceberg", incremental=True),
 ]
 scenarios = [Scenario(*scenario) for scenario in product(relations, relations)]
 
@@ -103,8 +104,13 @@ class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
     @staticmethod
     def include(scenario) -> bool:
         return (
-            scenario.initial.table_format == "iceberg" or scenario.final.table_format == "iceberg"
-        ) and "incremental" not in (scenario.initial.relation_type, scenario.final.relation_type)
+            (
+                scenario.initial.table_format == "iceberg"
+                or scenario.final.table_format == "iceberg"
+            )
+            and not scenario.initial.incremental
+            and not scenario.final.incremental
+        )
 
 
 class TestRelationTypeChangeBetweenIcebergMaterializations(TestRelationTypeChange):
