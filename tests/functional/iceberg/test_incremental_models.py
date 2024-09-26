@@ -2,8 +2,8 @@ import pytest
 
 from pathlib import Path
 
+from dbt.tests.util import run_dbt, run_dbt_and_capture
 
-from dbt.tests.util import run_dbt, run_dbt_and_capture, rm_file, write_file
 
 _SEED_INCREMENTAL_STRATEGIES = """
 world_id,world_name,boss
@@ -86,7 +86,7 @@ class TestIcebergIncrementalStrategies:
         assert len(run_results) == 4
 
     def __check_correct_operations(self, model_name, /, rows_affected, status="SUCCESS"):
-        run_results, stdout = run_dbt_and_capture(
+        run_results = run_dbt(
             ["show", "--inline", f"select * from {{{{ ref('{model_name}') }}}} where world_id = 4"]
         )
         assert run_results[0].adapter_response["rows_affected"] == rows_affected
