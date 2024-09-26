@@ -14,6 +14,7 @@ class Model:
     model: str
     relation_type: str
     table_format: Optional[str] = None
+    incremental: Optional[bool] = None
 
     @property
     def name(self) -> str:
@@ -42,6 +43,8 @@ relations = [
     Model(models.TABLE, "table", "default"),
     Model(models.DYNAMIC_TABLE, "dynamic_table", "default"),
     Model(models.DYNAMIC_ICEBERG_TABLE, "dynamic_table", "iceberg"),
+    Model(models.ICEBERG_TABLE, "table", "iceberg"),
+    Model(models.ICEBERG_INCREMENTAL_TABLE, "table", "iceberg", incremental=True),
 ]
 scenarios = [Scenario(*scenario) for scenario in product(relations, relations)]
 
@@ -94,6 +97,24 @@ class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
 
     @staticmethod
     def include(scenario) -> bool:
-        return (
-            scenario.initial.table_format == "iceberg" or scenario.final.table_format == "iceberg"
+        """
+        Upon adding the logic needed for seamless transitions to and from incremental models without data loss, we can coalesce these test cases.
+        """
+        return any(
+            (
+                # scenario 1: Everything that doesn't include incremental relations on Iceberg
+                (
+                    (
+                        scenario.initial.table_format == "iceberg"
+                        or scenario.final.table_format == "iceberg"
+                    )
+                    and not scenario.initial.incremental
+                    and not scenario.final.incremental
+                ),
+                # scenario 2: Iceberg Incremental swaps allowed
+                (
+                    scenario.initial.table_format == "iceberg"
+                    and scenario.final.table_format == "iceberg"
+                ),
+            )
         )

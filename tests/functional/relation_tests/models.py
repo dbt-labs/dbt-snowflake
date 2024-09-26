@@ -45,3 +45,24 @@ DYNAMIC_ICEBERG_TABLE = """
 ) }}
 select * from {{ ref('my_seed') }}
 """
+
+
+ICEBERG_TABLE = """
+{{ config(
+    materialized='table',
+    table_format="iceberg",
+    external_volume="s3_iceberg_snow",
+) }}
+select * from {{ ref('my_seed') }}
+"""
+
+ICEBERG_INCREMENTAL_TABLE = """
+{{ config(
+    materialized='incremental',
+    table_format='iceberg',
+    incremental_strategy='append',
+    unique_key="id",
+    external_volume = "s3_iceberg_snow",
+) }}
+select * from {{ ref('my_seed') }}
+"""
