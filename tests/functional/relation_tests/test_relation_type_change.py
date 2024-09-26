@@ -42,6 +42,8 @@ relations = [
     Model(models.TABLE, "table", "default"),
     Model(models.DYNAMIC_TABLE, "dynamic_table", "default"),
     Model(models.DYNAMIC_ICEBERG_TABLE, "dynamic_table", "iceberg"),
+    Model(models.ICEBERG_TABLE, "table", "iceberg"),
+    Model(models.ICEBERG_INCREMENTAL_TABLE, "incremental", "iceberg"),
 ]
 scenarios = [Scenario(*scenario) for scenario in product(relations, relations)]
 
