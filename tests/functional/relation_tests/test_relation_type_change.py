@@ -18,9 +18,10 @@ class Model:
 
     @property
     def name(self) -> str:
-        name = f"{self.relation_type}"
         if self.table_format:
-            name += f"_{self.table_format}"
+            name = f"{self.relation_type}_{self.table_format}"
+        else:
+            name = f"{self.relation_type}"
         return name
 
 
