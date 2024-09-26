@@ -109,7 +109,7 @@
 
   {% elif target_relation.table_format != existing_relation.table_format %}
     {% do exceptions.raise_compiler_error(
-        "Was unable to create incremental model '" ~ target_relation.identifier  ~ "' as " ~ target_relation.table_format ~ " table format. Cannot convert a " ~ existing_relation.table_format ~ " format table to " ~ target_relation.table_format ~ " without specifying --full-refresh."
+        "Unable to alter incremental model `" ~ target_relation.identifier  ~ "` to '" ~ target_relation.table_format ~ " table format due to Snowflake limitation. Please execute with --full-refresh to drop the table and recreate in new table format.'"
       )
     %}
 
