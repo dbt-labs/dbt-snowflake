@@ -40,8 +40,9 @@ class Scenario:
 relations = [
     Model(models.VIEW, "view"),
     Model(models.TABLE, "table", "default"),
-    Model(models.DYNAMIC_TABLE, "dynamic_table", "default"),
-    Model(models.DYNAMIC_ICEBERG_TABLE, "dynamic_table", "iceberg"),
+    # to be activated upon merge of dynamic table support PR
+    # Model(models.DYNAMIC_TABLE, "dynamic_table", "default"),
+    # Model(models.DYNAMIC_ICEBERG_TABLE, "dynamic_table", "iceberg"),
     Model(models.ICEBERG_TABLE, "table", "iceberg"),
     Model(models.ICEBERG_INCREMENTAL_TABLE, "incremental", "iceberg"),
 ]
