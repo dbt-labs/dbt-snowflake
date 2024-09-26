@@ -43,7 +43,7 @@
 --  Returns:
 --      A valid DQL statement that will return metadata associated with an iceberg catalog
 -#}
-show iceberg tables
+    show iceberg tables
         like '{{ relation.identifier }}'
         in schema {{ relation.database }}.{{ relation.schema }}
     ;

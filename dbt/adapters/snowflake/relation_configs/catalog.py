@@ -89,12 +89,15 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
 
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:
+        # this try block can be removed once enable_iceberg_materializations is retired
         try:
             catalog_results: "agate.Table" = relation_results["catalog"]
         except KeyError:
+            # this happens when `enable_iceberg_materializations` is turned off
             return {}
 
         if len(catalog_results) == 0:
+            # this happens when the dynamic table is a standard dynamic table (e.g. not iceberg)
             return {}
 
         # for now, if we get catalog results, it's because this is an iceberg table
