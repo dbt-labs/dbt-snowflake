@@ -56,7 +56,7 @@ UPDATE {database}.{schema}.upstream_table set world_name = 'Doughnut Plains' whe
 """
 
 
-class TestIcebergStrategies:
+class TestIcebergIncrementalStrategies:
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {"flags": {"enable_iceberg_materializations": True}}
@@ -121,6 +121,6 @@ class TestIcebergStrategies:
         run_results = run_dbt(["run", "-s", "append", "merge", "delete_insert"])
         assert len(run_results) == 3
 
-        self.__check_correct_operations("append", rows_affected=2)
+        self.__check_correct_operations("append", rows_affected=3)
         self.__check_correct_operations("merge", rows_affected=1)
         self.__check_correct_operations("delete_insert", rows_affected=1)
