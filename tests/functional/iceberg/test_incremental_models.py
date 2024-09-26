@@ -56,7 +56,7 @@ UPDATE {database}.{schema}.upstream_table set world_name = 'Doughnut Plains' whe
 """
 
 
-class TestIcebergMergeStrategies:
+class TestIcebergStrategies:
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {"flags": {"enable_iceberg_materializations": True}}
