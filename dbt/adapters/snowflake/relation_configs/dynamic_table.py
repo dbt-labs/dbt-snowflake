@@ -95,10 +95,10 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
         }
 
         if refresh_mode := relation_config.config.extra.get("refresh_mode"):
-            config_dict.update(refresh_mode=refresh_mode.upper())
+            config_dict["refresh_mode"] = refresh_mode.upper()
 
         if initialize := relation_config.config.extra.get("initialize"):
-            config_dict.update(initialize=initialize.upper())
+            config_dict["initialize"] = initialize.upper()
 
         return config_dict
 

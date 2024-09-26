@@ -65,7 +65,7 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
             "base_location": config_dict.get("base_location"),
         }
         if table_format := config_dict.get("table_format"):
-            kwargs_dict.update({"table_format": TableFormat(table_format)})
+            kwargs_dict["table_format"] = TableFormat(table_format)
         return super().from_dict(kwargs_dict)
 
     @classmethod
@@ -80,10 +80,10 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
         }
 
         if external_volume := relation_config.config.extra.get("external_volume"):
-            config_dict.update({"external_volume": external_volume})
+            config_dict["external_volume"] = external_volume
 
         if base_location := relation_config.config.extra.get("base_location_subpath"):
-            config_dict.update({"base_location": base_location})
+            config_dict["base_location"] = base_location
 
         return config_dict
 
@@ -101,13 +101,13 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
         config_dict = {"table_format": "iceberg"}
 
         if name := catalog.get("catalog_name"):
-            config_dict.update({"name": name})
+            config_dict["name"] = name
 
         if external_volume := catalog.get("external_volume_name"):
-            config_dict.update({"external_volume": external_volume})
+            config_dict["external_volume"] = external_volume
 
         if base_location := catalog.get("base_location"):
-            config_dict.update({"base_location": base_location})
+            config_dict["base_location"] = base_location
 
         return config_dict
 
