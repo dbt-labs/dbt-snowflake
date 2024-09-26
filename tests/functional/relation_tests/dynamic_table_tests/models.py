@@ -10,7 +10,7 @@ DYNAMIC_TABLE = """
 {{ config(
     materialized='dynamic_table',
     snowflake_warehouse='DBT_TESTING',
-    target_lag='2        minutes',
+    target_lag='2 minutes',
     refresh_mode='INCREMENTAL',
 ) }}
 select * from {{ ref('my_seed') }}
@@ -32,7 +32,7 @@ DYNAMIC_ICEBERG_TABLE = """
 {{ config(
     materialized='dynamic_table',
     snowflake_warehouse='DBT_TESTING',
-    target_lag='2        minutes',
+    target_lag='2 minutes',
     refresh_mode='INCREMENTAL',
     table_format="iceberg",
     external_volume="s3_iceberg_snow",
@@ -46,7 +46,7 @@ DYNAMIC_TABLE_ALTER = """
 {{ config(
     materialized='dynamic_table',
     snowflake_warehouse='DBT_TESTING',
-    target_lag='5   minutes',
+    target_lag='5 minutes',
     refresh_mode='INCREMENTAL',
 ) }}
 select * from {{ ref('my_seed') }}
@@ -57,7 +57,7 @@ DYNAMIC_TABLE_REPLACE = """
 {{ config(
     materialized='dynamic_table',
     snowflake_warehouse='DBT_TESTING',
-    target_lag='2   minutes',
+    target_lag='2 minutes',
     refresh_mode='FULL',
 ) }}
 select * from {{ ref('my_seed') }}
