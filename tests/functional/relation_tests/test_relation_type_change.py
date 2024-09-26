@@ -90,6 +90,11 @@ class TestRelationTypeChange:
             pytest.skip()
 
 
+"""
+Upon adding the logic needed for seamless transitions to and from incremental models without data loss, we can coalesce these test cases.
+"""
+
+
 class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
     @pytest.fixture(scope="class")
     def project_config_update(self):
@@ -99,4 +104,16 @@ class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
     def include(scenario) -> bool:
         return (
             scenario.initial.table_format == "iceberg" or scenario.final.table_format == "iceberg"
+        ) and "incremental" not in (scenario.initial.relation_type, scenario.final.relation_type)
+
+
+class TestRelationTypeChangeBetweenIcebergMaterializations(TestRelationTypeChange):
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"flags": {"enable_iceberg_materializations": True}}
+
+    @staticmethod
+    def include(scenario) -> bool:
+        return (
+            scenario.initial.table_format == "iceberg" and scenario.final.table_format == "iceberg"
         )
