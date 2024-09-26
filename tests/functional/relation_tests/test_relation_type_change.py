@@ -104,18 +104,20 @@ class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
     @staticmethod
     def include(scenario) -> bool:
         return any(
-            # scenario 1: Everything that doesn't include incremental relations on Iceberg
             (
+                # scenario 1: Everything that doesn't include incremental relations on Iceberg
+                (
+                    (
+                        scenario.initial.table_format == "iceberg"
+                        or scenario.final.table_format == "iceberg"
+                    )
+                    and not scenario.initial.incremental
+                    and not scenario.final.incremental
+                ),
+                # scenario 2: Iceberg Incremental swaps allowed
                 (
                     scenario.initial.table_format == "iceberg"
-                    or scenario.final.table_format == "iceberg"
-                )
-                and not scenario.initial.incremental
-                and not scenario.final.incremental
-            ),
-            # scenario 2: Iceberg Incremental swaps allowed
-            (
-                scenario.initial.table_format == "iceberg"
-                and scenario.final.table_format == "iceberg"
-            ),
+                    and scenario.final.table_format == "iceberg"
+                ),
+            )
         )
