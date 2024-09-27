@@ -63,6 +63,22 @@ relations = [
 scenarios = [Scenario(*scenario) for scenario in product(relations, relations)]
 
 
+def requires_full_refresh(scenario) -> bool:
+    return any(
+        [
+            # we can only swap incremental to table and back if both are iceberg
+            scenario.initial.is_incremental
+            and scenario.final.is_standard_table
+            and scenario.initial.table_format != scenario.final.table_format,
+            scenario.initial.is_standard_table
+            and scenario.final.is_incremental
+            and scenario.initial.table_format != scenario.final.table_format,
+            # we can't swap from an incremental to a dynamic table because the materialization does not handle this case
+            scenario.initial.relation_type == "dynamic_table" and scenario.final.is_incremental,
+        ]
+    )
+
+
 class TestRelationTypeChange:
     @pytest.fixture(scope="class")
     def project_config_update(self):
@@ -70,15 +86,7 @@ class TestRelationTypeChange:
 
     @staticmethod
     def include(scenario) -> bool:
-        """
-        This condition is the complement of TestRelationTypeChangeFullRefreshRequired, given `not scenario.uses_iceberg`
-        """
-        return not scenario.uses_iceberg and not any(
-            [
-                scenario.initial.relation_type == "dynamic_table"
-                and scenario.final.is_incremental,
-            ]
-        )
+        return not scenario.uses_iceberg and not requires_full_refresh(scenario)
 
     @pytest.fixture(scope="class", autouse=True)
     def seeds(self):
@@ -127,16 +135,7 @@ class TestRelationTypeChangeFullRefreshRequired(TestRelationTypeChange):
 
     @staticmethod
     def include(scenario) -> bool:
-        """
-        These are unhandled scenarios, given `not scenario.uses_iceberg`
-        """
-        return not scenario.uses_iceberg and any(
-            [
-                # we can't swap from an incremental to a dynamic table because the materialization does not handle this case
-                scenario.initial.relation_type == "dynamic_table"
-                and scenario.final.is_incremental,
-            ]
-        )
+        return not scenario.uses_iceberg and requires_full_refresh(scenario)
 
 
 class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
@@ -146,23 +145,7 @@ class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
 
     @staticmethod
     def include(scenario) -> bool:
-        """
-        This condition is the complement of TestRelationTypeChangeIcebergOnFullRefreshRequired, given `scenario.uses_iceberg`
-        """
-        return scenario.uses_iceberg and not any(
-            [
-                # we can only swap incremental to table and back if both are iceberg
-                scenario.initial.is_incremental
-                and scenario.final.is_standard_table
-                and scenario.initial.table_format != scenario.final.table_format,
-                scenario.initial.is_standard_table
-                and scenario.final.is_incremental
-                and scenario.initial.table_format != scenario.final.table_format,
-                # we can't swap from an incremental to a dynamic table because the materialization does not handle this case
-                scenario.initial.relation_type == "dynamic_table"
-                and scenario.final.is_incremental,
-            ]
-        )
+        return scenario.uses_iceberg and not requires_full_refresh(scenario)
 
 
 class TestRelationTypeChangeIcebergOnFullRefreshRequired(TestRelationTypeChange):
@@ -175,20 +158,4 @@ class TestRelationTypeChangeIcebergOnFullRefreshRequired(TestRelationTypeChange)
 
     @staticmethod
     def include(scenario) -> bool:
-        """
-        These are unhandled scenarios, given `scenario.uses_iceberg`
-        """
-        return scenario.uses_iceberg and any(
-            [
-                # we can only swap incremental to table and back if both are iceberg
-                scenario.initial.is_incremental
-                and scenario.final.is_standard_table
-                and scenario.initial.table_format != scenario.final.table_format,
-                scenario.initial.is_standard_table
-                and scenario.final.is_incremental
-                and scenario.initial.table_format != scenario.final.table_format,
-                # we can't swap from an incremental to a dynamic table because the materialization does not handle this case
-                scenario.initial.relation_type == "dynamic_table"
-                and scenario.final.is_incremental,
-            ]
-        )
+        return scenario.uses_iceberg and requires_full_refresh(scenario)
