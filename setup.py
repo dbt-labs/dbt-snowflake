@@ -56,6 +56,9 @@ setup(
     url="https://github.com/dbt-labs/dbt-snowflake",
     packages=find_namespace_packages(include=["dbt", "dbt.*"]),
     include_package_data=True,
+    entry_points={
+        "console_scripts": ["dbt = dbt.cli.main:cli"],
+    },
     install_requires=[
         "dbt-common>=1.10,<2.0",
         "dbt-adapters>=1.7,<2.0",
