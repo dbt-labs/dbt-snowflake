@@ -139,6 +139,14 @@ class SnowflakeRelation(BaseRelation):
 
         return self.replace_path(**path_part_map)
 
+    @property
+    def can_be_renamed(self) -> bool:
+        """
+        Standard tables and dynamic tables can be renamed, but Snowflake does not support renaming iceberg relations.
+        The iceberg standard does support renaming, so this may change in the future.
+        """
+        return self.type in self.renameable_relations and not self.is_iceberg_format
+
     def get_ddl_prefix_for_create(self, config: RelationConfig, temporary: bool) -> str:
         """
         This macro renders the appropriate DDL prefix during the create_table_as
