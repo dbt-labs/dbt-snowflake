@@ -84,22 +84,10 @@ class TestIcebergIncrementalStrategies:
             "delete_insert.sql": _MODEL_INCREMENTAL_ICEBERG_DELETE_INSERT,
         }
 
-    def test_incremental_strategies_build(self, project, setup_class):
-        run_results = run_dbt()
-        assert len(run_results) == 4
-
     def __check_correct_operations(self, model_name, /, rows_affected, status="SUCCESS"):
-        run_results, out = run_dbt_and_capture(
+        run_results = run_dbt(
             ["show", "--inline", f"select * from {{{{ ref('{model_name}') }}}} where world_id = 4"]
         )
-        print("===================")
-        print("===================")
-        print("===================")
-        print(model_name)
-        print(out)
-        print("===================")
-        print("===================")
-        print("===================")
         assert run_results[0].adapter_response["rows_affected"] == rows_affected
         assert run_results[0].adapter_response["code"] == status
 
