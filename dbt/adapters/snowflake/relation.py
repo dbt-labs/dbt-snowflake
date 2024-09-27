@@ -17,6 +17,7 @@ from dbt_common.exceptions import DbtRuntimeError
 from dbt_common.events.functions import fire_event, warn_or_error
 
 from dbt.adapters.snowflake.relation_configs import (
+    SnowflakeCatalogConfigChange,
     SnowflakeDynamicTableConfig,
     SnowflakeDynamicTableConfigChangeset,
     SnowflakeDynamicTableRefreshModeConfigChange,
@@ -114,6 +115,12 @@ class SnowflakeRelation(BaseRelation):
                 context=new_dynamic_table.refresh_mode,
             )
 
+        if new_dynamic_table.catalog != existing_dynamic_table.catalog:
+            config_change_collection.catalog = SnowflakeCatalogConfigChange(
+                action=RelationConfigChangeAction.create,
+                context=new_dynamic_table.catalog,
+            )
+
         if config_change_collection.has_changes:
             return config_change_collection
         return None
@@ -131,6 +138,14 @@ class SnowflakeRelation(BaseRelation):
                         path_part_map[path] = part.upper()
 
         return self.replace_path(**path_part_map)
+
+    @property
+    def can_be_renamed(self) -> bool:
+        """
+        Standard tables and dynamic tables can be renamed, but Snowflake does not support renaming iceberg relations.
+        The iceberg standard does support renaming, so this may change in the future.
+        """
+        return self.type in self.renameable_relations and not self.is_iceberg_format
 
     def get_ddl_prefix_for_create(self, config: RelationConfig, temporary: bool) -> str:
         """

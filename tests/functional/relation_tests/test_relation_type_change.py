@@ -13,15 +13,24 @@ from tests.functional.utils import describe_dynamic_table, query_relation_type, 
 class Model:
     model: str
     relation_type: str
-    table_format: Optional[str] = None
-    incremental: Optional[bool] = None
+    table_format: Optional[str] = "default"
+    is_incremental: Optional[bool] = False
 
     @property
     def name(self) -> str:
-        name = f"{self.relation_type}"
-        if self.table_format:
-            name += f"_{self.table_format}"
+        if self.is_incremental:
+            name = f"{self.relation_type}_{self.table_format}_incremental"
+        else:
+            name = f"{self.relation_type}_{self.table_format}"
         return name
+
+    @property
+    def is_iceberg(self) -> bool:
+        return self.table_format == "iceberg"
+
+    @property
+    def is_standard_table(self) -> bool:
+        return self.relation_type == "table" and not self.is_incremental
 
 
 @dataclass
@@ -37,26 +46,47 @@ class Scenario:
     def error_message(self) -> str:
         return f"Failed when migrating from: {self.initial.name} to: {self.final.name}"
 
+    @property
+    def uses_iceberg(self) -> bool:
+        return any([self.initial.is_iceberg, self.final.is_iceberg])
+
 
 relations = [
     Model(models.VIEW, "view"),
     Model(models.TABLE, "table", "default"),
-    # to be activated upon merge of dynamic table support PR
-    # Model(models.DYNAMIC_TABLE, "dynamic_table", "default"),
-    # Model(models.DYNAMIC_ICEBERG_TABLE, "dynamic_table", "iceberg"),
+    Model(models.INCREMENTAL_TABLE, "table", "default", is_incremental=True),
+    Model(models.DYNAMIC_TABLE, "dynamic_table", "default"),
     Model(models.ICEBERG_TABLE, "table", "iceberg"),
-    Model(models.ICEBERG_INCREMENTAL_TABLE, "table", "iceberg", incremental=True),
+    Model(models.INCREMENTAL_ICEBERG_TABLE, "table", "iceberg", is_incremental=True),
+    Model(models.DYNAMIC_ICEBERG_TABLE, "dynamic_table", "iceberg"),
 ]
 scenarios = [Scenario(*scenario) for scenario in product(relations, relations)]
 
 
+def requires_full_refresh(scenario) -> bool:
+    return any(
+        [
+            # we can only swap incremental to table and back if both are iceberg
+            scenario.initial.is_incremental
+            and scenario.final.is_standard_table
+            and scenario.initial.table_format != scenario.final.table_format,
+            scenario.initial.is_standard_table
+            and scenario.final.is_incremental
+            and scenario.initial.table_format != scenario.final.table_format,
+            # we can't swap from an incremental to a dynamic table because the materialization does not handle this case
+            scenario.initial.relation_type == "dynamic_table" and scenario.final.is_incremental,
+        ]
+    )
+
+
 class TestRelationTypeChange:
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"flags": {"enable_iceberg_materializations": False}}
 
     @staticmethod
     def include(scenario) -> bool:
-        return (
-            scenario.initial.table_format != "iceberg" and scenario.final.table_format != "iceberg"
-        )
+        return not scenario.uses_iceberg and not requires_full_refresh(scenario)
 
     @pytest.fixture(scope="class", autouse=True)
     def seeds(self):
@@ -77,7 +107,11 @@ class TestRelationTypeChange:
         for scenario in scenarios:
             if self.include(scenario):
                 update_model(project, scenario.name, scenario.final.model)
-        run_dbt(["run"])
+        # allow for dbt to fail so that we can see which scenarios pass and which scenarios fail
+        try:
+            run_dbt(["run"], expect_pass=False)
+        except Exception:
+            pass
 
     @pytest.mark.parametrize("scenario", scenarios, ids=[scenario.name for scenario in scenarios])
     def test_replace(self, project, scenario):
@@ -91,9 +125,17 @@ class TestRelationTypeChange:
             pytest.skip()
 
 
-"""
-Upon adding the logic needed for seamless transitions to and from incremental models without data loss, we can coalesce these test cases.
-"""
+class TestRelationTypeChangeFullRefreshRequired(TestRelationTypeChange):
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "flags": {"enable_iceberg_materializations": False},
+            "models": {"full_refresh": True},
+        }
+
+    @staticmethod
+    def include(scenario) -> bool:
+        return not scenario.uses_iceberg and requires_full_refresh(scenario)
 
 
 class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
@@ -103,21 +145,17 @@ class TestRelationTypeChangeIcebergOn(TestRelationTypeChange):
 
     @staticmethod
     def include(scenario) -> bool:
-        return any(
-            (
-                # scenario 1: Everything that doesn't include incremental relations on Iceberg
-                (
-                    (
-                        scenario.initial.table_format == "iceberg"
-                        or scenario.final.table_format == "iceberg"
-                    )
-                    and not scenario.initial.incremental
-                    and not scenario.final.incremental
-                ),
-                # scenario 2: Iceberg Incremental swaps allowed
-                (
-                    scenario.initial.table_format == "iceberg"
-                    and scenario.final.table_format == "iceberg"
-                ),
-            )
-        )
+        return scenario.uses_iceberg and not requires_full_refresh(scenario)
+
+
+class TestRelationTypeChangeIcebergOnFullRefreshRequired(TestRelationTypeChange):
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {
+            "flags": {"enable_iceberg_materializations": True},
+            "models": {"full_refresh": True},
+        }
+
+    @staticmethod
+    def include(scenario) -> bool:
+        return scenario.uses_iceberg and requires_full_refresh(scenario)
