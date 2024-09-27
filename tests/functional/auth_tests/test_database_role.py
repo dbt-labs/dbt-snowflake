@@ -3,13 +3,12 @@ import pytest
 from dbt.tests.util import run_dbt
 
 
+BLOCKING_DB_ROLE = "BLOCKING_DB_ROLE"
+
+
 class TestDatabaseRole:
     """
     This test addresses https://github.com/dbt-labs/dbt-snowflake/issues/1151
-
-    Run this manually while investigating:
-    CREATE DATABASE ROLE BLOCKING_DB_ROLE;
-    GRANT ALL PRIVILEGES ON FUTURE TABLES IN DATABASE DBT_TEST TO DATABASE ROLE BLOCKING_DB_ROLE;
     """
 
     @pytest.fixture(scope="class")
@@ -18,7 +17,20 @@ class TestDatabaseRole:
 
     @pytest.fixture(scope="class")
     def project_config_update(self):
-        return {"models": {"+copy_grants": True}}
+        return {"models": {"+grants": {"select": [BLOCKING_DB_ROLE]}}}
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, project):
+        project.run_sql(f"CREATE DATABASE ROLE {BLOCKING_DB_ROLE}")
+        sql = f"""
+        GRANT
+            ALL PRIVILEGES ON FUTURE TABLES
+            IN DATABASE {project.database}
+            TO DATABASE ROLE {BLOCKING_DB_ROLE}
+        """
+        project.run_sql(sql)
+        yield
+        project.run_sql(f"DROP DATABASE ROLE {BLOCKING_DB_ROLE}")
 
     def test_database_role(self, project):
         run_dbt(["run"])
