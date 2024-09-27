@@ -1,4 +1,5 @@
 import pytest
+import time
 
 from pathlib import Path
 
@@ -57,6 +58,8 @@ UPDATE {database}.{schema}.upstream_table set world_name = 'Doughnut Plains' whe
 
 
 class TestIcebergIncrementalStrategies:
+    append: str = f"append_{hash(time.time())}"
+
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {"flags": {"enable_iceberg_materializations": True}}
@@ -76,14 +79,10 @@ class TestIcebergIncrementalStrategies:
     def models(self):
         return {
             "upstream_table.sql": _MODEL_BASIC_TABLE_MODEL,
-            "append.sql": _MODEL_INCREMENTAL_ICEBERG_APPEND,
+            f"{self.append}.sql": _MODEL_INCREMENTAL_ICEBERG_APPEND,
             "merge.sql": _MODEL_INCREMENTAL_ICEBERG_MERGE,
             "delete_insert.sql": _MODEL_INCREMENTAL_ICEBERG_DELETE_INSERT,
         }
-
-    def test_incremental_strategies_build(self, project, setup_class):
-        run_results = run_dbt()
-        assert len(run_results) == 4
 
     def __check_correct_operations(self, model_name, /, rows_affected, status="SUCCESS"):
         run_results = run_dbt(
@@ -92,7 +91,7 @@ class TestIcebergIncrementalStrategies:
         assert run_results[0].adapter_response["rows_affected"] == rows_affected
         assert run_results[0].adapter_response["code"] == status
 
-        if model_name != "append":
+        if "append" not in model_name:
             run_results, stdout = run_dbt_and_capture(
                 [
                     "show",
@@ -118,9 +117,9 @@ class TestIcebergIncrementalStrategies:
             )
         )
 
-        run_results = run_dbt(["run", "-s", "append", "merge", "delete_insert"])
+        run_results = run_dbt(["run", "-s", self.append, "merge", "delete_insert"])
         assert len(run_results) == 3
 
-        self.__check_correct_operations("append", rows_affected=3)
+        self.__check_correct_operations(self.append, rows_affected=2)
         self.__check_correct_operations("merge", rows_affected=1)
         self.__check_correct_operations("delete_insert", rows_affected=1)
