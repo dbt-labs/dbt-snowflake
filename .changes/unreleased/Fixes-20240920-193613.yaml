@@ -1,5 +1,5 @@
 kind: Fixes
-body: Fix permissions on database roles
+body: Fix issue where dbt-snowflake attempts to drop database roles during grants sync
 time: 2024-09-20T19:36:13.671173-04:00
 custom:
   Author: mikealfare
