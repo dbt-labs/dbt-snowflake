@@ -320,7 +320,7 @@ class SnowflakeAdapter(SQLAdapter):
             grantee = row["grantee_name"]
             granted_to = row["granted_to"]
             privilege = row["privilege"]
-            if privilege != "OWNERSHIP" and granted_to != "SHARE":
+            if privilege != "OWNERSHIP" and granted_to not in ["SHARE", "DATABASE_ROLE"]:
                 if privilege in grants_dict.keys():
                     grants_dict[privilege].append(grantee)
                 else:
