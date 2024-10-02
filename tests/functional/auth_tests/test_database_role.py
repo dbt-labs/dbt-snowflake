@@ -55,7 +55,7 @@ class TestDatabaseRole:
         sql = f"""
         GRANT
             ALL PRIVILEGES ON FUTURE TABLES
-            IN DATABASE {project.database}
+            IN SCHEMA {project.test_schema}
             TO DATABASE ROLE {role}
         """
         project.run_sql(sql)
