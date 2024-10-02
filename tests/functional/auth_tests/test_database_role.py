@@ -1,4 +1,5 @@
 import os
+from random import randrange
 
 import pytest
 
@@ -48,7 +49,8 @@ class TestDatabaseRole:
         The existence of this database role triggered the bug as dbt-snowflake attempts
         to revoke it if the user also provides a grants config.
         """
-        role = "BLOCKING_DB_ROLE"
+        unique_suffix = randrange(0, 1_000_000)
+        role = f"BLOCKING_DB_ROLE_{unique_suffix}"
         project.run_sql(f"CREATE DATABASE ROLE {role}")
         sql = f"""
         GRANT
