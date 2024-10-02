@@ -1,5 +1,4 @@
 import os
-from random import randrange
 
 import pytest
 
@@ -43,14 +42,13 @@ class TestDatabaseRole:
         return {"models": {"+grants": {"select": [os.getenv("SNOWFLAKE_TEST_ROLE")]}}}
 
     @pytest.fixture(scope="class", autouse=True)
-    def setup(self, project):
+    def setup(self, project, prefix):
         """
         Create a database role with access to the model we're about to create.
         The existence of this database role triggered the bug as dbt-snowflake attempts
         to revoke it if the user also provides a grants config.
         """
-        unique_suffix = randrange(0, 1_000_000)
-        role = f"BLOCKING_DB_ROLE_{unique_suffix}"
+        role = f"BLOCKING_DB_ROLE_{prefix}"
         project.run_sql(f"CREATE DATABASE ROLE {role}")
         sql = f"""
         GRANT
