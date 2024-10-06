@@ -315,16 +315,20 @@ class SnowflakeAdapter(SQLAdapter):
     @available
     def standardize_grants_dict(self, grants_table: "agate.Table") -> dict:
         grants_dict: Dict[str, Any] = {}
+        self.AdapterSpecificConfigs
 
+        # granted_to maps to different object types like
+        # role, database_role and share
+        # create nest dictionaries [granted_to].[privilege][object_name]
         for row in grants_table:
             grantee = row["grantee_name"]
             granted_to = row["granted_to"]
             privilege = row["privilege"]
-            if privilege != "OWNERSHIP" and granted_to not in ["SHARE", "DATABASE_ROLE"]:
-                if privilege in grants_dict.keys():
-                    grants_dict[privilege].append(grantee)
-                else:
-                    grants_dict.update({privilege: [grantee]})
+            if privilege != "OWNERSHIP":
+                role_type_dict = grants_dict.setdefault(granted_to.lower(), {})
+                privilege_dict = role_type_dict.setdefault(privilege, [])
+                privilege_dict.append(grantee)
+
         return grants_dict
 
     def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
