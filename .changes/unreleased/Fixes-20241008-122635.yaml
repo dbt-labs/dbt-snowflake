@@ -1,0 +1,6 @@
+kind: Fixes
+body: Dynamic Iceberg table DDL catalog parameter fixes.
+time: 2024-10-08T12:26:35.521308-07:00
+custom:
+    Author: versusfacit
+    Issue: "1200"
