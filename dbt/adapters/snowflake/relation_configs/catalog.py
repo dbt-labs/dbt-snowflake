@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, TYPE_CHECKING, Set
+from typing import Any, Dict, Optional, TYPE_CHECKING, Set, List
 
 if TYPE_CHECKING:
     import agate
@@ -82,8 +82,10 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
         if external_volume := relation_config.config.extra.get("external_volume"):
             config_dict["external_volume"] = external_volume
 
-        if base_location := relation_config.config.extra.get("base_location_subpath"):
-            config_dict["base_location"] = base_location
+        catalog_dirs: List[str] = ["_dbt", relation_config.schema, relation_config.name]
+        if base_location_subpath := relation_config.config.extra.get("base_location_subpath"):
+            catalog_dirs.append(base_location_subpath)
+        config_dict["base_location"] = "/".join(catalog_dirs)
 
         return config_dict
 
