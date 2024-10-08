@@ -1,6 +1,6 @@
 from dbt.tests.adapter.simple_snapshot.test_snapshot import BaseSnapshotCheck, BaseSimpleSnapshot
 
-from dbt.test.adapter.simple_snapshot.test_various_snapshot_configs import (
+from dbt.tests.adapter.simple_snapshot.test_various_snapshot_configs import (
     BaseSnapshotColumnNames,
     BaseSnapshotColumnNamesFromDbtProject,
     BaseSnapshotInvalidColumnNames,
