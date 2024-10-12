@@ -105,8 +105,9 @@
 
         {{ log('grant_config: ' ~ grant_config) }}
         {#-- Check if we have defined new role type or are using default style --#}
-        {% set grant_config_by_type = split_grants_by_grantee_type(grant_config) %}
-        {{ log('grant_config_by_type: ' ~ grant_config_by_type) }}
+        {% set desired_grants_dict =  adapter.standardize_grant_config(grant_config) %}
+        {{ log('desired_grants_dict: ' ~ desired_grants_dict) }}
+
 
         {% if should_revoke %}
             {#-- We think previous grants may have carried over --#}
@@ -114,27 +115,8 @@
             {% set current_grants_table = run_query(get_show_grant_sql(relation)) %}
             {% set current_grants_dict = adapter.standardize_grants_dict(current_grants_table) %}
 
-            {#-- iterate over all the unique role_types --#}
-            {% set role_types = (current_grants_dict.keys()|list + grant_config_by_type.keys()|list)|unique|list %}
-
-            {% set needs_granting = {} %}
-            {% set needs_revoking = {} %}
-            {% for role_type in role_types %}
-                {% set current_grants =  current_grants_dict[role_type] if role_type in current_grants_dict else {} %}
-                {% set desired_grants =  grant_config_by_type[role_type] if role_type in grant_config_by_type else {} %}
-
-                {#-- Workout what needs to be granted or revoked for the role_type --#}
-                {% set grants = diff_of_two_dicts(desired_grants, current_grants) %}
-                {% set revokes = diff_of_two_dicts(current_grants, desired_grants) %}
-
-                {#-- Only add an entry if a grant or revoke is required --#}
-                {% if grants %}
-                    {% set _ = needs_granting.update({role_type: grants } ) %}
-                {% endif %}
-                {% if revokes %}
-                    {% set _ = needs_revoking.update({role_type: revokes } ) %}
-                {% endif %}
-            {% endfor %}
+            {% set needs_granting = adapter.diff_of_grants(desired_grants_dict, current_grants_dict) %}
+            {% set needs_revoking = adapter.diff_of_grants(current_grants_dict, desired_grants_dict) %}
 
             {#-- TODO: remove debug log statement --#}
             {{log ('needs_granting : ' ~ needs_granting)}}
@@ -147,7 +129,7 @@
             {#-- We don't think there's any chance of previous grants having carried over. --#}
             {#-- Jump straight to granting what the user has configured. --#}
             {% set needs_revoking = {} %}
-            {% set needs_granting = grant_config_by_type %}
+            {% set needs_granting = desired_grants_dict %}
         {% endif %}
 
         {% if needs_granting or needs_revoking %}

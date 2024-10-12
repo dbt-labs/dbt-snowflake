@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, TYPE_CHECKING
 
+
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
@@ -312,8 +313,10 @@ class SnowflakeAdapter(SQLAdapter):
         else:
             return column
 
+    GrantsDict = Dict[str, Dict[str, Any]]
+
     @available
-    def standardize_grants_dict(self, grants_table: "agate.Table") -> dict:
+    def standardize_grants_dict(self, grants_table: "agate.Table") -> GrantsDict:
         grants_dict: Dict[str, Any] = {}
         self.AdapterSpecificConfigs
 
@@ -326,10 +329,102 @@ class SnowflakeAdapter(SQLAdapter):
             privilege = row["privilege"]
             if privilege != "OWNERSHIP":
                 role_type_dict = grants_dict.setdefault(granted_to.lower(), {})
-                privilege_dict = role_type_dict.setdefault(privilege, [])
+                privilege_dict = role_type_dict.setdefault(privilege.lower(), [])
                 privilege_dict.append(grantee)
 
         return grants_dict
+
+    @available
+    def standardize_grant_config(self, grant_config: dict) -> GrantsDict:
+        """
+        Given a grants configuration object of either
+        Dict[str, Any] or Dict[str, [Dict[str, List[str] ] ]]]
+
+        Converts to Dict[str, Any] to [Dict["role", List[str]] ]]]
+
+        This enables use to handle new and older style grants
+        configurations.
+        """
+        grant_config_std: Dict[str, Any] = {}
+        self.AdapterSpecificConfigs
+
+        for grant_config_privilege, privilege_collection in grant_config.items():
+            # loop through the role entries and handle mapping, list & string entries
+            for privilege_item in privilege_collection:
+                # Assume old style list grants map to role
+                if not isinstance(privilege_item, dict):
+                    privilege_item = {"role": privilege_item}
+
+                for grantee_type, grantees in privilege_item.items():
+                    # -- Make sure object_type is in grant_config_by_type
+                    grantee_type_privileges: Dict[str, Any] = grant_config_std.setdefault(
+                        grantee_type.lower(), {}
+                    )
+                    privilege_list = grantee_type_privileges.setdefault(
+                        grant_config_privilege.lower(), []
+                    )
+
+                    # -- convert string to array to make code simpler --#}
+                    if isinstance(grantees, str):
+                        grantees = [grantees]
+
+                    for grantee in grantees:
+                        # -- Only add the item if not already in the list --#}
+                        if grantee not in privilege_list:
+                            privilege_list.append(grantee)
+
+        return grant_config_std
+
+    @available
+    def diff_of_grants(self, grants_a: GrantsDict, grants_b: GrantsDict) -> GrantsDict:
+        """
+        Given two dictionaries of type Dict[str, Dict[str, List[str]]]:
+            grants_a = {'key_x': {'key_a': ['VALUE_1', 'VALUE_2']}, 'KEY_Y': {'key_b': ['value_2']}}
+            grants_b = {'KEY_x': {'key_a': ['VALUE_1']}, 'key_y': {'key_b': ['value_3']}}
+        Return the same dictionary representation of dict_a MINUS dict_b,
+        performing a case-insensitive comparison between the strings in each.
+        All keys returned will be in the original case of dict_a.
+            returns {"key_x": {'key_a': ['VALUE_2']},"KEY_Y":{"key_b": ["value_2"]}}
+        """
+
+        def diff_of_two_dicts(dict_a: dict, dict_b: dict) -> dict:
+            """
+            Given two dictionaries of type Dict[str, List[str]]:
+                dict_a = {'key_x': ['value_1', 'VALUE_2'], 'KEY_Y': ['value_3']}
+                dict_b = {'key_x': ['value_1'], 'key_z': ['value_4']}
+            Return the same dictionary representation of dict_a MINUS dict_b,
+            performing a case-insensitive comparison between the strings in each.
+            All keys returned will be in the original case of dict_a.
+                returns {'key_x': ['VALUE_2'], 'KEY_Y': ['value_3']}
+            """
+
+            dict_diff = {}
+            dict_b_lowered = {k.casefold(): [x.casefold() for x in v] for k, v in dict_b.items()}
+            for k in dict_a:
+                if k.casefold() in dict_b_lowered.keys():
+                    diff = []
+                    for v in dict_a[k]:
+                        if v.casefold() not in dict_b_lowered[k.casefold()]:
+                            diff.append(v)
+                    if diff:
+                        dict_diff.update({k: diff})
+                else:
+                    dict_diff.update({k: dict_a[k]})
+            return dict_diff
+
+        grants_diff: Dict[str, Any] = {}
+        grants_b_lowered = {
+            k.casefold(): {x.casefold(): y for x, y in v.items()} for k, v in grants_b.items()
+        }
+        for k in grants_a:
+            if k.casefold() in grants_b_lowered.keys():
+                diff = diff_of_two_dicts(grants_a[k], grants_b_lowered[k.casefold()])
+                if diff:
+                    grants_diff.update({k: diff})
+            else:
+                grants_diff.update({k: grants_a[k]})
+
+        return grants_diff
 
     def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
         return f"DATEADD({interval}, {number}, {add_to})"
