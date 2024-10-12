@@ -60,45 +60,6 @@
     {{ return(dcl_statements) }}
 {%- endmacro %}
 
-{% macro split_grants_by_grantee_type(grant_config) %}
-    {#
-      -- Takes grant_config in { privilege: [grantee] } or { privilege: { grantee_type: [ grantee ] } }
-      -- and converts to { grantee_type: { privilege: [grantee] } }
-      --
-      -- Assumes { privilege: [grantee] } maps to { privilege: {'role': [ grantee ] } }
-    #}
-    {% set converted_dict = {} %}
-    {% for grant_config_privilege, privilege_collection in grant_config.items() %}
-        {#-- loop through the role entries and handle mapping, list & string entries --#}
-        {% for privilege_item in privilege_collection %}
-            {#-- Assume old style list grants map to role --#}
-            {% if privilege_item is not mapping %}
-                {% set privilege_item = {"role": privilege_item} %}
-            {% endif %}
-
-            {% for grantee_type, grantees in privilege_item.items() %}
-                {#-- Make sure object_type is in grant_config_by_type --#}
-                {% set grantee_type_privileges = converted_dict.setdefault(grantee_type|lower, {}) %}
-                {% set privilege_list = grantee_type_privileges.setdefault(grant_config_privilege, []) %}
-
-                {#-- convert string to array to make code simpler --#}
-                {% if grantees is string %}
-                    {% set grantees = [grantees] %}
-                {% endif %}
-
-                {% for grantee in grantees %}
-                    {#-- Only add the item if not already in the list --#}
-                    {% if grantee not in privilege_list %}
-                        {% set _ = privilege_list.append(grantee) %}
-                    {% endif %}
-                {% endfor %}
-            {% endfor %}
-
-        {% endfor %}
-    {% endfor %}
-    {{ return(converted_dict) }}
-{% endmacro %}
-
 {% macro snowflake__apply_grants(relation, grant_config, should_revoke=True) %}
     {#-- If grant_config is {} or None, this is a no-op --#}
     {% if grant_config %}
