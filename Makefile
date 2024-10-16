@@ -12,20 +12,20 @@ dev-uninstall: ## Uninstalls all packages while maintaining the virtual environm
 	pip uninstall -y dbt-snowflake
 
 .PHONY: unit
-unit: ## Runs unit tests with py38.
+unit: ## Runs unit tests with py39.
 	@\
-	tox -e py38
+	tox -e py39
 
 .PHONY: test
-test: ## Runs unit tests with py38 and code checks against staged changes.
+test: ## Runs unit tests with py39 and code checks against staged changes.
 	@\
-	tox -p -e py38; \
+	tox -p -e py39; \
 	pre-commit run --all-files
 
 .PHONY: integration
 integration: ## Runs snowflake integration tests with py38.
 	@\
-	tox -e py38-snowflake --
+	tox -e py39-snowflake --
 
 .PHONY: clean
 	@echo "cleaning repo"
