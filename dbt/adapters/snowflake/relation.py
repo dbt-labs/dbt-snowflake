@@ -162,7 +162,7 @@ class SnowflakeRelation(BaseRelation):
           support temporary relations.
         """
 
-        transient_explicitly_set_true: bool = config.extra.get("transient", False)
+        transient_explicitly_set_true: bool = config.get("transient", False)
 
         # Temporary tables are a Snowflake feature that do not exist in the
         # Iceberg framework. We ignore the Iceberg status of the model.
