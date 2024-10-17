@@ -14,7 +14,6 @@
 -#}
 
     {%- set dynamic_table = relation.from_config(config.model) -%}
-    {%- set materialization_prefix = relation.get_ddl_prefix_for_create(config.model.config, False) -%}
 
     {%- if dynamic_table.catalog.table_format == 'iceberg' -%}
         {{ _get_replace_dynamic_iceberg_table_as_sql(dynamic_table, relation, sql) }}
@@ -40,6 +39,8 @@
 --  Returns:
 --      A valid DDL statement which will result in a new dynamic standard table.
 -#}
+
+    {%- set materialization_prefix = relation.get_ddl_prefix_for_create(config.model.config, False) -%}
 
     create or replace {{ materialization_prefix }} dynamic table {{ relation }}
         target_lag = '{{ dynamic_table.target_lag }}'
