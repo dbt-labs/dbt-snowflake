@@ -277,7 +277,7 @@
     {% set sql -%}
        alter {{ relation.get_ddl_prefix_for_alter() }} {{ relation_type }} {{ relation.render() }} add column
           {% for column in add_columns %}
-            {{ column.name }} {{ column.data_type }}{{ ',' if not loop.last }}
+            {{ adapter.quote(column.name) }} {{ column.data_type }}{{ ',' if not loop.last }}
           {% endfor %}
     {%- endset -%}
 
@@ -290,7 +290,7 @@
     {% set sql -%}
         alter {{ relation.get_ddl_prefix_for_alter() }} {{ relation_type }} {{ relation.render() }} drop column
             {% for column in remove_columns %}
-                {{ column.name }}{{ ',' if not loop.last }}
+                {{ adapter.quote(column.name) }}{{ ',' if not loop.last }}
             {% endfor %}
     {%- endset -%}
 
