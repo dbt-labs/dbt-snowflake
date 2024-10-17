@@ -15,7 +15,7 @@ import re
 from contextlib import contextmanager
 from dataclasses import dataclass
 from io import StringIO
-from time import sleep
+from time import sleep, perf_counter
 
 from typing import Optional, Tuple, Union, Any, List, Iterable, TYPE_CHECKING
 
@@ -43,8 +43,11 @@ from dbt_common.exceptions import (
     DbtRuntimeError,
     DbtConfigError,
 )
+from dbt_common.events.contextvars import get_node_info
 from dbt_common.exceptions import DbtDatabaseError
+from dbt_common.events.functions import fire_event
 from dbt_common.record import get_record_mode_from_env, RecorderMode
+from dbt.adapters.events.types import SQLQueryStatus
 from dbt.adapters.exceptions.connection import FailedToConnectError
 from dbt.adapters.contracts.connection import AdapterResponse, Connection, Credentials
 from dbt.adapters.sql import SQLConnectionManager
@@ -82,6 +85,11 @@ def snowflake_private_key(private_key: RSAPrivateKey) -> bytes:
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption(),
     )
+
+
+@dataclass
+class SnowflakeAdapterResponse(AdapterResponse):
+    pass
 
 
 @dataclass
@@ -531,6 +539,8 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         bindings: Optional[Any] = None,
         abridge_sql_log: bool = False,
     ) -> Tuple[Connection, Any]:
+        pre = perf_counter()
+
         if bindings:
             # The snowflake connector is stricter than, e.g., psycopg2 -
             # which allows any iterable thing to be passed as a binding.
@@ -555,6 +565,15 @@ class SnowflakeConnectionManager(SQLConnectionManager):
 
         if cursor is None:
             self._raise_cursor_not_found_error(sql)
+
+        fire_event(
+            SQLQueryStatus(
+                status=str(self.get_response(cursor)),
+                elapsed=perf_counter() - pre,
+                node_info=get_node_info(),
+                query_id=cursor.sfqid,
+            )
+        )
 
         return connection, cursor
 
