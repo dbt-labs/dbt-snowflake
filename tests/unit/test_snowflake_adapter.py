@@ -25,7 +25,7 @@ from .utils import (
 )
 
 
-class TestSnowflakeAdapter(unittest.TestCase):
+class SnowflakeAdapterBase(unittest.TestCase):
     def setUp(self):
         profile_cfg = {
             "outputs": {
@@ -100,6 +100,9 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.qh_patch.stop()
         self.patcher.stop()
         self.load_state_check.stop()
+
+
+class TestSnowflakeAdapter(SnowflakeAdapterBase):
 
     def test_quoting_on_drop_schema(self):
         relation = SnowflakeAdapter.Relation.create(
@@ -993,3 +996,87 @@ class TestSnowflakeAdapterCredentials(unittest.TestCase):
             private_key_path="/tmp/does/not/exist.p8",
         )
         self.assertRaises(FileNotFoundError, creds.auth_args)
+
+
+class TestSnowflakeAdapter_diff_of_grants(SnowflakeAdapterBase):
+    def test_empty(self):
+        diff = self.adapter.diff_of_grants({}, {})
+        assert diff == {}
+
+    def test_object_types_but_no_grantee(self):
+        grants_a = {"select": {"role": {}}}
+        grants_b = {"select": {"role": {}}}
+        diff = self.adapter.diff_of_grants(grants_a, grants_b)
+        assert diff == {}
+
+    def test_empty_grant_a(self):
+        grants_a = {}
+        grants_b = {"insert": {"role": ["MY_TEST_ROLE_1"]}}
+
+        diff = self.adapter.diff_of_grants(grants_a, grants_b)
+        assert diff == {}
+
+    def test_empty_grant_b(self):
+        grants_a = {"insert": {"role": ["MY_TEST_ROLE_1"]}}
+        grants_b = {}
+
+        diff = self.adapter.diff_of_grants(grants_a, grants_b)
+        assert diff == grants_a
+
+    def test_case_different_1(self):
+        grants_a = {"insert": {"role": ["MY_TEST_ROLE_1"]}}
+        grants_b = {"insert": {"role": ["my_test_role_1"]}}
+
+        diff = self.adapter.diff_of_grants(grants_a, grants_b)
+        assert diff == {}
+
+    def test_case_different_2(self):
+        grants_a = {"insert": {"role": ["my_test_role_1"]}}
+        grants_b = {"insert": {"role": ["MY_TEST_ROLE_1"]}}
+
+        diff = self.adapter.diff_of_grants(grants_a, grants_b)
+        assert diff == {}
+
+    def test_select_to_insert(self):
+        grants_a = {"insert": {"role": ["my_test_role_1"]}}
+        grants_b = {"select": {"database_role": ["my_test_role_1"]}}
+
+        diff = self.adapter.diff_of_grants(grants_a, grants_b)
+        assert diff == grants_a
+
+    def test_comment_example(self):
+        grants_a = {"key_x": {"key_a": ["VALUE_1", "VALUE_2"]}, "KEY_Y": {"key_b": ["value_2"]}}
+        grants_b = {"KEY_x": {"key_a": ["VALUE_1"]}, "key_y": {"key_b": ["value_3"]}}
+
+        diff = self.adapter.diff_of_grants(grants_a, grants_b)
+        assert diff == {"key_x": {"key_a": ["VALUE_2"]}, "KEY_Y": {"key_b": ["value_2"]}}
+
+
+class TestSnowflakeAdapter_standardize_grant_config(SnowflakeAdapterBase):
+    def test_empty(self):
+        std = self.adapter.standardize_grant_config({})
+        assert std == {}
+
+    def test_old_style(self):
+        grant_config = {"select": ["my_test_role"]}
+        expected = {"role": {"select": ["my_test_role"]}}
+
+        std = self.adapter.standardize_grant_config(grant_config)
+        assert std == expected
+
+    def test_new_style(self):
+        grant_config = {"select": [{"database_role": ["my_test_role"]}]}
+        expected = {"database_role": {"select": ["my_test_role"]}}
+
+        std = self.adapter.standardize_grant_config(grant_config)
+        assert std == expected
+
+    def test_mixed_style(self):
+        grant_config = {"select": [{"database_role": ["my_test_role"]}, ["my_test_role_2"]]}
+        expected = {
+            "database_role": {"select": ["my_test_role"]},
+            "role": {"select": ["my_test_role_2"]},
+        }
+
+        std = self.adapter.standardize_grant_config(grant_config)
+        assert std == expected
