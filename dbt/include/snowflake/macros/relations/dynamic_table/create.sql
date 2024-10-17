@@ -41,7 +41,9 @@
 --      A valid DDL statement which will result in a new dynamic standard table.
 -#}
 
-    create dynamic table {{ relation }}
+    {%- set materialization_prefix = relation.get_ddl_prefix_for_create(config.model.config, False) -%}
+
+    create {{ materialization_prefix }} dynamic table {{ relation }}
         target_lag = '{{ dynamic_table.target_lag }}'
         warehouse = {{ dynamic_table.snowflake_warehouse }}
         {{ optional('refresh_mode', dynamic_table.refresh_mode) }}
