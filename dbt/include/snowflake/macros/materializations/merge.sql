@@ -66,7 +66,6 @@
     {% do arg_dict.update({'incremental_predicates': incremental_predicates}) %}
 
     delete from {{ target }} DBT_INTERNAL_TARGET
-    using {{ source }}
     where (
     {% for predicate in incremental_predicates %}
         {%- if not loop.first %}and {% endif -%} {{ predicate }}
