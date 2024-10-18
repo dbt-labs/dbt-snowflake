@@ -1,9 +1,12 @@
 from dataclasses import dataclass
+from importlib import import_module
 from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, TYPE_CHECKING
 
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
+from dbt.adapters.base.relation import AdapterTrackingRelationInfo
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
+from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -25,6 +28,7 @@ from dbt.adapters.snowflake.relation_configs import (
     SnowflakeRelationType,
     TableFormat,
 )
+
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
@@ -419,3 +423,21 @@ CALL {proc_name}();
     def debug_query(self):
         """Override for DebugTask method"""
         self.execute("select 1 as id")
+
+    def get_adapter_run_info(cls, config: RelationConfig) -> AdapterTrackingRelationInfo:
+        table_format: Optional[str] = None
+        if (
+            config
+            and hasattr(config, "_extra")
+            and (relation_format := config._extra.get("table_format"))
+        ):
+            table_format = relation_format
+
+        return AdapterTrackingRelationInfo(
+            adapter_name="snowflake",
+            version=import_module("dbt.adapters.__about__").version,
+            adapter_details={
+                "adapter_type": "snowflake",
+                "table_format": table_format,
+            },
+        )
