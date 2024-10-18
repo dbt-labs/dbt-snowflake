@@ -58,7 +58,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "dbt-common>=1.10,<2.0",
-        "dbt-adapters>=1.7,<2.0",
+        "dbt-adapters @ git+ssh://git@github.com/dbt-labs/dbt-adapters.git@ADAP-301/add-adapter-telemetry",
         "snowflake-connector-python[secure-local-storage]~=3.0",
         # add dbt-core to ensure backwards compatibility of installation, this is not a functional dependency
         "dbt-core>=1.8.0",
