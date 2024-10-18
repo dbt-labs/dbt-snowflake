@@ -63,7 +63,17 @@
   {#-- Set vars --#}
   {%- set full_refresh_mode = (should_full_refresh()) -%}
   {%- set language = model['language'] -%}
-  {% set target_relation = this %}
+
+  {%- set identifier = this.name -%}
+
+  {%- set target_relation = api.Relation.create(
+	identifier=identifier,
+	schema=schema,
+	database=database,
+	type='table',
+	table_format=config.get('table_format', 'default')
+    ) -%}
+
   {% set existing_relation = load_relation(this) %}
 
   {#-- The temp relation will be a view (faster) or temp table, depending on upsert/merge strategy --#}
@@ -90,10 +100,20 @@
     {%- call statement('main', language=language) -%}
       {{ create_table_as(False, target_relation, compiled_code, language) }}
     {%- endcall -%}
+
   {% elif full_refresh_mode %}
+    {% if target_relation.needs_to_drop(existing_relation) %}
+      {{ drop_relation_if_exists(existing_relation) }}
+    {% endif %}
     {%- call statement('main', language=language) -%}
       {{ create_table_as(False, target_relation, compiled_code, language) }}
     {%- endcall -%}
+
+  {% elif target_relation.table_format != existing_relation.table_format %}
+    {% do exceptions.raise_compiler_error(
+        "Unable to alter incremental model `" ~ target_relation.identifier  ~ "` to '" ~ target_relation.table_format ~ " table format due to Snowflake limitation. Please execute with --full-refresh to drop the table and recreate in new table format.'"
+      )
+    %}
 
   {% else %}
     {#-- Create the temp relation, either as a view or as a temp table --#}
