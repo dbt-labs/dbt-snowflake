@@ -435,7 +435,7 @@ CALL {proc_name}();
 
         return AdapterTrackingRelationInfo(
             adapter_name="snowflake",
-            version=import_module("dbt.adapters.__about__").version,
+            version=import_module("dbt.adapters.snowflake.__version__").version,
             adapter_details={
                 "adapter_type": "snowflake",
                 "table_format": table_format,
