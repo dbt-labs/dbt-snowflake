@@ -356,22 +356,23 @@ class SnowflakeAdapter(SQLAdapter):
                     privilege_item = {"role": privilege_item}
 
                 for grantee_type, grantees in privilege_item.items():
-                    # -- Make sure object_type is in grant_config_by_type
-                    grantee_type_privileges: Dict[str, Any] = grant_config_std.setdefault(
-                        grantee_type.lower(), {}
-                    )
-                    privilege_list = grantee_type_privileges.setdefault(
-                        grant_config_privilege.lower(), []
-                    )
+                    if grantees:
+                        # -- Make sure object_type is in grant_config_by_type
+                        grantee_type_privileges: Dict[str, Any] = grant_config_std.setdefault(
+                            grantee_type.lower(), {}
+                        )
+                        privilege_list = grantee_type_privileges.setdefault(
+                            grant_config_privilege.lower(), []
+                        )
 
-                    # -- convert string to array to make code simpler --#}
-                    if isinstance(grantees, str):
-                        grantees = [grantees]
+                        # -- convert string to array to make code simpler --#}
+                        if isinstance(grantees, str):
+                            grantees = [grantees]
 
-                    for grantee in grantees:
-                        # -- Only add the item if not already in the list --#}
-                        if grantee not in privilege_list:
-                            privilege_list.append(grantee)
+                        for grantee in grantees:
+                            # -- Only add the item if not already in the list --#}
+                            if grantee not in privilege_list:
+                                privilege_list.append(grantee)
 
         return grant_config_std
 

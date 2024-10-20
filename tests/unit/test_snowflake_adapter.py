@@ -1057,6 +1057,14 @@ class TestSnowflakeAdapter_standardize_grant_config(SnowflakeAdapterBase):
         std = self.adapter.standardize_grant_config({})
         assert std == {}
 
+    def test_empty_privilege(self):
+        std = self.adapter.standardize_grant_config({"select": []})
+        assert std == {}
+
+    def test_empty_privilege_role_type(self):
+        std = self.adapter.standardize_grant_config({"select": [{"role": []}]})
+        assert std == {}
+
     def test_old_style(self):
         grant_config = {"select": ["my_test_role"]}
         expected = {"role": {"select": ["my_test_role"]}}

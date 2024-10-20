@@ -79,10 +79,6 @@
             {% set needs_granting = adapter.diff_of_grants(desired_grants_dict, current_grants_dict) %}
             {% set needs_revoking = adapter.diff_of_grants(current_grants_dict, desired_grants_dict) %}
 
-            {#-- TODO: remove debug log statement --#}
-            {{log ('needs_granting : ' ~ needs_granting)}}
-            {{log ('needs_revoking : ' ~ needs_revoking)}}
-
             {% if not (needs_granting or needs_revoking) %}
                 {{ log('On ' ~ relation.render() ~': All grants are in place, no revocation or granting needed.')}}
             {% endif %}
@@ -98,8 +94,6 @@
             {% set grant_statement_list = get_dcl_statement_list_by_type(relation, needs_granting, snowflake__get_grant_sql_by_type) %}
             {% set dcl_statement_list = revoke_statement_list + grant_statement_list %}
 
-            {#-- TODO: remove debug log statement --#}
-            {{ log('dcl_statement_list: ' ~ dcl_statement_list) }}
             {% if dcl_statement_list %}
                 {{ call_dcl_statements(dcl_statement_list) }}
             {% endif %}
