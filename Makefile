@@ -32,22 +32,22 @@ linecheck: ## Checks for all Python lines 100 characters or more
 	find dbt -type f -name "*.py" -exec grep -I -r -n '.\{100\}' {} \;
 
 .PHONY: unit
-unit: ## Runs unit tests with py38.
+unit: ## Runs unit tests with py39.
 	@\
-	tox -e py38
+	tox -e py39
 
 .PHONY: test
-test: ## Runs unit tests with py38 and code checks against staged changes.
+test: ## Runs unit tests with py39 and code checks against staged changes.
 	@\
-	tox -p -e py38; \
+	tox -p -e py39; \
 	pre-commit run black-check --hook-stage manual | grep -v "INFO"; \
 	pre-commit run flake8-check --hook-stage manual | grep -v "INFO"; \
 	pre-commit run mypy-check --hook-stage manual | grep -v "INFO"
 
 .PHONY: integration
-integration: ## Runs snowflake integration tests with py38.
+integration: ## Runs snowflake integration tests with py39.
 	@\
-	tox -e py38-snowflake --
+	tox -e py39-snowflake --
 
 .PHONY: clean
 	@echo "cleaning repo"
