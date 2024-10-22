@@ -1,10 +1,8 @@
 from dataclasses import dataclass
-from importlib import import_module
 from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, TYPE_CHECKING
 
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
-from dbt.adapters.base.relation import AdapterTrackingRelationInfo
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
 from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.sql import SQLAdapter
@@ -424,7 +422,8 @@ CALL {proc_name}();
         """Override for DebugTask method"""
         self.execute("select 1 as id")
 
-    def get_adapter_run_info(cls, config: RelationConfig) -> AdapterTrackingRelationInfo:
+    @classmethod
+    def _get_adapter_specific_run_info(cls, config: RelationConfig) -> Dict[str, Any]:
         table_format: Optional[str] = None
         if (
             config
@@ -433,11 +432,7 @@ CALL {proc_name}();
         ):
             table_format = relation_format
 
-        return AdapterTrackingRelationInfo(
-            adapter_name="snowflake",
-            version=import_module("dbt.adapters.snowflake.__version__").version,
-            adapter_details={
-                "adapter_type": "snowflake",
-                "table_format": table_format,
-            },
-        )
+        return {
+            "adapter_type": "snowflake",
+            "table_format": table_format,
+        }
