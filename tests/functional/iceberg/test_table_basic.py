@@ -4,64 +4,16 @@ from pathlib import Path
 
 from dbt.tests.util import run_dbt, rm_file, write_file
 
-_MODEL_BASIC_TABLE_MODEL = """
-{{
-  config(
-    materialized = "table",
-    cluster_by=['id'],
-  )
-}}
-select 1 as id
-"""
-
-_MODEL_BASIC_ICEBERG_MODEL = """
-{{
-  config(
-    transient = "true",
-    materialized = "table",
-    cluster_by=['id'],
-    table_format="iceberg",
-    external_volume="s3_iceberg_snow",
-    base_location_subpath="subpath",
-  )
-}}
-
-select * from {{ ref('first_table') }}
-"""
-
-_MODEL_BUILT_ON_ICEBERG_TABLE = """
-{{
-  config(
-    materialized = "table",
-  )
-}}
-select * from {{ ref('iceberg_table') }}
-"""
-
-_MODEL_TABLE_BEFORE_SWAP = """
-{{
-  config(
-    materialized = "table",
-  )
-}}
-select 1 as id
-"""
-
-_MODEL_VIEW_BEFORE_SWAP = """
-select 1 as id
-"""
-
-_MODEL_TABLE_FOR_SWAP_ICEBERG = """
-{{
-  config(
-    materialized = "table",
-    table_format="iceberg",
-    external_volume="s3_iceberg_snow",
-    base_location_subpath="subpath",
-  )
-}}
-select 1 as id
-"""
+from tests.functional.iceberg.models import (
+    _MODEL_BASIC_TABLE_MODEL,
+    _MODEL_BASIC_ICEBERG_MODEL,
+    _MODEL_BASIC_DYNAMIC_TABLE_MODEL,
+    _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_SUBPATH,
+    _MODEL_BUILT_ON_ICEBERG_TABLE,
+    _MODEL_TABLE_BEFORE_SWAP,
+    _MODEL_VIEW_BEFORE_SWAP,
+    _MODEL_TABLE_FOR_SWAP_ICEBERG,
+)
 
 
 class TestIcebergTableBuilds:
@@ -75,11 +27,13 @@ class TestIcebergTableBuilds:
             "first_table.sql": _MODEL_BASIC_TABLE_MODEL,
             "iceberg_table.sql": _MODEL_BASIC_ICEBERG_MODEL,
             "table_built_on_iceberg_table.sql": _MODEL_BUILT_ON_ICEBERG_TABLE,
+            "dynamic_table.sql": _MODEL_BASIC_DYNAMIC_TABLE_MODEL,
+            "dynamic_tableb.sql": _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_SUBPATH,
         }
 
     def test_iceberg_tables_build_and_can_be_referred(self, project):
         run_results = run_dbt()
-        assert len(run_results) == 3
+        assert len(run_results) == 5
 
 
 class TestIcebergTableTypeBuildsOnExistingTable:
