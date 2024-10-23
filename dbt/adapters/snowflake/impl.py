@@ -4,6 +4,7 @@ from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, 
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
+from dbt.adapters.snowflake.catalog import SnowflakeExternalCatalogIntegration
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -58,6 +59,7 @@ class SnowflakeAdapter(SQLAdapter):
     Relation = SnowflakeRelation
     Column = SnowflakeColumn
     ConnectionManager = SnowflakeConnectionManager
+    ExternalCatalogIntegration = SnowflakeExternalCatalogIntegration
 
     AdapterSpecificConfigs = SnowflakeConfig
 
