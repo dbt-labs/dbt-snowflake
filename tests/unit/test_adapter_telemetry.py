@@ -19,7 +19,7 @@ def test_telemetry_with_snowflake_details():
     assert res.adapter_name == "snowflake"
     assert res.base_adapter_version == dbt.adapters.__about__.version
     assert res.adapter_version == dbt.adapters.snowflake.__version__.version
-    assert res.adapter_details == {
+    assert res.model_adapter_details == {
         "adapter_type": "snowflake",
         "table_format": "iceberg",
     }
