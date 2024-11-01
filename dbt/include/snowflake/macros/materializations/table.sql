@@ -7,7 +7,7 @@
 
   {% set grant_config = config.get('grants') %}
 
-  {%- set old_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
+  {%- set existing_relation = adapter.get_relation(database=database, schema=schema, identifier=identifier) -%}
   {%- set target_relation = api.Relation.create(
 	identifier=identifier,
 	schema=schema,
@@ -18,8 +18,8 @@
 
   {{ run_hooks(pre_hooks) }}
 
-  {% if target_relation.needs_to_drop(old_relation) %}
-    {{ drop_relation_if_exists(old_relation) }}
+  {% if target_relation.needs_to_drop(existing_relation) %}
+    {{ drop_relation_if_exists(existing_relation) }}
   {% endif %}
 
   {% call statement('main', language=language) -%}
@@ -28,7 +28,7 @@
 
   {{ run_hooks(post_hooks) }}
 
-  {% set should_revoke = should_revoke(old_relation, full_refresh_mode=True) %}
+  {% set should_revoke = should_revoke(existing_relation, full_refresh_mode=True) %}
   {% do apply_grants(target_relation, grant_config, should_revoke=should_revoke) %}
 
   {% do persist_docs(target_relation, model) %}
