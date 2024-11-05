@@ -134,10 +134,16 @@
 
 {% endmacro %}
 
-{% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
+{% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000, query_pre_hook=None) %}
+  {# -- Use query_pre_hook for optional configurations prior to fetching relations. For sake of
+     -- consistent use, place ;s in the query_pre_hook definition, not this macro. #}
 
   {%- set max_total_results = max_results_per_iter * max_iter -%}
   {%- set sql -%}
+    {% if query_pre_hook %}
+        {{ query_pre_hook }}
+    {% endif -%}
+
     {% if schema_relation is string %}
       show objects in {{ schema_relation }} limit {{ max_results_per_iter }};
     {% else %}

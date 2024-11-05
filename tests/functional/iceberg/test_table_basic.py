@@ -35,11 +35,6 @@ class TestIcebergTableBuilds:
         run_results = run_dbt()
         assert len(run_results) == 5
 
-    def test_iceberg_tables_handle_quoting_ignore_flag(self, project):
-        project.run_sql("ALTER SESSION SET QUOTED_IDENTIFIERS_IGNORE_CASE = true;")
-        run_results = run_dbt()
-        assert len(run_results) == 5
-
 
 class TestIcebergTableTypeBuildsOnExistingTable:
     @pytest.fixture(scope="class")

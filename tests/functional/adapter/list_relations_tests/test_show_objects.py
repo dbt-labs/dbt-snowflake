@@ -3,10 +3,12 @@ from typing import List
 
 import pytest
 
+from pathlib import Path
+
 from dbt.adapters.factory import get_adapter_by_type
 from dbt.adapters.snowflake import SnowflakeRelation
 
-from dbt.tests.util import run_dbt, get_connection
+from dbt.tests.util import run_dbt, get_connection, write_file
 
 
 SEED = """
@@ -41,8 +43,40 @@ select * from {{ ref('my_seed') }}
 """
 )
 
+_MODEL_ICEBERG = """
+{{
+  config(
+    materialized = "table",
+    table_format="iceberg",
+    external_volume="s3_iceberg_snow",
+  )
+}}
 
-class TestShowObjects:
+select 1
+"""
+
+macro_template_for_iceberg_quoted_identifiers_flag_test = """
+{{% macro list_relations_without_caching(schema_relation={}) -%}}
+    {{%- set pre_hook = 'ALTER SESSION SET QUOTED_IDENTIFIERS_IGNORE_CASE = true;' -%}}
+    {{%- set result = snowflake__list_relations_without_caching(schema_relation=schema_relation, query_pre_hook=pre_hook) -%}}
+    {{%- do return(result) -%}}
+{{% endmacro %}}
+"""
+
+
+class ShowObjectsBase:
+    @staticmethod
+    def list_relations_without_caching(project) -> List[SnowflakeRelation]:
+        my_adapter = get_adapter_by_type("snowflake")
+        schema = my_adapter.Relation.create(
+            database=project.database, schema=project.test_schema, identifier=""
+        )
+        with get_connection(my_adapter):
+            relations = my_adapter.list_relations_without_caching(schema)
+        return relations
+
+
+class TestShowObjects(ShowObjectsBase):
     views: int = 10
     tables: int = 10
     dynamic_tables: int = 10
@@ -66,16 +100,6 @@ class TestShowObjects:
         run_dbt(["seed"])
         run_dbt(["run"])
 
-    @staticmethod
-    def list_relations_without_caching(project) -> List[SnowflakeRelation]:
-        my_adapter = get_adapter_by_type("snowflake")
-        schema = my_adapter.Relation.create(
-            database=project.database, schema=project.test_schema, identifier=""
-        )
-        with get_connection(my_adapter):
-            relations = my_adapter.list_relations_without_caching(schema)
-        return relations
-
     def test_list_relations_without_caching(self, project):
         relations = self.list_relations_without_caching(project)
         assert len([relation for relation in relations if relation.is_view]) == self.views
@@ -87,3 +111,27 @@ class TestShowObjects:
             len([relation for relation in relations if relation.is_dynamic_table])
             == self.dynamic_tables
         )
+
+
+class TestShowIcebergObjects(ShowObjectsBase):
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"flags": {"enable_iceberg_materializations": True}}
+
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {"my_model.sql": _MODEL_ICEBERG}
+
+    def test_quoting_ignore_flag_doesnt_break_iceberg_metadata(self, project):
+        """We inject the QUOTED_IDENTIFIERS_IGNORE_CASE into the underlying query that fetches
+        objects which will fail without proper normalization within the python function after
+        the list relations macro returns."""
+        macro_file = project.project_root / Path("macros") / Path("macros_for_this_test.sql")
+        write_file(
+            macro_template_for_iceberg_quoted_identifiers_flag_test.format(project.test_schema),
+            macro_file,
+        )
+
+        run_dbt(["run"])
+
+        self.list_relations_without_caching(project)
