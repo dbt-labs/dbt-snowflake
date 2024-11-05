@@ -8,7 +8,7 @@ from pathlib import Path
 from dbt.adapters.factory import get_adapter_by_type
 from dbt.adapters.snowflake import SnowflakeRelation
 
-from dbt.tests.util import run_dbt, get_connection, write_file
+from dbt.tests.util import run_dbt, get_connection
 
 
 SEED = """
