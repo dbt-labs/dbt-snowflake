@@ -55,14 +55,6 @@ _MODEL_ICEBERG = """
 select 1
 """
 
-macro_template_for_iceberg_quoted_identifiers_flag_test = """
-{{% macro list_relations_without_caching(schema_relation={}) -%}}
-    {{%- set pre_hook = 'ALTER SESSION SET QUOTED_IDENTIFIERS_IGNORE_CASE = true;' -%}}
-    {{%- set result = snowflake__list_relations_without_caching(schema_relation=schema_relation, query_pre_hook=pre_hook) -%}}
-    {{%- do return(result) -%}}
-{{% endmacro %}}
-"""
-
 
 class ShowObjectsBase:
     @staticmethod
@@ -126,12 +118,6 @@ class TestShowIcebergObjects(ShowObjectsBase):
         """We inject the QUOTED_IDENTIFIERS_IGNORE_CASE into the underlying query that fetches
         objects which will fail without proper normalization within the python function after
         the list relations macro returns."""
-        macro_file = project.project_root / Path("macros") / Path("macros_for_this_test.sql")
-        write_file(
-            macro_template_for_iceberg_quoted_identifiers_flag_test.format(project.test_schema),
-            macro_file,
-        )
-
         run_dbt(["run"])
 
         self.list_relations_without_caching(project)

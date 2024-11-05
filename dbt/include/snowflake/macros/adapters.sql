@@ -134,15 +134,21 @@
 
 {% endmacro %}
 
-{% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000, query_pre_hook=None) %}
+{% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
   {# -- Use query_pre_hook for optional configurations prior to fetching relations. For sake of
      -- consistent use, place ;s in the query_pre_hook definition, not this macro. #}
 
   {%- set max_total_results = max_results_per_iter * max_iter -%}
   {%- set sql -%}
-    {% if query_pre_hook %}
-        {{ query_pre_hook }}
-    {% endif -%}
+    {# -- The QUOTED_IDENTIFIERS_IGNORE_CASE setting impacts column names like
+       -- is_iceberg which is created by dbt, but it does not affect the case
+       -- of column values in Snowflake's SHOW OBJECTS query! This session-only
+       -- alteration ensures the is_iceberg column is lowercase, juast if it
+       -- were a system-provided field.
+       --
+       -- This along with the behavior flag in general may be removed when
+       -- is_iceberg comes on show objects. #}
+    alter session set QUOTED_IDENTIFIERS_IGNORE_CASE = false;
 
     {% if schema_relation is string %}
       show objects in {{ schema_relation }} limit {{ max_results_per_iter }};
@@ -151,10 +157,7 @@
     {% endif -%}
 
     {# -- Gated for performance reason. If you don't want Iceberg, you shouldn't pay the
-       -- latency penalty.
-       --
-       -- Note: The capitalization of is_iceberg is handled in Python due to
-       -- unpredictable quoting behavior based on QUOTED_IDENTIFIERS_IGNORE_CASE. #}
+       -- latency penalty. #}
     {% if adapter.behavior.enable_iceberg_materializations.no_warn %}
       select all_objects.*, is_iceberg as {{ adapter.quote('is_iceberg') }}
       from table(result_scan(last_query_id(-1))) all_objects
