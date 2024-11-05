@@ -44,7 +44,7 @@ module.exports = ({ context }) => {
 
             if (labels.includes("test macos") || testAllLabel) {
               include.push({
-                os: "macos-12",
+                os: "macos-14",
                 adapter,
                 "python-version": pythonVersion,
               });
@@ -78,7 +78,7 @@ module.exports = ({ context }) => {
   // additionally include runs for all adapters, on macos and windows,
   // but only for the default python version
   for (const adapter of supportedAdapters) {
-    for (const operatingSystem of ["windows-latest", "macos-12"]) {
+    for (const operatingSystem of ["windows-latest", "macos-14"]) {
       include.push({
         os: operatingSystem,
         adapter: adapter,
