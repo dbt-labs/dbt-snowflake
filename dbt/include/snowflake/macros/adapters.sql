@@ -140,16 +140,6 @@
 
   {%- set max_total_results = max_results_per_iter * max_iter -%}
   {%- set sql -%}
-    {# -- The QUOTED_IDENTIFIERS_IGNORE_CASE setting impacts column names like
-       -- is_iceberg which is created by dbt, but it does not affect the case
-       -- of column values in Snowflake's SHOW OBJECTS query! This session-only
-       -- alteration ensures the is_iceberg column is lowercase, juast if it
-       -- were a system-provided field.
-       --
-       -- This along with the behavior flag in general may be removed when
-       -- is_iceberg comes on show objects. #}
-    alter session set QUOTED_IDENTIFIERS_IGNORE_CASE = false;
-
     {% if schema_relation is string %}
       show objects in {{ schema_relation }} limit {{ max_results_per_iter }};
     {% else %}
@@ -159,7 +149,7 @@
     {# -- Gated for performance reason. If you don't want Iceberg, you shouldn't pay the
        -- latency penalty. #}
     {% if adapter.behavior.enable_iceberg_materializations.no_warn %}
-      select all_objects.*, is_iceberg as {{ adapter.quote('is_iceberg') }}
+      select all_objects.*, is_iceberg
       from table(result_scan(last_query_id(-1))) all_objects
       left join INFORMATION_SCHEMA.tables as all_tables
         on all_tables.table_name = all_objects."name"
