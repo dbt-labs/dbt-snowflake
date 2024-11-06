@@ -264,7 +264,7 @@
 {% endmacro %}
 
 
-{% macro snowflake__in (relation, add_columns, remove_columns) %}
+{% macro snowflake__alter_relation_add_remove_columns(relation, add_columns, remove_columns) %}
 
     {% if relation.is_dynamic_table -%}
         {% set relation_type = "dynamic table" %}
