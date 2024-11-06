@@ -115,9 +115,13 @@ class TestShowIcebergObjects(ShowObjectsBase):
         return {"my_model.sql": _MODEL_ICEBERG}
 
     def test_quoting_ignore_flag_doesnt_break_iceberg_metadata(self, project):
-        """We inject the QUOTED_IDENTIFIERS_IGNORE_CASE into the underlying query that fetches
-        objects which will fail without proper normalization within the python function after
-        the list relations macro returns."""
+        """https://github.com/dbt-labs/dbt-snowflake/issues/1227
+
+        The list relations function involves a metadata sub-query. Regardless of
+        QUOTED_IDENTIFIERS_IGNORE_CASE, this function will fail without proper
+        normalization within the encapsulating python function after the macro invocation
+        returns. This test verifies that normalization is working.
+        """
         run_dbt(["run"])
 
         self.list_relations_without_caching(project)
