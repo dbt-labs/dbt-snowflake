@@ -134,7 +134,10 @@
 
 {% endmacro %}
 
-{% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
+{% macro snowflake__list_relations_without_caching(schema_relation) %}
+
+  {%- set max_results_per_iter = adapter.config.flags.get('list_relations_per_iteration', 10000) -%}
+  {%- set max_iter = adapter.config.flags.get('list_relations_iteration_limit', 10) -%}
 
   {%- set max_total_results = max_results_per_iter * max_iter -%}
   {%- set sql -%}
