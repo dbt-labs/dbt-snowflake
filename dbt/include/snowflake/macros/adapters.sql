@@ -111,9 +111,10 @@
 
       {%- if loop.index == max_iter -%}
         {%- set msg -%}
-           dbt will list a maximum of {{ max_total_results }} objects in schema {{ schema_relation }}.
-           Your schema exceeds this limit. Please contact support@getdbt.com for troubleshooting tips,
-           or review and reduce the number of objects contained.
+            dbt is currently configured to list a maximum of {{ max_total_results }} objects per schema.
+            {{ schema_relation }} exceeds this limit. If this is expected, you may configure this limit
+            by setting list_relations_per_page and list_relations_page_limit in your project flags.
+            It is recommended to start by increasing list_relations_page_limit to something more than the default of 10.
         {%- endset -%}
 
         {% do exceptions.raise_compiler_error(msg) %}
