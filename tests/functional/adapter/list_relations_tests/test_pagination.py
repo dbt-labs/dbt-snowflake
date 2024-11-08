@@ -97,11 +97,15 @@ class TestListRelationsWithoutCachingTooLarge(BaseConfig):
     def test_list_relations(self, project):
         kwargs = {"schema_relation": project.test_schema}
         with project.adapter.connection_named("__test"):
-            with pytest.raises(CompilationError):
+            with pytest.raises(CompilationError) as error:
                 project.adapter.execute_macro(
                     "snowflake__list_relations_without_caching", kwargs=kwargs
                 )
+            assert "list_relations_per_page" in error.value.msg
+            assert "list_relations_page_limit" in error.value.msg
 
     def test_on_run(self, project):
-        with pytest.raises(CompilationError):
+        with pytest.raises(CompilationError) as error:
             run_dbt(["run"])
+        assert "list_relations_per_page" in error.value.msg
+        assert "list_relations_page_limit" in error.value.msg
