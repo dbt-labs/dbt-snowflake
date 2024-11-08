@@ -77,8 +77,8 @@ class TestListRelationsWithoutCachingLarge(BaseConfig):
     def profiles_config_update(self):
         return {
             "flags": {
-                "list_relations_per_iteration": 10,
-                "list_relations_iteration_limit": 20,
+                "list_relations_per_page": 10,
+                "list_relations_page_limit": 20,
             }
         }
 
@@ -89,8 +89,8 @@ class TestListRelationsWithoutCachingTooLarge(BaseConfig):
     def project_config_update(self):
         return {
             "flags": {
-                "list_relations_per_iteration": 10,
-                "list_relations_iteration_limit": 5,
+                "list_relations_per_page": 10,
+                "list_relations_page_limit": 5,
             }
         }
 
