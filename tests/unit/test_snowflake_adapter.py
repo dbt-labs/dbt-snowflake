@@ -59,6 +59,9 @@ class TestSnowflakeAdapter(unittest.TestCase):
 
         self.handle = mock.MagicMock(spec=snowflake_connector.SnowflakeConnection)
         self.cursor = self.handle.cursor.return_value
+        # query_id needs to be a string for the adapter response protobuf event
+        self.sfqid = mock.patch.object(self.cursor, "sfqid", new_callable=lambda: "42")
+        self.sfqid.start()
         self.mock_execute = self.cursor.execute
         self.patcher = mock.patch("dbt.adapters.snowflake.connections.snowflake.connector.connect")
         self.snowflake = self.patcher.start()
@@ -99,6 +102,7 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.adapter.cleanup_connections()
         self.qh_patch.stop()
         self.patcher.stop()
+        self.sfqid.stop()
         self.load_state_check.stop()
 
     def test_quoting_on_drop_schema(self):
