@@ -20,6 +20,8 @@
 
 name: Adapter Integration Tests
 
+run-name: "${{ (contains(github.event_name, 'workflow_') && inputs.name) || github.event_name }}: ${{ (contains(github.event_name, 'workflow_') &&  inputs.adapter_branch) || github.ref_name }} by @${{ github.actor }}"
+
 on:
   # pushes to release branches
   push:
@@ -34,10 +36,31 @@ on:
   # manual trigger
   workflow_dispatch:
     inputs:
-      dbt-core-branch:
-        description: "branch of dbt-core to use in dev-requirements.txt"
+      name:
+        description: "Name to associate with run (example: 'dbt-adapters-242')"
         required: false
         type: string
+        default: "Adapter Integration Tests"
+      adapter_branch:
+        description: "The branch of this adapter repository to use"
+        type: string
+        required: false
+        default: "main"
+      dbt_adapters_branch:
+        description: "The branch of dbt-adapters to use"
+        type: string
+        required: false
+        default: "main"
+      dbt_core_branch:
+        description: "The branch of dbt-core to use"
+        type: string
+        required: false
+        default: "main"
+      dbt_common_branch:
+        description: "The branch of dbt-common to use"
+        type: string
+        required: false
+        default: "main"
 
 # explicitly turn off permissions for `GITHUB_TOKEN`
 permissions: read-all
@@ -67,13 +90,13 @@ jobs:
     steps:
       - name: Check out the repository (non-PR)
         if: github.event_name != 'pull_request_target'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Check out the repository (PR)
         if: github.event_name == 'pull_request_target'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha }}
@@ -86,18 +109,21 @@ jobs:
         #  'false' - if none of changed files matches any of filter rules
         # also, returns:
         #  `changes` - JSON array with names of all filters matching any of the changed files
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         id: get-changes
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           filters: |
             snowflake:
+              - '.github/**/*.yml'
+              - '.github/**/*.sh'
               - 'dbt/**'
               - 'tests/**'
               - 'dev-requirements.txt'
+              - '*.py'
       - name: Generate integration test matrix
         id: generate-matrix
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           CHANGES: ${{ steps.get-changes.outputs.changes }}
         with:
@@ -138,24 +164,40 @@ jobs:
 
     steps:
       - name: Check out the repository
-        if: github.event_name != 'pull_request_target'
-        uses: actions/checkout@v3
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      # explicity checkout the branch for the PR,
+      - name: Check out the repository (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.adapter_branch }}
+
+      # explicitly checkout the branch for the PR,
       # this is necessary for the `pull_request_target` event
       - name: Check out the repository (PR)
         if: github.event_name == 'pull_request_target'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Update Adapters and Core branches (update dev_requirements.txt)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          ./.github/scripts/update_dev_dependency_branches.sh \
+            ${{ inputs.dbt_adapters_branch }} \
+            ${{ inputs.dbt_core_branch }} \
+            ${{ inputs.dbt_common_branch }}
+          cat dev-requirements.txt
 
       - name: Install python dependencies
         run: |
@@ -163,12 +205,6 @@ jobs:
           python -m pip install tox
           python -m pip --version
           tox --version
-
-      - name: Update dev_requirements.txt
-        if: inputs.dbt-core-branch != ''
-        run: |
-          pip install bumpversion
-          ./.github/scripts/update_dbt_core_branch.sh ${{ inputs.dbt-core-branch }}
 
       - name: Run tox (snowflake)
         if: matrix.adapter == 'snowflake'
@@ -180,6 +216,8 @@ jobs:
           SNOWFLAKE_TEST_OAUTH_REFRESH_TOKEN: ${{ secrets.SNOWFLAKE_TEST_OAUTH_REFRESH_TOKEN }}
           SNOWFLAKE_TEST_OAUTH_CLIENT_ID: ${{ secrets.SNOWFLAKE_TEST_OAUTH_CLIENT_ID }}
           SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET: ${{ secrets.SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET }}
+          SNOWFLAKE_TEST_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_TEST_PRIVATE_KEY }}
+          SNOWFLAKE_TEST_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_TEST_PRIVATE_KEY_PASSPHRASE }}
           SNOWFLAKE_TEST_ALT_DATABASE: ${{ secrets.SNOWFLAKE_TEST_ALT_DATABASE }}
           SNOWFLAKE_TEST_ALT_WAREHOUSE: ${{ secrets.SNOWFLAKE_TEST_ALT_WAREHOUSE }}
           SNOWFLAKE_TEST_DATABASE: ${{ secrets.SNOWFLAKE_TEST_DATABASE }}
@@ -190,22 +228,24 @@ jobs:
           DBT_TEST_USER_3: dbt_test_role_3
         run: tox -- --ddtrace
 
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: logs
-          path: ./logs
-
       - name: Get current date
         if: always()
         id: date
         run: echo "date=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT #no colons allowed for artifacts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logs_${{ matrix.python-version }}_${{ matrix.os }}_${{ matrix.adapter }}-${{ steps.date.outputs.date }}
+          path: ./logs
+          overwrite: true
+
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: integration_results_${{ matrix.python-version }}_${{ matrix.os }}_${{ matrix.adapter }}-${{ steps.date.outputs.date }}.csv
           path: integration_results.csv
+          overwrite: true
 
   require-label-comment:
     runs-on: ubuntu-latest

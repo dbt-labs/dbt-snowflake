@@ -1,6 +1,6 @@
 module.exports = ({ context }) => {
-  const defaultPythonVersion = "3.8";
-  const supportedPythonVersions = ["3.8", "3.9", "3.10", "3.11"];
+  const defaultPythonVersion = "3.9";
+  const supportedPythonVersions = ["3.9", "3.10", "3.11", "3.12"];
   const supportedAdapters = ["snowflake"];
 
   // if PR, generate matrix based on files changed and PR labels
@@ -44,7 +44,7 @@ module.exports = ({ context }) => {
 
             if (labels.includes("test macos") || testAllLabel) {
               include.push({
-                os: "macos-latest",
+                os: "macos-14",
                 adapter,
                 "python-version": pythonVersion,
               });
@@ -78,7 +78,7 @@ module.exports = ({ context }) => {
   // additionally include runs for all adapters, on macos and windows,
   // but only for the default python version
   for (const adapter of supportedAdapters) {
-    for (const operatingSystem of ["windows-latest", "macos-latest"]) {
+    for (const operatingSystem of ["windows-latest", "macos-14"]) {
       include.push({
         os: operatingSystem,
         adapter: adapter,

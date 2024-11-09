@@ -1,6 +1,7 @@
 import pytest
 from dbt.tests.util import run_dbt
 
+
 snapshots__snapshot_query_tag_sql = """
 {% snapshot snapshot_query_tag %}
     {{
@@ -14,15 +15,14 @@ snapshots__snapshot_query_tag_sql = """
     }}
     select 1 as id, 'blue' as color
 {% endsnapshot %}
-
 """
+
 
 models__table_model_query_tag_sql = """
 {{ config(materialized = 'table') }}
-
 select 1 as id
-
 """
+
 
 models__models_config_yml = """
 version: 2
@@ -31,24 +31,22 @@ models:
   - name: view_model_query_tag
     columns:
       - name: id
-        tests:
+        data_tests:
           - unique
-
 """
+
 
 models__view_model_query_tag_sql = """
 {{ config(materialized = 'view') }}
-
 select 1 as id
-
 """
+
 
 models__incremental_model_query_tag_sql = """
 {{ config(materialized = 'incremental', unique_key = 'id') }}
-
 select 1 as id
-
 """
+
 
 macros__check_tag_sql = """
 {% macro check_query_tag() %}
@@ -61,12 +59,12 @@ macros__check_tag_sql = """
   {% endif %}
 
 {% endmacro %}
-
 """
+
 
 seeds__seed_query_tag_csv = """id
 1
-"""
+""".strip()
 
 
 class TestQueryTag:
@@ -95,20 +93,14 @@ class TestQueryTag:
     def project_config_update(self, prefix):
         return {
             "config-version": 2,
-            "models": {
-                "tests": {"query_tag": prefix, "post-hook": "{{ check_tag() }}"},
-            },
-            "seeds": {
-                "tests": {"query_tag": prefix, "post-hook": "{{ check_tag() }}"},
-            },
-            "snapshots": {
-                "tests": {"query_tag": prefix, "post-hook": "{{ check_tag() }}"},
-            },
+            "models": {"query_tag": prefix, "post-hook": "{{ check_query_tag() }}"},
+            "seeds": {"query_tag": prefix, "post-hook": "{{ check_query_tag() }}"},
+            "snapshots": {"query_tag": prefix, "post-hook": "{{ check_query_tag() }}"},
             "tests": {"test": {"query_tag": prefix, "post-hook": "{{ check_query_tag() }}"}},
         }
 
     def build_all_with_query_tags(self, project, prefix):
-        run_dbt(["build", "--vars", '{{"check_tag": "{}"}}'.format(prefix)])
+        run_dbt(["build", "--vars", '{{"query_tag": "{}"}}'.format(prefix)])
 
     def test_snowflake_query_tag(self, project, prefix):
         self.build_all_with_query_tags(project, prefix)
@@ -130,7 +122,7 @@ class TestSnowflakeProfileQueryTag:
         return {"query_tag": prefix}
 
     def build_all_with_query_tags(self, project, prefix):
-        run_dbt(["build", "--vars", '{{"check_tag": "{}"}}'.format(prefix)])
+        run_dbt(["build", "--vars", '{{"query_tag": "{}"}}'.format(prefix)])
 
     def test_snowflake_query_tag(self, project, prefix):
         self.build_all_with_query_tags(project, prefix)

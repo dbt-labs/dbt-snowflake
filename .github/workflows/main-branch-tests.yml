@@ -41,7 +41,7 @@ jobs:
     steps:
     - name: Call CI workflow for ${{ matrix.branch }} branch
       id: trigger-step
-      uses: aurelien-baudet/workflow-dispatch@v2
+      uses: aurelien-baudet/workflow-dispatch@v4
       with:
         workflow: ${{ matrix.workflow_name }}
         ref: ${{ matrix.branch }}
