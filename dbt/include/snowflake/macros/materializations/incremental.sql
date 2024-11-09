@@ -20,7 +20,7 @@
 
        The append strategy can use a view because it will run a single INSERT statement.
 
-       When unique_key is none, the delete+insert strategy can use a view beacuse a
+       When unique_key is none, the delete+insert and microbatch strategies can use a view beacuse a
        single INSERT statement is run with no DELETES as part of the statement.
        Otherwise, play it safe by using a temporary table.
   #} */
@@ -32,10 +32,10 @@
     ) %}
   {% endif %}
 
-  {% if strategy == "delete+insert" and tmp_relation_type is not none and tmp_relation_type != "table" and unique_key is not none %}
+  {% if strategy in ["delete+insert", "microbatch"] and tmp_relation_type is not none and tmp_relation_type != "table" and unique_key is not none %}
     {% do exceptions.raise_compiler_error(
       "In order to maintain consistent results when `unique_key` is not none,
-      the `delete+insert` strategy only supports `table` for `tmp_relation_type` but "
+      the `" ~ strategy ~ "` strategy only supports `table` for `tmp_relation_type` but "
       ~ tmp_relation_type ~ " was specified."
       )
   %}
@@ -49,7 +49,7 @@
     {{ return("view") }}
   {% elif strategy in ("default", "merge", "append") %}
     {{ return("view") }}
-  {% elif strategy == "delete+insert" and unique_key is none %}
+  {% elif strategy in ["delete+insert", "microbatch"] and unique_key is none %}
     {{ return("view") }}
   {% else %}
     {{ return("table") }}
@@ -63,7 +63,17 @@
   {#-- Set vars --#}
   {%- set full_refresh_mode = (should_full_refresh()) -%}
   {%- set language = model['language'] -%}
-  {% set target_relation = this %}
+
+  {%- set identifier = this.name -%}
+
+  {%- set target_relation = api.Relation.create(
+	identifier=identifier,
+	schema=schema,
+	database=database,
+	type='table',
+	table_format=config.get('table_format', 'default')
+    ) -%}
+
   {% set existing_relation = load_relation(this) %}
 
   {#-- The temp relation will be a view (faster) or temp table, depending on upsert/merge strategy --#}
@@ -90,10 +100,20 @@
     {%- call statement('main', language=language) -%}
       {{ create_table_as(False, target_relation, compiled_code, language) }}
     {%- endcall -%}
+
   {% elif full_refresh_mode %}
+    {% if target_relation.needs_to_drop(existing_relation) %}
+      {{ drop_relation_if_exists(existing_relation) }}
+    {% endif %}
     {%- call statement('main', language=language) -%}
       {{ create_table_as(False, target_relation, compiled_code, language) }}
     {%- endcall -%}
+
+  {% elif target_relation.table_format != existing_relation.table_format %}
+    {% do exceptions.raise_compiler_error(
+        "Unable to alter incremental model `" ~ target_relation.identifier  ~ "` to '" ~ target_relation.table_format ~ " table format due to Snowflake limitation. Please execute with --full-refresh to drop the table and recreate in new table format.'"
+      )
+    %}
 
   {% else %}
     {#-- Create the temp relation, either as a view or as a temp table --#}
