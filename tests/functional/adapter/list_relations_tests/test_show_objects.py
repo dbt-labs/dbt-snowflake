@@ -3,6 +3,8 @@ from typing import List
 
 import pytest
 
+from pathlib import Path
+
 from dbt.adapters.factory import get_adapter_by_type
 from dbt.adapters.snowflake import SnowflakeRelation
 
@@ -41,8 +43,32 @@ select * from {{ ref('my_seed') }}
 """
 )
 
+_MODEL_ICEBERG = """
+{{
+  config(
+    materialized = "table",
+    table_format="iceberg",
+    external_volume="s3_iceberg_snow",
+  )
+}}
 
-class TestShowObjects:
+select 1
+"""
+
+
+class ShowObjectsBase:
+    @staticmethod
+    def list_relations_without_caching(project) -> List[SnowflakeRelation]:
+        my_adapter = get_adapter_by_type("snowflake")
+        schema = my_adapter.Relation.create(
+            database=project.database, schema=project.test_schema, identifier=""
+        )
+        with get_connection(my_adapter):
+            relations = my_adapter.list_relations_without_caching(schema)
+        return relations
+
+
+class TestShowObjects(ShowObjectsBase):
     views: int = 10
     tables: int = 10
     dynamic_tables: int = 10
@@ -66,16 +92,6 @@ class TestShowObjects:
         run_dbt(["seed"])
         run_dbt(["run"])
 
-    @staticmethod
-    def list_relations_without_caching(project) -> List[SnowflakeRelation]:
-        my_adapter = get_adapter_by_type("snowflake")
-        schema = my_adapter.Relation.create(
-            database=project.database, schema=project.test_schema, identifier=""
-        )
-        with get_connection(my_adapter):
-            relations = my_adapter.list_relations_without_caching(schema)
-        return relations
-
     def test_list_relations_without_caching(self, project):
         relations = self.list_relations_without_caching(project)
         assert len([relation for relation in relations if relation.is_view]) == self.views
@@ -87,3 +103,25 @@ class TestShowObjects:
             len([relation for relation in relations if relation.is_dynamic_table])
             == self.dynamic_tables
         )
+
+
+class TestShowIcebergObjects(ShowObjectsBase):
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"flags": {"enable_iceberg_materializations": True}}
+
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {"my_model.sql": _MODEL_ICEBERG}
+
+    def test_quoting_ignore_flag_doesnt_break_iceberg_metadata(self, project):
+        """https://github.com/dbt-labs/dbt-snowflake/issues/1227
+
+        The list relations function involves a metadata sub-query. Regardless of
+        QUOTED_IDENTIFIERS_IGNORE_CASE, this function will fail without proper
+        normalization within the encapsulating python function after the macro invocation
+        returns. This test verifies that normalization is working.
+        """
+        run_dbt(["run"])
+
+        self.list_relations_without_caching(project)
