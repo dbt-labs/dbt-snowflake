@@ -167,7 +167,7 @@ jobs:
       archive_name: ${{ needs.build-release.outputs.archive-name }}
 
   pypi-release:
-    name: "PyPI release"
+    name: PyPI Release
     if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
     runs-on: ubuntu-latest
     needs: build-release
@@ -179,8 +179,7 @@ jobs:
       # see https://github.com/marketplace/actions/pypi-publish
       id-token: write
     steps:
-      - name: "Publish to PyPI"
-        uses: dbt-labs/dbt-adapters/.github/actions/publish-pypi@main
+      - uses: dbt-labs/dbt-adapters/.github/actions/publish-pypi@main
         with:
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
           archive-name: ${{ needs.build-release.outputs.archive-name }}
