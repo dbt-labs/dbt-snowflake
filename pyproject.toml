@@ -45,6 +45,7 @@ Changelog = "https://github.com/dbt-labs/dbt-snowflake/blob/main/CHANGELOG.md"
 
 [tool.pytest]
 testpaths = ["tests/functional", "tests/unit"]
+addopts = "-v -n auto"
 color = true
 filterwarnings = [
     "ignore:.*'soft_unicode' has been renamed to 'soft_str'*:DeprecationWarning",
