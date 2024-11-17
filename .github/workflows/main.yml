@@ -38,52 +38,81 @@ defaults:
 jobs:
   code-quality:
     name: code-quality
+
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the repository
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - uses: pre-commit/action@v3.0.1
+
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
 
   unit:
     name: unit test / python ${{ matrix.python-version }}
+
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the repository
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
       - uses: pypa/hatch@install
       - run: hatch run unit-tests
 
   build:
     name: build packages
+
     runs-on: ubuntu-latest
+
     outputs:
       is_alpha: ${{ steps.check-is-alpha.outputs.is_alpha }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the repository
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - run: hatch build
-      - run: hatch run build:check-all
-      - id: check-is-alpha
+
+      - uses: pypa/hatch@install
+
+      - name: Build distributions
+        run: hatch build
+
+      - name: Check distribution descriptions
+        run: hatch run build:check-all
+
+      - name: Check if this is an alpha version
+        id: check-is-alpha
         run: |
           export is_alpha=0
           if [[ "$(ls -lh dist/)" == *"a1"* ]]; then export is_alpha=1; fi
           echo "is_alpha=$is_alpha" >> $GITHUB_OUTPUT
+
       - uses: actions/upload-artifact@v4
         with:
           name: dist
@@ -92,22 +121,34 @@ jobs:
 
   test-build:
     name: verify packages / python ${{ matrix.python-version }} / ${{ matrix.os }} / ${{ matrix.dist-type }}
+
     if: needs.build.outputs.is_alpha == 0
+
     needs: build
+
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-14, windows-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12']
         dist-type: ['whl', 'gz']
+
     steps:
-      - uses: actions/setup-python@v5
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
       - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
-      - run: find ./dist/*.${{ matrix.dist-type }} -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
-      - run: python -c "import dbt.adapters.snowflake"
+
+      - name: Install ${{ matrix.dist-type }} distributions
+        run: find ./dist/*.${{ matrix.dist-type }} -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
+
+      - name: Check ${{ matrix.dist-type }} distributions
+        run: |
+          python -c "import dbt.adapters.snowflake"

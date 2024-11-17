@@ -119,6 +119,7 @@ jobs:
               - '.github/**/*.sh'
               - 'dbt/**'
               - 'tests/**'
+              - 'hatch.toml'
               - 'pyproject.toml'
               - '*.py'
       - name: Generate integration test matrix
