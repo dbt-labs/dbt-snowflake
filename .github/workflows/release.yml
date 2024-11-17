@@ -169,8 +169,8 @@ jobs:
   pypi-release:
     name: PyPI Release
     if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    runs-on: ubuntu-latest
     needs: build-release
+    runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.deploy-to }}
       url: ${{ vars.PYPI_PROJECT_URL }}
