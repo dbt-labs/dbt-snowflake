@@ -154,6 +154,18 @@ jobs:
           path: dist/
           retention-days: 3
 
+  github-release:
+    name: GitHub Release
+    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
+    needs: [build-release, release-prep]
+    uses: dbt-labs/dbt-adapters/.github/workflows/github-release.yml@main
+    with:
+      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
+      version_number: ${{ inputs.version_number }}
+      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
+      test_run: ${{ inputs.test_run }}
+      archive_name: ${{ needs.build-release.outputs.archive-name }}
+
   pypi-release:
     name: "PyPI release"
     if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
@@ -172,18 +184,6 @@ jobs:
         with:
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
           archive-name: ${{ needs.build-release.outputs.archive-name }}
-
-  github-release:
-    name: GitHub Release
-    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    needs: [build-release, release-prep]
-    uses: dbt-labs/dbt-adapters/.github/workflows/github-release.yml@main
-    with:
-      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-      version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
-      test_run: ${{ inputs.test_run }}
-      archive_name: ${{ needs.build-release.outputs.archive-name }}
 
   docker-release:
     name: "Docker Release"
