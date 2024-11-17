@@ -76,7 +76,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: pypa/hatch@install
+      - name: Install python dependencies
+        uses: pypa/hatch@install
+
       - run: hatch run unit-tests
 
   build:
@@ -102,6 +104,9 @@ jobs:
 
       - name: Build distributions
         run: hatch build
+
+      - name: Show distribution contents
+        run: ls -lh dist/
 
       - name: Check distribution descriptions
         run: hatch run build:check-all
@@ -146,8 +151,12 @@ jobs:
           name: dist
           path: dist/
 
+      - name: Show distributions
+        run: ls -lh dist/
+
       - name: Install ${{ matrix.dist-type }} distributions
-        run: find ./dist/*.${{ matrix.dist-type }} -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
+        run: |
+          find ./dist/*.${{ matrix.dist-type }} -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/
 
       - name: Check ${{ matrix.dist-type }} distributions
         run: |
