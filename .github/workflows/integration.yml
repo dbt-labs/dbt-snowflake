@@ -132,9 +132,9 @@ jobs:
             const matrix = script({ context })
             console.log(matrix)
             return matrix
-
   test:
     name: ${{ matrix.adapter }} / python ${{ matrix.python-version }} / ${{ matrix.os }}
+
     # run if not a PR from a forked repository or has a label to mark as safe to test
     # also checks that the matrix generated is not empty
     if: >-
@@ -184,6 +184,11 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Update Adapters and Core branches (update hatch.toml)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           ./.github/scripts/update_dev_dependency_branches.sh \
@@ -227,7 +232,8 @@ jobs:
       pull-requests: write
 
     steps:
-      - if: >-
+      - name: Needs permission PR comment
+        if: >-
           needs.test.result == 'skipped' &&
           github.event_name == 'pull_request_target' &&
           github.event.pull_request.head.repo.full_name != github.repository
