@@ -355,46 +355,17 @@ jobs:
       - generate-changelog
       - bump-version
 
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - name: "Checkout ${{ github.event.repository.name }}@${{ needs.release-branch.outputs.name }}"
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release-branch.outputs.name }}
-
-      - name: Setup postgres
-        run: psql -f ./scripts/setup_test_database.sql
-        env:
-          PGHOST: localhost
-          PGPORT: 5432
-          PGUSER: postgres
-          PGPASSWORD: postgres
-          PGDATABASE: postgres
+          ref: ${{ needs.release-branch.outputs.name }}\
 
       - name: "Set up `hatch`"
         uses: dbt-labs/dbt-adapters/.github/actions/setup-hatch@main
 
       - name: "Run integration tests"
         run: hatch run integration-tests
-        env:
-          POSTGRES_TEST_HOST: localhost
-          POSTGRES_TEST_PORT: 5432
-          POSTGRES_TEST_USER: root
-          POSTGRES_TEST_PASS: password
-          POSTGRES_TEST_DATABASE: dbt
-          POSTGRES_TEST_THREADS: 4
 
   merge-release-branch:
     runs-on: ubuntu-latest
