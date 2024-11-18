@@ -9,12 +9,8 @@ description = "The Snowflake adapter plugin for dbt"
 readme = "README.md"
 keywords = ["dbt", "adapter", "adapters", "database", "elt", "dbt-core", "dbt Core", "dbt Cloud", "dbt Labs", "snowflake"]
 requires-python = ">=3.9.0"
-authors = [
-    { name = "dbt Labs", email = "info@dbtlabs.com" },
-]
-maintainers = [
-    { name = "dbt Labs", email = "info@dbtlabs.com" },
-]
+authors = [{ name = "dbt Labs", email = "info@dbtlabs.com" }]
+maintainers = [{ name = "dbt Labs", email = "info@dbtlabs.com" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: Apache Software License",
