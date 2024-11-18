@@ -18,6 +18,7 @@ class TestBasic:
         my_models = {
             "my_dynamic_table.sql": models.DYNAMIC_TABLE,
             "my_dynamic_table_downstream.sql": models.DYNAMIC_TABLE_DOWNSTREAM,
+            "my_dynamic_transient_table.sql": models.DYNAMIC_TRANSIENT_TABLE,
         }
         if self.iceberg:
             my_models.update(
@@ -36,6 +37,9 @@ class TestBasic:
         run_dbt(["run", "--full-refresh"])
         assert query_relation_type(project, "my_dynamic_table") == "dynamic_table"
         assert query_relation_type(project, "my_dynamic_table_downstream") == "dynamic_table"
+        assert (
+            query_relation_type(project, "my_dynamic_transient_table") == "dynamic_table_transient"
+        )
         if self.iceberg:
             assert query_relation_type(project, "my_dynamic_iceberg_table") == "dynamic_table"
 

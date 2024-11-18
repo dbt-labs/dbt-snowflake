@@ -40,7 +40,7 @@
 --      A valid DDL statement which will result in a new dynamic standard table.
 -#}
 
-    {%- set materialization_prefix = relation.get_ddl_prefix_for_create(config.model.config, False) -%}
+    {%- set materialization_prefix = relation.get_ddl_prefix_for_create(config.model.config, False, False) -%}
 
     create or replace {{ materialization_prefix }} dynamic table {{ relation }}
         target_lag = '{{ dynamic_table.target_lag }}'

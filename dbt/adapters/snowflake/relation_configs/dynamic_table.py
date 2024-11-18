@@ -63,6 +63,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     catalog: SnowflakeCatalogConfig
     refresh_mode: Optional[RefreshMode] = RefreshMode.default()
     initialize: Optional[Initialize] = Initialize.default()
+    transient: Optional[bool] = False
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> Self:
@@ -78,6 +79,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "catalog": SnowflakeCatalogConfig.from_dict(config_dict["catalog"]),
             "refresh_mode": config_dict.get("refresh_mode"),
             "initialize": config_dict.get("initialize"),
+            "transient": config_dict.get("transient"),
         }
 
         return super().from_dict(kwargs_dict)
@@ -92,6 +94,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "target_lag": relation_config.config.extra.get("target_lag"),
             "snowflake_warehouse": relation_config.config.extra.get("snowflake_warehouse"),
             "catalog": SnowflakeCatalogConfig.parse_relation_config(relation_config),
+            "transient": relation_config.config.extra.get("transient", False),
         }
 
         if refresh_mode := relation_config.config.extra.get("refresh_mode"):
@@ -105,7 +108,6 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:
         dynamic_table: "agate.Row" = relation_results["dynamic_table"].rows[0]
-
         config_dict = {
             "name": dynamic_table.get("name"),
             "schema_name": dynamic_table.get("schema_name"),

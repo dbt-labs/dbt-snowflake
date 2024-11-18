@@ -16,6 +16,7 @@ def query_relation_type(project, name: str) -> Optional[str]:
         select
             case table_type
                 when 'BASE TABLE' then iff(is_dynamic = 'YES', 'dynamic_table', 'table')
+                                    || iff(is_transient = 'YES', '_transient', '')
                 when 'VIEW' then 'view'
                 when 'EXTERNAL TABLE' then 'external_table'
             end as relation_type
@@ -25,7 +26,6 @@ def query_relation_type(project, name: str) -> Optional[str]:
         and table_catalog like '{relation.database.upper()}'
     """
     results = project.run_sql(sql, fetch="all")
-
     assert len(results) > 0, f"Relation {relation} not found"
     assert len(results) == 1, f"Multiple relations found"
 
