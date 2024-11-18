@@ -135,11 +135,10 @@
 
 {% endmacro %}
 
-{% macro snowflake__list_relations_without_caching(schema_relation) %}
+{% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
 
-  {%- set max_results_per_iter = adapter.config.flags.get('list_relations_per_page', 10000) -%}
-  {%- set max_iter = adapter.config.flags.get('list_relations_page_limit', 10) -%}
-
+  {%- set max_results_per_iter = adapter.config.flags.get('list_relations_per_page', max_results_per_iter) -%}
+  {%- set max_iter = adapter.config.flags.get('list_relations_page_limit', max_iter) -%}
   {%- set max_total_results = max_results_per_iter * max_iter -%}
   {%- set sql -%}
     {% if schema_relation is string %}
@@ -151,7 +150,7 @@
     {# -- Gated for performance reason. If you don't want Iceberg, you shouldn't pay the
        -- latency penalty. #}
     {% if adapter.behavior.enable_iceberg_materializations.no_warn %}
-      select all_objects.*, is_iceberg as "is_iceberg"
+      select all_objects.*, is_iceberg
       from table(result_scan(last_query_id(-1))) all_objects
       left join INFORMATION_SCHEMA.tables as all_tables
         on all_tables.table_name = all_objects."name"
