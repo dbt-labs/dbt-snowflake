@@ -85,11 +85,6 @@ def snowflake_private_key(private_key: RSAPrivateKey) -> bytes:
 
 
 @dataclass
-class SnowflakeAdapterResponse(AdapterResponse):
-    query_id: str = ""
-
-
-@dataclass
 class SnowflakeCredentials(Credentials):
     account: str
     user: Optional[str] = None
@@ -447,17 +442,17 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         logger.debug("Cancel query '{}': {}".format(connection_name, res))
 
     @classmethod
-    def get_response(cls, cursor) -> SnowflakeAdapterResponse:
+    def get_response(cls, cursor) -> AdapterResponse:
         code = cursor.sqlstate
 
         if code is None:
             code = "SUCCESS"
-
-        return SnowflakeAdapterResponse(
+        query_id = str(cursor.sfqid) if cursor.sfqid is not None else None
+        return AdapterResponse(
             _message="{} {}".format(code, cursor.rowcount),
             rows_affected=cursor.rowcount,
             code=code,
-            query_id=cursor.sfqid,
+            query_id=query_id,
         )
 
     # disable transactional logic by default on Snowflake
