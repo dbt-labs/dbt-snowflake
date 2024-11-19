@@ -111,9 +111,10 @@
 
       {%- if loop.index == max_iter -%}
         {%- set msg -%}
-           dbt will list a maximum of {{ max_total_results }} objects in schema {{ schema_relation }}.
-           Your schema exceeds this limit. Please contact support@getdbt.com for troubleshooting tips,
-           or review and reduce the number of objects contained.
+            dbt is currently configured to list a maximum of {{ max_total_results }} objects per schema.
+            {{ schema_relation }} exceeds this limit. If this is expected, you may configure this limit
+            by setting list_relations_per_page and list_relations_page_limit in your project flags.
+            It is recommended to start by increasing list_relations_page_limit to something more than the default of 10.
         {%- endset -%}
 
         {% do exceptions.raise_compiler_error(msg) %}
@@ -135,6 +136,9 @@
 {% endmacro %}
 
 {% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
+
+  {%- set max_results_per_iter = adapter.config.flags.get('list_relations_per_page', max_results_per_iter) -%}
+  {%- set max_iter = adapter.config.flags.get('list_relations_page_limit', max_iter) -%}
   {%- set max_total_results = max_results_per_iter * max_iter -%}
   {%- set sql -%}
     {% if schema_relation is string %}
