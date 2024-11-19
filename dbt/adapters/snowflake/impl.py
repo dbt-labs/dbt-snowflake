@@ -92,6 +92,7 @@ class SnowflakeAdapter(SQLAdapter):
                     "benefits only those actively using it, we've made this behavior opt-in to "
                     "prevent unnecessary latency for other users."
                 ),
+                "docs_url": "https://docs.getdbt.com/reference/resource-configs/snowflake-configs#iceberg-table-format",
             }
         ]
 
