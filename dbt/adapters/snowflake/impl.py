@@ -92,7 +92,18 @@ class SnowflakeAdapter(SQLAdapter):
                     "benefits only those actively using it, we've made this behavior opt-in to "
                     "prevent unnecessary latency for other users."
                 ),
-            }
+            },
+            {
+                "name": "default_dynamic_tables_to_transient",
+                "default": False,
+                "description": (
+                    "Standard Tables are created as transient by default. This can be overridden "
+                    "by setting transient: false in the model config. This saves on storages costs "
+                    "and for most users is the right decision. We are changing the default behavior for "
+                    "dynamic tables to align with this."
+                    "Read more: https://docs.getdbt.com/reference/resource-configs/snowflake-configs#transient-tables"
+                ),
+            },
         ]
 
     @classmethod

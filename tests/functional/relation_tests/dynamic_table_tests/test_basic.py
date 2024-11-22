@@ -50,3 +50,18 @@ class TestBasicIcebergOn(TestBasic):
     @pytest.fixture(scope="class")
     def project_config_update(self):
         return {"flags": {"enable_iceberg_materializations": True}}
+
+
+class TestDefaultTransient(TestBasic):
+
+    @pytest.fixture(scope="class")
+    def project_config_update(self):
+        return {"flags": {"default_dynamic_tables_to_transient": True}}
+
+    def test_dynamic_table_full_refresh(self, project):
+        run_dbt(["run", "--full-refresh"])
+        assert (
+            query_relation_type(project, "my_dynamic_transient_table") == "dynamic_table_transient"
+        )
+        assert query_relation_type(project, "my_dynamic_table_downstream") == "dynamic_table"
+        assert query_relation_type(project, "my_dynamic_table") == "dynamic_table_transient"

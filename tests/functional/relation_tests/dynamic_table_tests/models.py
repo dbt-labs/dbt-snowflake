@@ -35,6 +35,7 @@ DYNAMIC_TABLE_DOWNSTREAM = """
     snowflake_warehouse='DBT_TESTING',
     target_lag='DOWNSTREAM',
     refresh_mode='INCREMENTAL',
+    transient=False,
 ) }}
 select * from {{ ref('my_seed') }}
 """
