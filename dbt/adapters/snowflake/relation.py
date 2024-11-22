@@ -56,7 +56,6 @@ class SnowflakeRelation(BaseRelation):
             }
         )
     )
-    transient: Optional[bool] = None
 
     @property
     def is_dynamic_table(self) -> bool:
