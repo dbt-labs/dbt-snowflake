@@ -1,6 +1,0 @@
-kind: Under the Hood
-body: Improve memory efficiency of the process_results() override.
-time: 2024-05-17T14:37:43.7414-04:00
-custom:
-  Author: peterallenwebb
-  Issue: "1053"

@@ -60,8 +60,10 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.handle = mock.MagicMock(spec=snowflake_connector.SnowflakeConnection)
         self.cursor = self.handle.cursor.return_value
         self.mock_execute = self.cursor.execute
+        self.mock_execute.return_value = mock.MagicMock(sfqid="42")
         self.patcher = mock.patch("dbt.adapters.snowflake.connections.snowflake.connector.connect")
         self.snowflake = self.patcher.start()
+        self.snowflake.connect.cursor.return_value = mock.MagicMock(sfqid="42")
 
         # Create the Manifest.state_check patcher
         @mock.patch("dbt.parser.manifest.ManifestLoader.build_manifest_state_check")
@@ -90,7 +92,6 @@ class TestSnowflakeAdapter(unittest.TestCase):
         self.qh_patch = mock.patch.object(self.adapter.connections.query_header, "add")
         self.mock_query_header_add = self.qh_patch.start()
         self.mock_query_header_add.side_effect = lambda q: "/* dbt */\n{}".format(q)
-
         self.adapter.acquire_connection()
         inject_adapter(self.adapter, SnowflakePlugin)
 
