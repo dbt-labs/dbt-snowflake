@@ -1,7 +1,0 @@
-kind: Features
-body: 'Allow configurable pagination on list_relations_without_caching to support
-  users with a large number of objects per schema'
-time: 2024-11-07T17:03:07.826352-05:00
-custom:
-  Author: mikealfare
-  Issue: "1234"
