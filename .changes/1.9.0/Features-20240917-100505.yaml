@@ -1,6 +1,0 @@
-kind: Features
-body: Add support for Iceberg table format in Dynamic Tables
-time: 2024-09-17T10:05:05.609859-04:00
-custom:
-  Author: mikealfare
-  Issue: "1183"
