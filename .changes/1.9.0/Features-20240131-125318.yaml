@@ -1,6 +1,0 @@
-kind: Features
-body: Support refresh_mode and initialize parameters for dynamic tables
-time: 2024-01-31T12:53:18.111616Z
-custom:
-  Author: HenkvanDyk,mikealfare
-  Issue: "1076"
