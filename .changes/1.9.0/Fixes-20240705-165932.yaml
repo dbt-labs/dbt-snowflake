@@ -1,6 +1,0 @@
-kind: Fixes
-body: Use show ... starts with instead of show ... like in _show_object_metadata
-time: 2024-07-05T16:59:32.087555+01:00
-custom:
-    Author: aranke
-    Issue: "1102"

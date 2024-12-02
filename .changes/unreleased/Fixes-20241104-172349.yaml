@@ -1,6 +1,0 @@
-kind: Fixes
-body: Iceberg quoting ignore fix.
-time: 2024-11-04T17:23:49.706297-08:00
-custom:
-    Author: versusfacit
-    Issue: "1227"

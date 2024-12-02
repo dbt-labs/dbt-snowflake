@@ -1,6 +1,0 @@
-kind: Under the Hood
-body: Change behavior flag semantics to log iceberg flag warnings..
-time: 2024-09-17T18:11:47.525026-07:00
-custom:
-    Author: versusfacit
-    Issue: "321"
