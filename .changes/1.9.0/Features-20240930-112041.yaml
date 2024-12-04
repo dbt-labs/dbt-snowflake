@@ -1,6 +1,0 @@
-kind: Features
-body: Add support for all on_schema_change incremental model strategies.
-time: 2024-09-30T11:20:41.99589-07:00
-custom:
-    Author: versusfacit
-    Issue: "321"

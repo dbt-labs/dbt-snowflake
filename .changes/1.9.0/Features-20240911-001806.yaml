@@ -1,6 +1,0 @@
-kind: Features
-body: Add support for Iceberg table materializations.
-time: 2024-09-11T00:18:06.780586-07:00
-custom:
-    Author: versusfacit
-    Issue: "321"

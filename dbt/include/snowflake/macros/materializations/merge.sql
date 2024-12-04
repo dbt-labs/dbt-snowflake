@@ -58,10 +58,10 @@
 
     {#-- Add additional incremental_predicates to filter for batch --#}
     {% if model.config.get("__dbt_internal_microbatch_event_time_start") -%}
-        {% do incremental_predicates.append("DBT_INTERNAL_TARGET." ~ model.config.event_time ~ " >= TIMESTAMP '" ~ model.config.__dbt_internal_microbatch_event_time_start ~ "'") %}
+        {% do incremental_predicates.append("DBT_INTERNAL_TARGET." ~ model.config.event_time ~ " >= to_timestamp_tz('" ~ model.config.__dbt_internal_microbatch_event_time_start ~ "')") %}
     {% endif %}
     {% if model.config.__dbt_internal_microbatch_event_time_end -%}
-        {% do incremental_predicates.append("DBT_INTERNAL_TARGET." ~ model.config.event_time ~ " < TIMESTAMP '" ~ model.config.__dbt_internal_microbatch_event_time_end ~ "'") %}
+        {% do incremental_predicates.append("DBT_INTERNAL_TARGET." ~ model.config.event_time ~ " < to_timestamp_tz('" ~ model.config.__dbt_internal_microbatch_event_time_end ~ "')") %}
     {% endif %}
     {% do arg_dict.update({'incremental_predicates': incremental_predicates}) %}
 

@@ -1,6 +1,0 @@
-kind: Fixes
-body: Dynamic Iceberg table base_location_subpath generation fix.
-time: 2024-10-08T12:26:35.521308-07:00
-custom:
-    Author: versusfacit
-    Issue: "1200"
