@@ -1,0 +1,6 @@
+kind: Under the Hood
+body: Use new `batch` context variables over `node.config.__dbt_internal` ones
+time: 2024-12-05T14:40:36.373637-05:00
+custom:
+  Author: michelleark
+  Issue: "1263"
