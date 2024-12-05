@@ -121,7 +121,7 @@ defaults:
 jobs:
   release-prep:
     name: "Release prep: generate changelog, bump version"
-    uses: dbt-labs/dbt-snowflake/.github/workflows/release_prep_hatch.yml@main
+    uses: ./.github/workflows/release_prep_hatch.yml
     with:
       branch: ${{ inputs.branch }}
       version: ${{ inputs.version }}
