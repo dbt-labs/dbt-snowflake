@@ -80,7 +80,6 @@
   {%- set unique_key = config.get('unique_key') -%}
   {% set incremental_strategy = config.get('incremental_strategy') or 'default' %}
   {% set tmp_relation_type = dbt_snowflake_get_tmp_relation_type(incremental_strategy, unique_key, language) %}
-
   {% set tmp_relation = make_temp_relation(this).incorporate(type=tmp_relation_type) %}
 
   {% set grant_config = config.get('grants') %}
