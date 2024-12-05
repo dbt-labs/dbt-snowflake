@@ -81,8 +81,7 @@
   {% set incremental_strategy = config.get('incremental_strategy') or 'default' %}
   {% set tmp_relation_type = dbt_snowflake_get_tmp_relation_type(incremental_strategy, unique_key, language) %}
 
-  {% set tmp_relation_suffix = '__dbt_tmp' if not model.batch else '__dbt_tmp_' ~ model.batch.id %}
-  {% set tmp_relation = make_temp_relation(this, suffix=tmp_relation_suffix).incorporate(type=tmp_relation_type) %}
+  {% set tmp_relation = make_temp_relation(this).incorporate(type=tmp_relation_type) %}
 
   {% set grant_config = config.get('grants') %}
 
