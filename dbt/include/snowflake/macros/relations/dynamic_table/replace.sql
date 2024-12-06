@@ -40,7 +40,15 @@
 --      A valid DDL statement which will result in a new dynamic standard table.
 -#}
 
-    create or replace dynamic table {{ relation }}
+    {%- if adapter.behavior.default_dynamic_tables_to_transient -%}
+        {%- set transient = True -%}
+    {%- else -%}
+        {%- set transient = False -%}
+    {%- endif -%}
+
+    {%- set materialization_prefix = relation.get_ddl_prefix_for_create(config.model.config, False, transient) -%}
+
+    create or replace {{ materialization_prefix }} dynamic table {{ relation }}
         target_lag = '{{ dynamic_table.target_lag }}'
         warehouse = {{ dynamic_table.snowflake_warehouse }}
         {{ optional('refresh_mode', dynamic_table.refresh_mode) }}

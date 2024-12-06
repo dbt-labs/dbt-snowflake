@@ -147,7 +147,9 @@ class SnowflakeRelation(BaseRelation):
         """
         return self.type in self.renameable_relations and not self.is_iceberg_format
 
-    def get_ddl_prefix_for_create(self, config: RelationConfig, temporary: bool) -> str:
+    def get_ddl_prefix_for_create(
+        self, config: RelationConfig, temporary: bool, transient_default: bool = True
+    ) -> str:
         """
         This macro renders the appropriate DDL prefix during the create_table_as
         macro. It decides based on mutually exclusive table configuration options:
@@ -187,7 +189,7 @@ class SnowflakeRelation(BaseRelation):
 
         # Always supply transient on table create DDL unless user specifically sets
         # transient to false or unset. Might as well update the object attribute too!
-        elif transient_explicitly_set_true or config.get("transient", True):
+        elif transient_explicitly_set_true or config.get("transient", transient_default):
             return "transient"
         else:
             return ""

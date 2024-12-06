@@ -105,7 +105,6 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:
         dynamic_table: "agate.Row" = relation_results["dynamic_table"].rows[0]
-
         config_dict = {
             "name": dynamic_table.get("name"),
             "schema_name": dynamic_table.get("schema_name"),

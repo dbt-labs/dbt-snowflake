@@ -17,12 +17,25 @@ select * from {{ ref('my_seed') }}
 """
 
 
+DYNAMIC_TRANSIENT_TABLE = """
+{{ config(
+    materialized='dynamic_table',
+    snowflake_warehouse='DBT_TESTING',
+    target_lag='2 minutes',
+    refresh_mode='INCREMENTAL',
+    transient=True,
+) }}
+select * from {{ ref('my_seed') }}
+"""
+
+
 DYNAMIC_TABLE_DOWNSTREAM = """
 {{ config(
     materialized='dynamic_table',
     snowflake_warehouse='DBT_TESTING',
     target_lag='DOWNSTREAM',
     refresh_mode='INCREMENTAL',
+    transient=False,
 ) }}
 select * from {{ ref('my_seed') }}
 """

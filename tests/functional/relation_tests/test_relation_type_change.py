@@ -53,8 +53,8 @@ class Scenario:
 
 relations = [
     Model(models.VIEW, "view"),
-    Model(models.TABLE, "table", "default"),
-    Model(models.INCREMENTAL_TABLE, "table", "default", is_incremental=True),
+    Model(models.TABLE, "table_transient", "default"),
+    Model(models.INCREMENTAL_TABLE, "table_transient", "default", is_incremental=True),
     Model(models.DYNAMIC_TABLE, "dynamic_table", "default"),
     Model(models.ICEBERG_TABLE, "table", "iceberg"),
     Model(models.INCREMENTAL_ICEBERG_TABLE, "table", "iceberg", is_incremental=True),
