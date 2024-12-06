@@ -1,6 +1,0 @@
-kind: Fixes
-body: Update relation caching to correctly identify dynamic tables, accounting for Snowflake's `2024_03` bundle
-time: 2024-05-16T17:43:37.336858-04:00
-custom:
-  Author: mikealfare
-  Issue: "1016"

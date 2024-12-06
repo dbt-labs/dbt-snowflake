@@ -4,7 +4,7 @@ from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, 
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
-from dbt.adapters.snowflake.catalog import SnowflakeExternalCatalogIntegration
+from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
@@ -26,6 +26,7 @@ from dbt.adapters.snowflake.relation_configs import (
     SnowflakeRelationType,
     TableFormat,
 )
+
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
@@ -59,7 +60,6 @@ class SnowflakeAdapter(SQLAdapter):
     Relation = SnowflakeRelation
     Column = SnowflakeColumn
     ConnectionManager = SnowflakeConnectionManager
-    ExternalCatalogIntegration = SnowflakeExternalCatalogIntegration
 
     AdapterSpecificConfigs = SnowflakeConfig
 
@@ -77,6 +77,7 @@ class SnowflakeAdapter(SQLAdapter):
             Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadataBatch: CapabilitySupport(support=Support.Full),
             Capability.GetCatalogForSingleRelation: CapabilitySupport(support=Support.Full),
+            Capability.MicrobatchConcurrency: CapabilitySupport(support=Support.Full),
         }
     )
 
@@ -92,6 +93,7 @@ class SnowflakeAdapter(SQLAdapter):
                     "benefits only those actively using it, we've made this behavior opt-in to "
                     "prevent unnecessary latency for other users."
                 ),
+                "docs_url": "https://docs.getdbt.com/reference/resource-configs/snowflake-configs#iceberg-table-format",
             }
         ]
 
@@ -256,13 +258,20 @@ class SnowflakeAdapter(SQLAdapter):
             # if the schema doesn't exist, we just want to return.
             # Alternatively, we could query the list of schemas before we start
             # and skip listing the missing ones, which sounds expensive.
-            if "Object does not exist" in str(exc):
+            # "002043 (02000)" is error code for "object does not exist or is not found"
+            # The error message text may vary across languages, but the error code is expected to be more stable
+            if "002043 (02000)" in str(exc):
                 return []
             raise
 
         # this can be collapsed once Snowflake adds is_iceberg to show objects
         columns = ["database_name", "schema_name", "name", "kind", "is_dynamic"]
         if self.behavior.enable_iceberg_materializations.no_warn:
+            # The QUOTED_IDENTIFIERS_IGNORE_CASE setting impacts column names like
+            # is_iceberg which is created by dbt, but it does not affect the case
+            # of column values in Snowflake's SHOW OBJECTS query! This
+            # normalization step ensures metadata queries are handled consistently.
+            schema_objects = schema_objects.rename(column_names={"IS_ICEBERG": "is_iceberg"})
             columns.append("is_iceberg")
 
         return [self._parse_list_relations_result(obj) for obj in schema_objects.select(columns)]
@@ -421,3 +430,18 @@ CALL {proc_name}();
     def debug_query(self):
         """Override for DebugTask method"""
         self.execute("select 1 as id")
+
+    @classmethod
+    def _get_adapter_specific_run_info(cls, config: RelationConfig) -> Dict[str, Any]:
+        table_format: Optional[str] = None
+        if (
+            config
+            and hasattr(config, "_extra")
+            and (relation_format := config._extra.get("table_format"))
+        ):
+            table_format = relation_format
+
+        return {
+            "adapter_type": "snowflake",
+            "table_format": table_format,
+        }

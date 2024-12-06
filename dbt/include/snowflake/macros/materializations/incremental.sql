@@ -20,7 +20,7 @@
 
        The append strategy can use a view because it will run a single INSERT statement.
 
-       When unique_key is none, the delete+insert strategy can use a view beacuse a
+       When unique_key is none, the delete+insert and microbatch strategies can use a view beacuse a
        single INSERT statement is run with no DELETES as part of the statement.
        Otherwise, play it safe by using a temporary table.
   #} */
@@ -32,10 +32,10 @@
     ) %}
   {% endif %}
 
-  {% if strategy == "delete+insert" and tmp_relation_type is not none and tmp_relation_type != "table" and unique_key is not none %}
+  {% if strategy in ["delete+insert", "microbatch"] and tmp_relation_type is not none and tmp_relation_type != "table" and unique_key is not none %}
     {% do exceptions.raise_compiler_error(
       "In order to maintain consistent results when `unique_key` is not none,
-      the `delete+insert` strategy only supports `table` for `tmp_relation_type` but "
+      the `" ~ strategy ~ "` strategy only supports `table` for `tmp_relation_type` but "
       ~ tmp_relation_type ~ " was specified."
       )
   %}
@@ -49,7 +49,7 @@
     {{ return("view") }}
   {% elif strategy in ("default", "merge", "append") %}
     {{ return("view") }}
-  {% elif strategy == "delete+insert" and unique_key is none %}
+  {% elif strategy in ["delete+insert", "microbatch"] and unique_key is none %}
     {{ return("view") }}
   {% else %}
     {{ return("table") }}
@@ -58,6 +58,7 @@
 
 {% materialization incremental, adapter='snowflake', supported_languages=['sql', 'python'] -%}
 
+  {% set original_query_tag = set_query_tag() %}
 
   {#-- Set vars --#}
   {%- set full_refresh_mode = (should_full_refresh()) -%}
