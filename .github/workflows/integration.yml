@@ -204,7 +204,7 @@ jobs:
 
       - uses: pypa/hatch@install
 
-      - run: hatch run integration-tests
+      - run: hatch run integration-tests tests/functional --ddtrace
         env:
           SNOWFLAKE_TEST_ACCOUNT: ${{ secrets.SNOWFLAKE_TEST_ACCOUNT }}
           SNOWFLAKE_TEST_PASSWORD: ${{ secrets.SNOWFLAKE_TEST_PASSWORD }}
