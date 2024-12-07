@@ -205,6 +205,7 @@ jobs:
       - uses: pypa/hatch@install
 
       - run: hatch run integration-tests --ddtrace
+        working-directory: ./dbt-postgres
         env:
           SNOWFLAKE_TEST_ACCOUNT: ${{ secrets.SNOWFLAKE_TEST_ACCOUNT }}
           SNOWFLAKE_TEST_PASSWORD: ${{ secrets.SNOWFLAKE_TEST_PASSWORD }}
