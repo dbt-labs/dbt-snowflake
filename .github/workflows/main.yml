@@ -105,7 +105,7 @@ jobs:
       - name: Build distributions
         run: hatch build
 
-      - name: Show distribution contents
+      - name: Show distributions
         run: ls -lh dist/
 
       - name: Check distribution descriptions
