@@ -83,7 +83,7 @@ jobs:
       github.event_name != 'pull_request_target' ||
       github.event.pull_request.head.repo.full_name == github.repository ||
       contains(github.event.pull_request.labels.*.name, 'ok to test')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       matrix: ${{ steps.generate-matrix.outputs.result }}
 

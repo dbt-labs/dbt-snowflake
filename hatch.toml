@@ -17,7 +17,7 @@ dependencies = [
     "ipdb~=0.13.13",
     "pre-commit==3.7.0",
     "freezegun",
-    "pytest",
+    "pytest>=7.0,<8.0",
     "pytest-csv~=3.0",
     "pytest-dotenv",
     "pytest-logbook~=1.2",
