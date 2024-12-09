@@ -1,6 +1,0 @@
-kind: Fixes
-body: Handle non-English Snowflake error message for non-existing schemas
-time: 2023-11-29T12:41:45.1273-07:00
-custom:
-  Author: pei0804
-  Issue: "834"

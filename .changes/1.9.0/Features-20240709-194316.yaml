@@ -1,6 +1,0 @@
-kind: Features
-body: Improve run times for large projects by reusing connections by default
-time: 2024-07-09T19:43:16.489649-04:00
-custom:
-  Author: mikealfare amardatar
-  Issue: "1082"
