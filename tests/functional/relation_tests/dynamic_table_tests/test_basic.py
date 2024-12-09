@@ -48,7 +48,12 @@ class TestBasicIcebergOn(TestBasic):
         return {"flags": {"enable_iceberg_materializations": True}}
 
 
-class TestAutoConfigDoesntRebuild:
+class TestAutoConfigDoesntFullRefresh:
+    """
+    AUTO refresh_strategy will be compared accurately with both INCREMENTAL and FULL.
+    https://github.com/dbt-labs/dbt-snowflake/issues/1267
+    """
+
     DT_NAME = "my_dynamic_table"
 
     @pytest.fixture(scope="class", autouse=True)
@@ -63,7 +68,7 @@ class TestAutoConfigDoesntRebuild:
         }
 
     @pytest.mark.parametrize("test_dt", [f"explicit_{DT_NAME}", f"implicit_{DT_NAME}"])
-    def test_auto_config_doesnt_rebuild(self, project, test_dt):
+    def test_auto_config_doesnt_full_refresh(self, project, test_dt):
         model_qualified_name = f"{project.database}.{project.test_schema}.{test_dt}"
 
         run_dbt(["seed"])
@@ -72,9 +77,13 @@ class TestAutoConfigDoesntRebuild:
         assert_message_in_logs("refresh_mode = AUTO", logs)
 
         _, logs = run_dbt_and_capture(["--debug", "run", "--select", f"{test_dt}.sql"])
+
         assert_message_in_logs(f"create dynamic table {model_qualified_name}", logs, False)
+        assert_message_in_logs(
+            f"create or replace dynamic table {model_qualified_name}", logs, False
+        )
         assert_message_in_logs("refresh_mode = AUTO", logs, False)
         assert_message_in_logs(
-            f"No configuration changes were identified on on: `{model_qualified_name}`. Continuing.",
+            f"No configuration changes were identified on: `{model_qualified_name}`. Continuing.",
             logs,
         )
