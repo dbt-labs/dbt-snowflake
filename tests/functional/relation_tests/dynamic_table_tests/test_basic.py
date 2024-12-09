@@ -58,18 +58,20 @@ class TestAutoConfigDoesntRebuild:
     @pytest.fixture(scope="class", autouse=True)
     def models(self):
         yield {
-            f"{self.DT_NAME}.sql": models.AUTO_DYNAMIC_TABLE,
+            f"explicit_{self.DT_NAME}.sql": models.EXPLICIT_AUTO_DYNAMIC_TABLE,
+            f"implicit_{self.DT_NAME}.sql": models.IMPLICIT_AUTO_DYNAMIC_TABLE,
         }
 
-    def test_auto_config_doesnt_rebuild(self, project):
-        model_qualified_name = f"{project.database}.{project.test_schema}.{self.DT_NAME}"
+    @pytest.mark.parametrize("test_dt", [f"explicit_{DT_NAME}", f"implicit_{DT_NAME}"])
+    def test_auto_config_doesnt_rebuild(self, project, test_dt):
+        model_qualified_name = f"{project.database}.{project.test_schema}.{test_dt}"
 
         run_dbt(["seed"])
-        _, logs = run_dbt_and_capture(["--debug", "run", "--select", f"{self.DT_NAME}.sql"])
+        _, logs = run_dbt_and_capture(["--debug", "run", "--select", f"{test_dt}.sql"])
         assert_message_in_logs(f"create dynamic table {model_qualified_name}", logs)
         assert_message_in_logs("refresh_mode = AUTO", logs)
 
-        _, logs = run_dbt_and_capture(["--debug", "run", "--select", f"{self.DT_NAME}.sql"])
+        _, logs = run_dbt_and_capture(["--debug", "run", "--select", f"{test_dt}.sql"])
         assert_message_in_logs(f"create dynamic table {model_qualified_name}", logs, False)
         assert_message_in_logs("refresh_mode = AUTO", logs, False)
         assert_message_in_logs(
