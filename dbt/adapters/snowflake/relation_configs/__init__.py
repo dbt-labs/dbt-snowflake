@@ -3,6 +3,7 @@ from dbt.adapters.snowflake.relation_configs.catalog import (
     SnowflakeCatalogConfigChange,
 )
 from dbt.adapters.snowflake.relation_configs.dynamic_table import (
+    RefreshMode,
     SnowflakeDynamicTableConfig,
     SnowflakeDynamicTableConfigChangeset,
     SnowflakeDynamicTableRefreshModeConfigChange,
