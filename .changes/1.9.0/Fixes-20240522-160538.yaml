@@ -1,6 +1,0 @@
-kind: Fixes
-body: 'Rename targets for tables and views use fully qualified names'
-time: 2024-05-22T16:05:38.602074-04:00
-custom:
-  Author: mikealfare
-  Issue: "1031"

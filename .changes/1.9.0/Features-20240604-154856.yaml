@@ -1,6 +1,0 @@
-kind: Features
-body: Replace underscores with hyphens in account IDs to prevent SSL issues
-time: 2024-06-04T15:48:56.845374-07:00
-custom:
-  Author: colin-rogers-dbt
-  Issue: "1068"
