@@ -39,8 +39,9 @@ Repository = "https://github.com/dbt-labs/dbt-snowflake.git"
 Issues = "https://github.com/dbt-labs/dbt-snowflake/issues"
 Changelog = "https://github.com/dbt-labs/dbt-snowflake/blob/main/CHANGELOG.md"
 
-[tool.pytest]
+[tool.pytest.ini_options]
 testpaths = ["tests/functional", "tests/unit"]
+env_files = ["test.env"]
 addopts = "-v -n auto"
 color = true
 filterwarnings = [
