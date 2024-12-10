@@ -41,3 +41,11 @@ class SnowflakeColumn(Column):
             return 16777216
         else:
             return int(self.char_size)
+
+    @classmethod
+    def from_description(cls, name: str, raw_data_type: str) -> "SnowflakeColumn":
+        if "vector" in raw_data_type.lower():
+            column = cls(name, raw_data_type, None, None, None)
+        else:
+            column = super().from_description(name, raw_data_type)
+        return column
