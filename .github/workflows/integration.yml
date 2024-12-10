@@ -198,11 +198,8 @@ jobs:
             ${{ inputs.dbt_common_branch }}
           cat hatch.toml
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - uses: pypa/hatch@install
+      - name: Install python dependencies
+        uses: pypa/hatch@install
 
       - run: hatch run integration-tests tests/functional --ddtrace
         env:
