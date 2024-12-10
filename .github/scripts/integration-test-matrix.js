@@ -29,7 +29,7 @@ module.exports = ({ context }) => {
           ) {
             // always run tests on ubuntu by default
             include.push({
-              os: "ubuntu-22.04",
+              os: "ubuntu-latest",
               adapter,
               "python-version": pythonVersion,
             });
@@ -68,7 +68,7 @@ module.exports = ({ context }) => {
   for (const adapter of supportedAdapters) {
     for (const pythonVersion of supportedPythonVersions) {
       include.push({
-        os: 'ubuntu-22.04',
+        os: 'ubuntu-latest',
         adapter: adapter,
         "python-version": pythonVersion,
       });
@@ -78,7 +78,7 @@ module.exports = ({ context }) => {
   // additionally include runs for all adapters, on macos and windows,
   // but only for the default python version
   for (const adapter of supportedAdapters) {
-    for (const operatingSystem of ["windows-22.04", "macos-14"]) {
+    for (const operatingSystem of ["windows-latest", "macos-14"]) {
       include.push({
         os: operatingSystem,
         adapter: adapter,
