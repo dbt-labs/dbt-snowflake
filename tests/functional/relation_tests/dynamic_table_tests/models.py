@@ -17,6 +17,26 @@ select * from {{ ref('my_seed') }}
 """
 
 
+EXPLICIT_AUTO_DYNAMIC_TABLE = """
+{{ config(
+    materialized='dynamic_table',
+    snowflake_warehouse='DBT_TESTING',
+    target_lag='2 minutes',
+    refresh_mode='AUTO',
+) }}
+select * from {{ ref('my_seed') }}
+"""
+
+IMPLICIT_AUTO_DYNAMIC_TABLE = """
+{{ config(
+    materialized='dynamic_table',
+    snowflake_warehouse='DBT_TESTING',
+    target_lag='2 minutes',
+) }}
+select * from {{ ref('my_seed') }}
+"""
+
+
 DYNAMIC_TABLE_DOWNSTREAM = """
 {{ config(
     materialized='dynamic_table',
