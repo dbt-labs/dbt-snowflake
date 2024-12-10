@@ -50,11 +50,15 @@ jobs:
           commit_sha=$(git rev-parse HEAD)
           echo "release_commit=$commit_sha" >> $GITHUB_OUTPUT
 
-      - name: "Get Current Version Number"
-        id: version-number-sources
-        run: |
-          current_version=`awk -F"current_version = " '{print $2}' .bumpversion.cfg | tr '\n' ' '`
-          echo "current_version=$current_version" >> $GITHUB_OUTPUT
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - uses: pypa/hatch@install
+
+      - id: version-number-sources
+        run: echo "current_version=$(hatch version)" >> $GITHUB_OUTPUT
 
       - name: "Audit Version And Parse Into Parts"
         id: semver
