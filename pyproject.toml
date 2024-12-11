@@ -43,3 +43,6 @@ Changelog = "https://github.com/dbt-labs/dbt-snowflake/blob/main/CHANGELOG.md"
 testpaths = ["tests/functional", "tests/unit"]
 env_files = ["test.env"]
 addopts = "-v --color=yes -n auto"
+filterwarnings = [
+    "ignore:datetime.datetime.utcnow:DeprecationWarning",
+]
