@@ -27,10 +27,13 @@ dependencies = [
 setup = "pre-commit install"
 code-quality = "pre-commit run --all-files"
 unit-tests = "python -m pytest {args:tests/unit}"
-integration-tests = "python -m pytest {args:tests/functional}"
+integration-tests = [
+    "- python -m pytest {args:tests/functional} --ignore=tests/functional/adapter/incremental",
+    "- python -m pytest tests/functional/adapter/incremental {args}",
+]
 docker-dev = [
     "docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev .",
-	"docker run --rm -it --name dbt-snowflake-dev -v $(shell pwd):/opt/code dbt-snowflake-dev",
+	"docker run --rm -it --name dbt-snowflake-dev -v $(pwd):/opt/code dbt-snowflake-dev",
 ]
 
 [envs.build]
