@@ -44,6 +44,5 @@ testpaths = ["tests/functional", "tests/unit"]
 env_files = ["test.env"]
 addopts = "-v --color=yes -n auto"
 filterwarnings = [
-    "ignore:.*'soft_unicode' has been renamed to 'soft_str'*:DeprecationWarning",
-    "ignore:.*datetime.datetime.utcnow() is deprecated*:DeprecationWarning",
+    "ignore:datetime.datetime.utcnow() is deprecated*:DeprecationWarning",
 ]
