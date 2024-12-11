@@ -51,7 +51,10 @@ TEST_GROUPS = {
 def pytest_collection_modifyitems(config, items):
     test_root = pathlib.Path(config.rootdir) / "tests" / "functional"
     for item in items:
-        test_path = pathlib.Path(item.fspath).relative_to(test_root)
+        try:
+            test_path = pathlib.Path(item.fspath).relative_to(test_root)
+        except ValueError:
+            continue
         test_module = test_path.parts[0]
         if test_module == "adapter":
             test_module = test_path.parts[1]

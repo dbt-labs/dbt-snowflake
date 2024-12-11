@@ -28,12 +28,12 @@ setup = "pre-commit install"
 code-quality = "pre-commit run --all-files"
 unit-tests = "python -m pytest {args:tests/unit}"
 integration-tests = [
-    '- python -m pytest -m "group_1" {args:tests/functional}',
-    '- python -m pytest -m "group_2" {args:tests/functional}',
-    '- python -m pytest -m "group_3" {args:tests/functional}',
-    '- python -m pytest -m "group_4" {args:tests/functional}',
-    '- python -m pytest -m "group_5" {args:tests/functional}',
-    '- python -m pytest -m "not group_1 and not group_2 and not group_3 and not group_4 and not group_5" {args:tests/functional}',
+    '- python -m pytest {args:tests/functional} -m "group_1"',
+    '- python -m pytest {args:tests/functional} -m "group_2"',
+    '- python -m pytest {args:tests/functional} -m "group_3"',
+    '- python -m pytest {args:tests/functional} -m "group_4"',
+    '- python -m pytest {args:tests/functional} -m "group_5"',
+    '- python -m pytest {args:tests/functional} -m "not group_1 and not group_2 and not group_3 and not group_4 and not group_5"',
 ]
 docker-dev = [
     "docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev .",
