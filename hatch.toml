@@ -29,6 +29,7 @@ code-quality = "pre-commit run --all-files"
 unit-tests = "python -m pytest {args:tests/unit}"
 integration-tests = [
     '- python -m pytest {args:tests/functional} -m "group_1"',
+    '- python -m pytest {args:tests/functional} -m "group_4"',
     '- python -m pytest {args:tests/functional} -m "group_5"',
     '- python -m pytest {args:tests/functional} -m "group_6"',
 ]
