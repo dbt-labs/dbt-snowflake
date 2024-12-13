@@ -22,7 +22,7 @@ from dbt_common.contracts.metadata import (
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
 
-from dbt.adapters.snowflake import settings
+from dbt.adapters.snowflake import constants
 from dbt.adapters.snowflake.relation_configs import (
     SnowflakeRelationType,
     TableFormat,
@@ -347,7 +347,7 @@ class SnowflakeAdapter(SQLAdapter):
         database = parsed_model["database"]
         identifier = parsed_model["alias"]
         python_version = parsed_model["config"].get(
-            "python_version", settings.DEFAULT_PYTHON_VERSION_FOR_PYTHON_MODELS
+            "python_version", constants.DEFAULT_PYTHON_VERSION_FOR_PYTHON_MODELS
         )
 
         packages = parsed_model["config"].get("packages", [])
