@@ -32,6 +32,8 @@ integration-tests = [
     '- python -m pytest {args:tests/functional} -m "last_quarter"',
     '- python -m pytest {args:tests/functional} -m "last_month"',
     '- python -m pytest {args:tests/functional} -m "microbatch"',
+    '- python -m pytest {args:tests/functional} -m "python_model"',
+    '- python -m pytest {args:tests/functional} -m "large"',
 ]
 docker-dev = [
     "docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev .",

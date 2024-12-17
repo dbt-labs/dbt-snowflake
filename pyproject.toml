@@ -51,4 +51,6 @@ markers = [
     "last_quarter",
     "last_month",
     "microbatch",
+    "python_model",
+    "large",
 ]
