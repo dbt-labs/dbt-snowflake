@@ -47,8 +47,8 @@ filterwarnings = [
     "ignore:datetime.datetime.utcnow:DeprecationWarning",
 ]
 markers = [
-    "group_1",
-    "group_4",
-    "group_5",
-    "group_6",
+    "last_year",
+    "last_quarter",
+    "last_month",
+    "microbatch",
 ]
