@@ -1,0 +1,6 @@
+kind: Under the Hood
+body: Update default Python version for python models
+time: 2024-12-11T17:08:31.842063-05:00
+custom:
+  Author: mikealfare
+  Issue: "1203"
