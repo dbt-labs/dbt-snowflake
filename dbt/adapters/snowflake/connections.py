@@ -487,6 +487,8 @@ class SnowflakeConnectionManager(SQLConnectionManager):
         auto_begin: bool = True,
         bindings: Optional[Any] = None,
         abridge_sql_log: bool = False,
+        retryable_exceptions: tuple[type[Exception], ...] = tuple(),
+        retry_limit: int = 0,
     ) -> Tuple[Connection, Any]:  # type: ignore
         if bindings:
             # The snowflake connector is stricter than, e.g., psycopg2 -
