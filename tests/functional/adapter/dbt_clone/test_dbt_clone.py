@@ -6,6 +6,9 @@ from dbt.tests.util import run_dbt
 from dbt.tests.adapter.dbt_clone.test_dbt_clone import BaseClonePossible
 
 
+pytestmark = pytest.mark.high_memory
+
+
 class TestSnowflakeClonePossible(BaseClonePossible):
     @pytest.fixture(autouse=True)
     def clean_up(self, project):

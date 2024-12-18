@@ -8,6 +8,7 @@ packages = ["dbt"]
 packages = ["dbt"]
 
 [envs.default]
+python = "3.9"
 dependencies = [
     "dbt-adapters @ git+https://github.com/dbt-labs/dbt-adapters.git",
     "dbt-common @ git+https://github.com/dbt-labs/dbt-common.git",
@@ -28,12 +29,8 @@ setup = "pre-commit install"
 code-quality = "pre-commit run --all-files"
 unit-tests = "python -m pytest {args:tests/unit}"
 integration-tests = [
-    '- python -m pytest {args:tests/functional} -m "last_year"',
-    '- python -m pytest {args:tests/functional} -m "last_quarter"',
-    '- python -m pytest {args:tests/functional} -m "last_month"',
-    '- python -m pytest {args:tests/functional} -m "microbatch"',
-    '- python -m pytest {args:tests/functional} -m "python_model"',
-    '- python -m pytest {args:tests/functional} -m "large"',
+    '- python -m pytest {args:tests/functional} -m "not high_memory"',
+    '- python -m pytest {args:tests/functional} -m "high_memory"',
 ]
 docker-dev = [
     "docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev .",

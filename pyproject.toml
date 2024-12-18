@@ -46,11 +46,4 @@ addopts = "-v --color=yes -n auto"
 filterwarnings = [
     "ignore:datetime.datetime.utcnow:DeprecationWarning",
 ]
-markers = [
-    "last_year",
-    "last_quarter",
-    "last_month",
-    "microbatch",
-    "python_model",
-    "large",
-]
+markers = ["high_memory"]
