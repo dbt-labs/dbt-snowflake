@@ -5,6 +5,9 @@ from dbt.tests.adapter.unit_testing.test_case_insensitivity import BaseUnitTestC
 from dbt.tests.adapter.unit_testing.test_invalid_input import BaseUnitTestInvalidInput
 
 
+pytestmark = pytest.mark.high_memory
+
+
 class TestSnowflakeUnitTestingTypes(BaseUnitTestingTypes):
     @pytest.fixture
     def data_types(self):
