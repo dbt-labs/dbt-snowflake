@@ -863,6 +863,19 @@ class TestSnowflakeColumn(unittest.TestCase):
         assert col.is_string() is False
         assert col.is_integer() is False
 
+    def test_vector_from_description(self):
+        col = SnowflakeColumn.from_description("my_col", "VECTOR(FLOAT, 768)")
+        assert col.column == "my_col"
+        assert col.dtype == "VECTOR(FLOAT, 768)"
+        assert col.char_size is None
+        assert col.numeric_precision is None
+        assert col.numeric_scale is None
+        assert col.is_float() is False
+        assert col.is_number() is False
+        assert col.is_numeric() is False
+        assert col.is_string() is False
+        assert col.is_integer() is False
+
 
 class SnowflakeConnectionsTest(unittest.TestCase):
     def test_comment_stripping_regex(self):
