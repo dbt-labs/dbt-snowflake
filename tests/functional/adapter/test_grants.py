@@ -6,9 +6,6 @@ from dbt.tests.adapter.grants.test_seed_grants import BaseSeedGrants
 from dbt.tests.adapter.grants.test_snapshot_grants import BaseSnapshotGrants
 
 
-pytestmark = pytest.mark.high_memory
-
-
 class BaseCopyGrantsSnowflake:
     # Try every test case without copy_grants enabled (default),
     # and with copy_grants enabled (this base class)

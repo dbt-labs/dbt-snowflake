@@ -46,4 +46,3 @@ addopts = "-v --color=yes -n auto"
 filterwarnings = [
     "ignore:datetime.datetime.utcnow:DeprecationWarning",
 ]
-markers = ["high_memory"]

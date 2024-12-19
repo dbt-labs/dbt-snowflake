@@ -19,9 +19,6 @@ from dbt.tests.adapter.constraints.fixtures import (
 )
 
 
-pytestmark = pytest.mark.high_memory
-
-
 my_model_contract_sql_header_sql = """
 {{
   config(

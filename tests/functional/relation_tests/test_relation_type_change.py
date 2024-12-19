@@ -9,9 +9,6 @@ from tests.functional.relation_tests import models
 from tests.functional.utils import describe_dynamic_table, query_relation_type, update_model
 
 
-pytestmark = pytest.mark.high_memory
-
-
 @dataclass
 class Model:
     model: str
