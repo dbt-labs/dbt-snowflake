@@ -18,7 +18,6 @@ from dbt.tests.adapter.constraints.fixtures import (
     model_contract_header_schema_yml,
 )
 
-
 my_model_contract_sql_header_sql = """
 {{
   config(
