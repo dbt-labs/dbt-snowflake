@@ -1,6 +1,0 @@
-kind: Breaking Changes
-body: Drop support for Python 3.8
-time: 2024-10-16T18:31:43.4167-04:00
-custom:
-  Author: mikealfare
-  Issue: "1211"
