@@ -1,0 +1,6 @@
+kind: Features
+body: Support granting of Database Roles
+time: 2024-10-12T11:58:30.84775252+01:00
+custom:
+    Author: seediang
+    Issue: "1206"
