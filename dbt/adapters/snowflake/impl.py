@@ -139,9 +139,21 @@ class SnowflakeAdapter(SQLAdapter):
 
     def pre_model_hook(self, config: Mapping[str, Any]) -> Optional[str]:
         default_warehouse = self.config.credentials.warehouse
-        warehouse = config.get("snowflake_warehouse", default_warehouse)
+        
+        # Get warehouse from vars or config
+        warehouse = None
+        
+        # Check command line vars first (stored in config.cli_vars)
+        if hasattr(self.config, 'cli_vars'):
+            warehouse = self.config.cli_vars.get('snowflake_warehouse')
+        
+        # Then check config
+        if not warehouse:
+            warehouse = config.get("snowflake_warehouse", default_warehouse)
+        
         if warehouse == default_warehouse or warehouse is None:
             return None
+        
         previous = self._get_warehouse()
         self._use_warehouse(warehouse)
         return previous

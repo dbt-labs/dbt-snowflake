@@ -1,0 +1,6 @@
+kind: Features
+body: Add support for overriding Snowflake warehouse via dbt vars
+time: 2025-01-03T16:47:53.137762Z
+custom:
+    Author: christopher-turnbull
+    Issue: "1280"

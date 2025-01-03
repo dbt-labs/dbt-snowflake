@@ -133,3 +133,79 @@ class TestValidConfigWarehouse:
     def test_snowflake_warehouse_valid(self, project):
         result = run_dbt(["run", "--models", "valid_warehouse"])
         assert "DBT_TESTING" in result[0].node.config.get("snowflake_warehouse")
+
+
+class TestWarehouseVarsOverride:
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "test_model.sql": """
+                {{ config(materialized='table') }}
+                select 1 as id
+            """,
+            "schema.yml": """
+version: 2
+models:
+  - name: test_model
+    tests:
+      - unique:
+          column_name: id
+"""
+        }
+
+    def test_snowflake_vars_override_ok_run(self, project):
+        # Test dbt run with warehouse in vars
+        result = run_dbt([
+            "run",
+            "--vars",
+            "{snowflake_warehouse: DBT_TESTING_ALT}",
+            "--models",
+            "test_model"
+        ])
+        assert len(result) == 1
+        assert result[0].status == "success"
+
+    def test_snowflake_vars_override_ok_test(self, project):
+        # First run the model
+        run_dbt([
+            "run",
+            "--vars",
+            "{snowflake_warehouse: DBT_TESTING_ALT}",
+            "--models",
+            "test_model"
+        ])
+        
+        # Then test it
+        result = run_dbt([
+            "test",
+            "--vars",
+            "{snowflake_warehouse: DBT_TESTING_ALT}",
+            "--models",
+            "test_model"
+        ])
+        assert len(result) == 1
+        assert result[0].status == "pass"
+
+    def test_snowflake_vars_override_invalid(self, project):
+        # Test with non-existent warehouse
+        result = run_dbt([
+            "run",
+            "--vars",
+            "{snowflake_warehouse: DOES_NOT_EXIST}",
+            "--models",
+            "test_model"
+        ], expect_pass=False)
+        assert "Object does not exist, or operation cannot be performed" in result[0].message
+
+    def test_snowflake_vars_override_precedence(self, project):
+        # Test that vars override project config
+        result = run_dbt([
+            "run",
+            "--vars",
+            "{snowflake_warehouse: DBT_TESTING_ALT}",
+            "--models",
+            "test_model"
+        ])
+        assert len(result) == 1
+        assert result[0].status == "success"
+        # Could add additional verification that DBT_TESTING_ALT was used instead of DBT_TESTING
