@@ -59,6 +59,7 @@ jobs:
 
       - id: version-number-sources
         run: echo "current_version=$(hatch version)" >> $GITHUB_OUTPUT
+        working-directory: ./dbt-snowflake
 
       - name: "Audit Version And Parse Into Parts"
         id: semver

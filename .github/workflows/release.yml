@@ -148,10 +148,11 @@ jobs:
           archive_name=${{ github.event.repository.name }}-${{ inputs.version }}-${{ inputs.deploy-to }}
           echo "name=$archive_name" >> $GITHUB_OUTPUT
       - run: hatch build && hatch run build:check-all
+        working-directory: ./dbt-snowflake
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.archive.outputs.name }}
-          path: dist/
+          path: dbt-snowflake/dist/
           retention-days: 3
 
   github-release:
