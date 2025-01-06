@@ -52,16 +52,8 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install python dependencies
-        run: |
-          python -m pip install --user --upgrade pip
-          python -m pip install -r dev-requirements.txt
-          python -m pip --version
-          pre-commit --version
-          dbt --version
-
       - name: Run pre-commit hooks
-        run: pre-commit run --all-files --show-diff-on-failure
+        uses: pre-commit/action@v3.0.1
 
   unit:
     name: unit test / python ${{ matrix.python-version }}
@@ -72,10 +64,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
-
-    env:
-      TOXENV: "unit"
-      PYTEST_ADDOPTS: "-v --color=yes --csv unit_results.csv"
 
     steps:
       - name: Check out the repository
@@ -89,26 +77,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install python dependencies
-        run: |
-          python -m pip install --user --upgrade pip
-          python -m pip install tox
-          python -m pip --version
-          tox --version
+        uses: pypa/hatch@install
 
-      - name: Run tox
-        run: tox
-
-      - name: Get current date
-        if: always()
-        id: date
-        run: echo "date=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT #no colons allowed for artifacts
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: unit_results_${{ matrix.python-version }}-${{ steps.date.outputs.date }}.csv
-          path: unit_results.csv
-          overwrite: true
+      - run: hatch run unit-tests
 
   build:
     name: build packages
@@ -129,25 +100,16 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install python dependencies
-        run: |
-          python -m pip install --user --upgrade pip
-          python -m pip install --upgrade setuptools wheel twine check-wheel-contents
-          python -m pip --version
+      - uses: pypa/hatch@install
 
       - name: Build distributions
-        run: ./scripts/build-dist.sh
+        run: hatch build
 
       - name: Show distributions
         run: ls -lh dist/
 
       - name: Check distribution descriptions
-        run: |
-          twine check dist/*
-
-      - name: Check wheel contents
-        run: |
-          check-wheel-contents dist/*.whl --ignore W007,W008
+        run: hatch run build:check-all
 
       - name: Check if this is an alpha version
         id: check-is-alpha
@@ -183,12 +145,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install python dependencies
-        run: |
-          python -m pip install --user --upgrade pip
-          python -m pip install --upgrade wheel
-          python -m pip --version
 
       - uses: actions/download-artifact@v4
         with:

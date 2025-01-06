@@ -76,85 +76,31 @@ defaults:
     shell: bash
 
 jobs:
-  # generate test metadata about what files changed and the testing matrix to use
-  test-metadata:
-    # run if not a PR from a forked repository or has a label to mark as safe to test
-    if: >-
-      github.event_name != 'pull_request_target' ||
-      github.event.pull_request.head.repo.full_name == github.repository ||
-      contains(github.event.pull_request.labels.*.name, 'ok to test')
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.generate-matrix.outputs.result }}
-
-    steps:
-      - name: Check out the repository (non-PR)
-        if: github.event_name != 'pull_request_target'
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Check out the repository (PR)
-        if: github.event_name == 'pull_request_target'
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Check if relevant files changed
-        if: github.event_name == 'pull_request_target'
-        # https://github.com/marketplace/actions/paths-changes-filter
-        # For each filter, it sets output variable named by the filter to the text:
-        #  'true' - if any of changed files matches any of filter rules
-        #  'false' - if none of changed files matches any of filter rules
-        # also, returns:
-        #  `changes` - JSON array with names of all filters matching any of the changed files
-        uses: dorny/paths-filter@v3
-        id: get-changes
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          filters: |
-            snowflake:
-              - '.github/**/*.yml'
-              - '.github/**/*.sh'
-              - 'dbt/**'
-              - 'tests/**'
-              - 'dev-requirements.txt'
-              - '*.py'
-      - name: Generate integration test matrix
-        id: generate-matrix
-        uses: actions/github-script@v7
-        env:
-          CHANGES: ${{ steps.get-changes.outputs.changes }}
-        with:
-          script: |
-            const script = require('./.github/scripts/integration-test-matrix.js')
-            const matrix = script({ context })
-            console.log(matrix)
-            return matrix
   test:
-    name: ${{ matrix.adapter }} / python ${{ matrix.python-version }} / ${{ matrix.os }}
+    name: ${{ matrix.os }} / python ${{ matrix.python-version }}
 
     # run if not a PR from a forked repository or has a label to mark as safe to test
     # also checks that the matrix generated is not empty
     if: >-
-      needs.test-metadata.outputs.matrix &&
-      fromJSON( needs.test-metadata.outputs.matrix ).include[0] &&
       (
         github.event_name != 'pull_request_target' ||
         github.event.pull_request.head.repo.full_name == github.repository ||
         contains(github.event.pull_request.labels.*.name, 'ok to test')
       )
     runs-on: ${{ matrix.os }}
-    needs: test-metadata
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.test-metadata.outputs.matrix) }}
+      matrix:
+        os: [ubuntu-22.04]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        include:
+          - os: macos-14
+            python-version: "3.9"
+          - os: windows-2022
+            python-version: "3.9"
 
     env:
-      TOXENV: integration-${{ matrix.adapter }}
-      PYTEST_ADDOPTS: "-v --color=yes -n4 --csv integration_results.csv"
       DBT_INVOCATION_ENV: github-actions
       DD_CIVISIBILITY_AGENTLESS_ENABLED: true
       DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
@@ -190,24 +136,19 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Update Adapters and Core branches (update dev_requirements.txt)
+      - name: Update Adapters and Core branches (update hatch.toml)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           ./.github/scripts/update_dev_dependency_branches.sh \
             ${{ inputs.dbt_adapters_branch }} \
             ${{ inputs.dbt_core_branch }} \
             ${{ inputs.dbt_common_branch }}
-          cat dev-requirements.txt
+          cat hatch.toml
 
       - name: Install python dependencies
-        run: |
-          python -m pip install  --user --upgrade pip
-          python -m pip install tox
-          python -m pip --version
-          tox --version
+        uses: pypa/hatch@install
 
-      - name: Run tox (snowflake)
-        if: matrix.adapter == 'snowflake'
+      - run: hatch run integration-tests tests/functional --ddtrace
         env:
           SNOWFLAKE_TEST_ACCOUNT: ${{ secrets.SNOWFLAKE_TEST_ACCOUNT }}
           SNOWFLAKE_TEST_PASSWORD: ${{ secrets.SNOWFLAKE_TEST_PASSWORD }}
@@ -226,26 +167,6 @@ jobs:
           DBT_TEST_USER_1: dbt_test_role_1
           DBT_TEST_USER_2: dbt_test_role_2
           DBT_TEST_USER_3: dbt_test_role_3
-        run: tox -- --ddtrace
-
-      - name: Get current date
-        if: always()
-        id: date
-        run: echo "date=$(date +'%Y-%m-%dT%H_%M_%S')" >> $GITHUB_OUTPUT #no colons allowed for artifacts
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: logs_${{ matrix.python-version }}_${{ matrix.os }}_${{ matrix.adapter }}-${{ steps.date.outputs.date }}
-          path: ./logs
-          overwrite: true
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: integration_results_${{ matrix.python-version }}_${{ matrix.os }}_${{ matrix.adapter }}-${{ steps.date.outputs.date }}.csv
-          path: integration_results.csv
-          overwrite: true
 
   require-label-comment:
     runs-on: ubuntu-latest

@@ -1,0 +1,62 @@
+[version]
+path = "dbt/adapters/snowflake/__version__.py"
+
+[build.targets.sdist]
+packages = ["src/dbt"]
+sources = ["src"]
+
+[build.targets.wheel]
+packages = ["src/dbt"]
+sources = ["src"]
+
+[envs.default]
+dependencies = [
+    "dbt-adapters @ git+https://github.com/dbt-labs/dbt-adapters.git",
+    "dbt-common @ git+https://github.com/dbt-labs/dbt-common.git",
+    "dbt-tests-adapter @ git+https://github.com/dbt-labs/dbt-adapters.git#subdirectory=dbt-tests-adapter",
+    "dbt-core @ git+https://github.com/dbt-labs/dbt-core.git#subdirectory=core",
+    "ddtrace==2.3.0",
+    "ipdb~=0.13.13",
+    "pre-commit~=3.7.0",
+    "pytest~=7.4",
+    "pytest-csv~=3.0",
+    "pytest-dotenv~=0.5.2",
+    "pytest-logbook~=1.2",
+    "pytest-xdist~=3.6",
+    "tox~=4.16",  # does this pin deps transitively?
+]
+
+[envs.default.scripts]
+setup = "pre-commit install"
+code-quality = "pre-commit run --all-files"
+unit-tests = "python -m pytest {args:tests/unit}"
+integration-tests = "- python -m pytest {args:tests/functional}"
+docker-dev = [
+    "docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev .",
+	"docker run --rm -it --name dbt-snowflake-dev -v $(pwd):/opt/code dbt-snowflake-dev",
+]
+
+[envs.build]
+detached = true
+dependencies = [
+    "wheel",
+    "twine",
+    "check-wheel-contents",
+]
+
+[envs.build.scripts]
+check-all = [
+    "- check-wheel",
+    "- check-sdist",
+]
+check-wheel = [
+    "twine check dist/*",
+    "find ./dist/dbt_snowflake-*.whl -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/",
+    "pip freeze | grep dbt-snowflake",
+]
+check-sdist = [
+    "check-wheel-contents dist/*.whl --ignore W007,W008",
+    "find ./dist/dbt_snowflake-*.gz -maxdepth 1 -type f | xargs python -m pip install --force-reinstall --find-links=dist/",
+    "pip freeze | grep dbt-snowflake",
+]
+docker-prod = "docker build -f docker/Dockerfile -t dbt-snowflake ."

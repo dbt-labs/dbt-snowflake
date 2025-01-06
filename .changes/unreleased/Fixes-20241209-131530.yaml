@@ -1,0 +1,6 @@
+kind: Fixes
+body: AUTO should no longer lead to rebuilds of dynamic tables.
+time: 2024-12-09T13:15:30.554566-08:00
+custom:
+    Author: versusfacit
+    Issue: "1267"
