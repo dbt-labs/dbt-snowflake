@@ -1,18 +1,21 @@
 from dataclasses import dataclass
-from typing import Optional, Dict, Any, TYPE_CHECKING
+from typing import Optional, Dict, Any, TYPE_CHECKING, Union
 
+from dbt.adapters.contracts.catalog import CatalogIntegrationConfig, CatalogIntegrationType
 from dbt.adapters.relation_configs import RelationConfigChange, RelationResults
+from dbt.adapters.clients import catalogs as catalogs_client
 from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.contracts.relation import ComponentName
 from dbt_common.dataclass_schema import StrEnum  # doesn't exist in standard library until py3.11
 from typing_extensions import Self
 
+from dbt.adapters.relation_configs.formats import TableFormat
+from dbt.adapters.snowflake.catalog import SnowflakeManagedIcebergCatalogIntegration
 from dbt.adapters.snowflake.relation_configs.base import SnowflakeRelationConfigBase
 from dbt.adapters.snowflake.relation_configs.catalog import (
     SnowflakeCatalogConfig,
     SnowflakeCatalogConfigChange,
 )
-
 
 if TYPE_CHECKING:
     import agate
@@ -35,6 +38,29 @@ class Initialize(StrEnum):
     @classmethod
     def default(cls) -> Self:
         return cls("ON_CREATE")
+
+
+def _setup_catalog_integration(catalog_info: Union[Dict, RelationConfig]) -> Optional[str]:
+    if isinstance(catalog_info, Dict):
+        catalog_config = SnowflakeCatalogConfig.from_dict(catalog_info)
+    else:
+        catalog_config = SnowflakeCatalogConfig.parse_relation_config(catalog_info)  # type: ignore
+    if catalog_config.table_format != TableFormat.default():
+        catalog_name = "snowflake_managed"
+        integration_config = CatalogIntegrationConfig(
+            catalog_name=catalog_name,
+            integration_name=catalog_config.name,
+            table_format=catalog_config.table_format,
+            catalog_type=CatalogIntegrationType.managed,
+            external_volume=catalog_config.external_volume,
+        )
+        catalogs_client.add_catalog(
+            SnowflakeManagedIcebergCatalogIntegration(integration_config),
+            catalog_name=catalog_name,
+        )
+        return catalog_name
+    else:
+        return None
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
@@ -60,12 +86,13 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     query: str
     target_lag: str
     snowflake_warehouse: str
-    catalog: SnowflakeCatalogConfig
+    catalog: Optional[str]
     refresh_mode: Optional[RefreshMode] = RefreshMode.default()
     initialize: Optional[Initialize] = Initialize.default()
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> Self:
+        catalog = _setup_catalog_integration(config_dict["catalog"])
         kwargs_dict = {
             "name": cls._render_part(ComponentName.Identifier, config_dict.get("name")),
             "schema_name": cls._render_part(ComponentName.Schema, config_dict.get("schema_name")),
@@ -75,7 +102,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "query": config_dict.get("query"),
             "target_lag": config_dict.get("target_lag"),
             "snowflake_warehouse": config_dict.get("snowflake_warehouse"),
-            "catalog": SnowflakeCatalogConfig.from_dict(config_dict["catalog"]),
+            "catalog": catalog,
             "refresh_mode": config_dict.get("refresh_mode"),
             "initialize": config_dict.get("initialize"),
         }
@@ -84,6 +111,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
 
     @classmethod
     def parse_relation_config(cls, relation_config: RelationConfig) -> Dict[str, Any]:
+        catalog = _setup_catalog_integration(relation_config)
         config_dict = {
             "name": relation_config.identifier,
             "schema_name": relation_config.schema,
@@ -91,7 +119,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
             "query": relation_config.compiled_code,
             "target_lag": relation_config.config.extra.get("target_lag"),
             "snowflake_warehouse": relation_config.config.extra.get("snowflake_warehouse"),
-            "catalog": SnowflakeCatalogConfig.parse_relation_config(relation_config),
+            "catalog": catalog,
         }
 
         if refresh_mode := relation_config.config.extra.get("refresh_mode"):

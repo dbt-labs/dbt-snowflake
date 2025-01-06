@@ -1,29 +1,57 @@
+from typing import Dict, Optional
+
+import textwrap
+
 from dbt.adapters.base import BaseRelation
-from dbt.adapters.base.catalog import ExternalCatalogIntegration
+from dbt.adapters.contracts.catalog import CatalogIntegration, CatalogIntegrationType
+from dbt.adapters.contracts.relation import RelationConfig
 
 
-class SnowflakeExternalCatalogIntegration(ExternalCatalogIntegration):
+class SnowflakeManagedIcebergCatalogIntegration(CatalogIntegration):
+    catalog_type = CatalogIntegrationType.managed
 
-    def relation_exists(self, relation: BaseRelation) -> bool:
-        response, result = self._connection_manager.execute(f"DESCRIBE ICEBERG TABLE {relation.render()}")
-        if result and result.rows:
-            return True
-        return False
+    def render_ddl_predicates(self, relation: RelationConfig) -> str:
+        """
+        {{ optional('external_volume', dynamic_table.catalog.external_volume) }}
+        {{ optional('catalog', dynamic_table.catalog.name) }}
+        base_location = '{{ dynamic_table.catalog.base_location }}'
+        :param relation:
+        :return:
+        """
+        base_location: str = f"_dbt/{relation.schema}/{relation.name}"
 
-    def _exists(self) -> bool:
-        if not self._exists:
-            response, result = self._connection_manager.execute(
-                f"DESCRIBE CATALOG INTEGRATION {self.external_catalog.name}")
-            if result and result.rows:
-                self._exists = True
-            else:
-                self._exists = False
-        return self._exists
+        if sub_path := relation.config.get("base_location_subpath"):
+            base_location += f"/{sub_path}"
 
-    def refresh_relation(self, relation: BaseRelation) -> None:
-        self._connection_manager.execute(f"ALTER ICEBERG TABLE {relation.render()} REFRESH")
+        iceberg_ddl_predicates: str = f"""
+                external_volume = '{self.external_volume}'
+                catalog = 'snowflake'
+                base_location = '{base_location}'
+                """
+        return textwrap.indent(textwrap.dedent(iceberg_ddl_predicates), " " * 10)
 
-    def create_relation(self, relation: BaseRelation) -> None:
-        self._connection_manager.execute(f"CREATE ICEBERG TABLE {relation.render()}"
-                                         f"EXTERNAL_VOLUME '{self.external_catalog.configuration.external_volume.name}'"
-                                         f"CATALOG='{self.external_catalog.name}'")
+
+class SnowflakeGlueCatalogIntegration(CatalogIntegration):
+    catalog_type = CatalogIntegrationType.glue
+    auto_refresh: str = "FALSE"
+    replace_invalid_characters: str = "FALSE"
+
+    def _handle_adapter_configs(self, adapter_configs: Optional[Dict]) -> None:
+        if adapter_configs:
+            if "auto_refresh" in adapter_configs:
+                self.auto_refresh = adapter_configs["auto_refresh"]
+            if "replace_invalid_characters" in adapter_configs:
+                self.replace_invalid_characters = adapter_configs["replace_invalid_characters"]
+
+    def render_ddl_predicates(self, relation: BaseRelation) -> str:
+        ddl_predicate = f"""create or replace iceberg table {relation.render()}
+                   external_volume = '{self.external_volume}
+                   catalog = '{self.name}'
+                   """
+        if self.namespace:
+            ddl_predicate += "CATALOG_NAMESPACE = '{self.namespace}'"
+        if self.auto_refresh:
+            ddl_predicate += f"REPLACE_INVALID_CHARACTERS = {self.auto_refresh}"
+        if self.replace_invalid_characters:
+            ddl_predicate += f"AUTO_REFRESH = {self.replace_invalid_characters}"
+        return ddl_predicate

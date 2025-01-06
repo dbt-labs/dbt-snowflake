@@ -69,6 +69,7 @@
 --  Returns:
 --      A valid DDL statement which will result in a new dynamic iceberg table.
 -#}
+    {%- set catalog_integration = adapter.get_catalog_integration(model.catalog) -%}
 
     create dynamic iceberg table {{ relation }}
         target_lag = '{{ dynamic_table.target_lag }}'
