@@ -139,11 +139,12 @@ jobs:
       - name: Update Adapters and Core branches (update hatch.toml)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          ./.github/scripts/update_dev_dependency_branches.sh \
+          scripts/update_dev_dependency_branches.sh \
             ${{ inputs.dbt_adapters_branch }} \
             ${{ inputs.dbt_core_branch }} \
             ${{ inputs.dbt_common_branch }}
           cat hatch.toml
+        working-directory: ./dbt-snowflake
 
       - name: Install python dependencies
         uses: pypa/hatch@install
@@ -167,6 +168,7 @@ jobs:
           DBT_TEST_USER_1: dbt_test_role_1
           DBT_TEST_USER_2: dbt_test_role_2
           DBT_TEST_USER_3: dbt_test_role_3
+        working-directory: ./dbt-snowflake
 
   require-label-comment:
     runs-on: ubuntu-latest

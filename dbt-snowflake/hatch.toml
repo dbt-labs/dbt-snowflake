@@ -1,5 +1,5 @@
 [version]
-path = "dbt/adapters/snowflake/__version__.py"
+path = "src/dbt/adapters/snowflake/__version__.py"
 
 [build.targets.sdist]
 packages = ["src/dbt"]

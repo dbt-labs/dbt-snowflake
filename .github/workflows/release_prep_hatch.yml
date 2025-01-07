@@ -127,6 +127,7 @@ jobs:
             is_current=true
           fi
           echo "is-current=$is_current" >> $GITHUB_OUTPUT
+        working-directory: ./dbt-snowflake
 
       - name: "[INFO] Skip version bump"
         if: steps.version.outputs.is-current == 'true'
@@ -153,6 +154,7 @@ jobs:
             does_exist=true
           fi
           echo "exists=$does_exist">> $GITHUB_OUTPUT
+        working-directory: ./dbt-snowflake
 
       - name: "[INFO] Skip changelog generation"
         if: steps.changelog.outputs.exists == 'true'
@@ -249,11 +251,13 @@ jobs:
           changie merge
         env:
           CHANGIE_CORE_TEAM: ${{ needs.core-team.outputs.team_membership }}
+        working-directory: ./dbt-snowflake
 
       - name: "Remove trailing whitespace and missing new lines"
         # this step will fail on whitespace errors but also correct them
         continue-on-error: true
         run: hatch run code-quality
+        working-directory: ./dbt-snowflake
 
       - name: "Commit & push changes"
         run: |
@@ -301,6 +305,7 @@ jobs:
 
       - name: "Bump version to ${{ inputs.version }}"
         run: hatch version ${{ inputs.version }}
+        working-directory: ./dbt-snowflake
 
       - name: "Commit & push changes"
         run: |
@@ -343,6 +348,7 @@ jobs:
 
       - name: "Run unit tests"
         run: hatch run unit-tests
+        working-directory: ./dbt-snowflake
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -366,6 +372,7 @@ jobs:
 
       - name: "Run integration tests"
         run: hatch run integration-tests
+        working-directory: ./dbt-snowflake
 
   merge-release-branch:
     runs-on: ubuntu-latest
