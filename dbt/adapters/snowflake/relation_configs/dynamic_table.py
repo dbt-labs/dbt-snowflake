@@ -41,17 +41,21 @@ class Initialize(StrEnum):
 
 
 def _setup_catalog_integration(catalog_info: Union[Dict, RelationConfig]) -> Optional[str]:
-    if isinstance(catalog_info, Dict):
+    breakpoint()
+    if not catalog_info:
+        return None
+    elif isinstance(catalog_info, dict):
         catalog_config = SnowflakeCatalogConfig.from_dict(catalog_info)
     else:
-        catalog_config = SnowflakeCatalogConfig.parse_relation_config(catalog_info)  # type: ignore
+        catalog_config = SnowflakeCatalogConfig.from_relation_config(catalog_info)
+
     if catalog_config.table_format != TableFormat.default():
         catalog_name = "snowflake_managed"
         integration_config = CatalogIntegrationConfig(
             catalog_name=catalog_name,
             integration_name=catalog_config.name,
             table_format=catalog_config.table_format,
-            catalog_type=CatalogIntegrationType.managed,
+            catalog_type=CatalogIntegrationType.managed.value,
             external_volume=catalog_config.external_volume,
         )
         catalogs_client.add_catalog(
@@ -86,7 +90,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     query: str
     target_lag: str
     snowflake_warehouse: str
-    catalog: Optional[str]
+    catalog: Optional[str] = None
     refresh_mode: Optional[RefreshMode] = RefreshMode.default()
     initialize: Optional[Initialize] = Initialize.default()
 

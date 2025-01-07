@@ -69,7 +69,7 @@ class SnowflakeAdapter(SQLAdapter):
 
     AdapterSpecificConfigs = SnowflakeConfig
     CatalogIntegrations = {
-        CatalogIntegrationType.iceberg_managed: SnowflakeManagedIcebergCatalogIntegration,
+        CatalogIntegrationType.managed: SnowflakeManagedIcebergCatalogIntegration,
         CatalogIntegrationType.glue: SnowflakeGlueCatalogIntegration,
     }
 

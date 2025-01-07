@@ -90,6 +90,10 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
         return config_dict
 
     @classmethod
+    def from_relation_config(cls, relation_config: RelationConfig) -> Self:
+        return cls.from_dict(cls.parse_relation_config(relation_config))
+
+    @classmethod
     def parse_relation_results(cls, relation_results: RelationResults) -> Dict[str, Any]:
         # this try block can be removed once enable_iceberg_materializations is retired
         try:

@@ -15,7 +15,7 @@
 
     {%- set dynamic_table = relation.from_config(config.model) -%}
 
-    {%- if dynamic_table.catalog.table_format == 'iceberg' -%}
+    {%- if dynamic_table.catalog -%}
         {{ _get_replace_dynamic_iceberg_table_as_sql(dynamic_table, relation, sql) }}
     {%- else -%}
         {{ _get_replace_dynamic_standard_table_as_sql(dynamic_table, relation, sql) }}
@@ -68,13 +68,16 @@
 --  Returns:
 --      A valid DDL statement which will result in a new dynamic iceberg table.
 -#}
+    {% set catalog_integration = adapter.get_catalog_integration(dynamic_table.catalog) -%}
+
+    {% if not catalog_integration -%}
+        {{ raise('Catalog integration is required for iceberg tables') }}
+    {%- endif -%}
 
     create or replace dynamic iceberg table {{ relation }}
         target_lag = '{{ dynamic_table.target_lag }}'
         warehouse = {{ dynamic_table.snowflake_warehouse }}
-        {{ optional('external_volume', dynamic_table.catalog.external_volume) }}
-        {{ optional('catalog', dynamic_table.catalog.name) }}
-        base_location = '{{ dynamic_table.catalog.base_location }}'
+        {{ catalog_integration.render_ddl_predicates(relation) }}
         {{ optional('refresh_mode', dynamic_table.refresh_mode) }}
         {{ optional('initialize', dynamic_table.initialize) }}
         as (
