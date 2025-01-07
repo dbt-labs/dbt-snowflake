@@ -15,7 +15,7 @@
 
     {%- set dynamic_table = relation.from_config(config.model) -%}
 
-    {%- if dynamic_table.catalog -%}
+    {%- if dynamic_table.catalog  is not none -%}
         {{ _get_create_dynamic_iceberg_table_as_sql(dynamic_table, relation, sql) }}
     {%- else -%}
         {{ _get_create_dynamic_standard_table_as_sql(dynamic_table, relation, sql) }}

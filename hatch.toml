@@ -11,10 +11,10 @@ sources = ["src"]
 
 [envs.default]
 dependencies = [
-    "dbt-adapters @ git+https://github.com/dbt-labs/dbt-adapters.git",
+    "dbt-adapters @ git+https://github.com/dbt-labs/dbt-adapters.git@feature/externalCatalogConfig",
     "dbt-common @ git+https://github.com/dbt-labs/dbt-common.git",
-    "dbt-tests-adapter @ git+https://github.com/dbt-labs/dbt-adapters.git#subdirectory=dbt-tests-adapter",
-    "dbt-core @ git+https://github.com/dbt-labs/dbt-core.git#subdirectory=core",
+    "dbt-tests-adapter @ git+https://github.com/dbt-labs/dbt-adapters.git#subdirectory=dbt-tests-adapter@feature/externalCatalogConfig",
+    "dbt-core @ git+https://github.com/dbt-labs/dbt-core.git#subdirectory=core@catalogs-parsing",
     "ddtrace==2.3.0",
     "ipdb~=0.13.13",
     "pre-commit~=3.7.0",
@@ -30,7 +30,7 @@ dependencies = [
 setup = "pre-commit install"
 code-quality = "pre-commit run --all-files"
 unit-tests = "python -m pytest {args:tests/unit}"
-integration-tests = "- python -m pytest {args:tests/functional}"
+integration-tests = "python -m pytest {args:tests/functional}"
 docker-dev = [
     "docker build -f docker/dev.Dockerfile -t dbt-snowflake-dev .",
 	"docker run --rm -it --name dbt-snowflake-dev -v $(pwd):/opt/code dbt-snowflake-dev",
