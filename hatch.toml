@@ -13,8 +13,8 @@ sources = ["src"]
 dependencies = [
     "dbt-adapters @ git+https://github.com/dbt-labs/dbt-adapters.git@feature/externalCatalogConfig",
     "dbt-common @ git+https://github.com/dbt-labs/dbt-common.git",
-    "dbt-tests-adapter @ git+https://github.com/dbt-labs/dbt-adapters.git#subdirectory=dbt-tests-adapter@feature/externalCatalogConfig",
-    "dbt-core @ git+https://github.com/dbt-labs/dbt-core.git#subdirectory=core@catalogs-parsing",
+    "dbt-tests-adapter @ git+https://github.com/dbt-labs/dbt-adapters.git@feature/externalCatalogConfig#subdirectory=dbt-tests-adapter",
+    "dbt-core @ git+https://github.com/dbt-labs/dbt-core.git@catalogs-parsing#subdirectory=core",
     "ddtrace==2.3.0",
     "ipdb~=0.13.13",
     "pre-commit~=3.7.0",
