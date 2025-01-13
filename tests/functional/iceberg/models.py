@@ -23,6 +23,37 @@ _MODEL_BASIC_ICEBERG_MODEL = """
 select * from {{ ref('first_table') }}
 """
 
+_MODEL_BASIC_ICEBERG_MODEL_WITH_PATH = """
+{{
+  config(
+    transient = "true",
+    materialized = "table",
+    cluster_by=['id'],
+    table_format="iceberg",
+    external_volume="s3_iceberg_snow",
+    base_location="base_path",
+  )
+}}
+
+select * from {{ ref('first_table') }}
+"""
+
+_MODEL_BASIC_ICEBERG_MODEL_WITH_PATH_SUBPATH = """
+{{
+  config(
+    transient = "true",
+    materialized = "table",
+    cluster_by=['id'],
+    table_format="iceberg",
+    external_volume="s3_iceberg_snow",
+    base_location="base_path",
+    base_location_subpath="subpath",
+  )
+}}
+
+select * from {{ ref('first_table') }}
+"""
+
 _MODEL_BASIC_DYNAMIC_TABLE_MODEL = """
 {{ config(
     materialized='dynamic_table',
@@ -32,6 +63,21 @@ _MODEL_BASIC_DYNAMIC_TABLE_MODEL = """
     table_format='iceberg',
     external_volume='s3_iceberg_snow',
 ) }}
+
+select * from {{ ref('first_table') }}
+"""
+
+_MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_PATH = """
+{{
+  config(
+    transient = "true",
+    materialized = "table",
+    cluster_by=['id'],
+    table_format="iceberg",
+    external_volume="s3_iceberg_snow",
+    base_location="base_path",
+  )
+}}
 
 select * from {{ ref('first_table') }}
 """
