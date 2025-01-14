@@ -82,6 +82,23 @@ _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_PATH = """
 select * from {{ ref('first_table') }}
 """
 
+_MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_PATH_SUBPATH = """
+{{
+  config(
+    transient = "true",
+    materialized = "table",
+    cluster_by=['id'],
+    table_format="iceberg",
+    external_volume="s3_iceberg_snow",
+    base_location="base_path",
+    base_location_subpath='subpath',
+  )
+}}
+
+select * from {{ ref('first_table') }}
+"""
+
+
 _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_SUBPATH = """
 {{ config(
     materialized='dynamic_table',
