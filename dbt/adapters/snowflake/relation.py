@@ -208,7 +208,7 @@ class SnowflakeRelation(BaseRelation):
 
         # If the base_location config is supplied, overwrite the default value
         if base_path := config.get("base_location"):
-            base_location = f"{base_path}"
+            base_location = f"{base_path}/{self.name}"
 
         if subpath := config.get("base_location_subpath"):
             base_location += f"/{subpath}"
