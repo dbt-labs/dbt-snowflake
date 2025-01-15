@@ -12,6 +12,7 @@
     {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
     {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
     {%- set copy_grants = config.get('copy_grants', default=false) -%}
+    {%- set catalog_name = config.get('catalog_name', default=none) -%}
 
     {%- if cluster_by_keys is not none and cluster_by_keys is string -%}
       {%- set cluster_by_keys = [cluster_by_keys] -%}
@@ -21,18 +22,25 @@
     {% else %}
       {%- set cluster_by_string = none -%}
     {%- endif -%}
+    {%- if catalog_name is not none %}
+      {%- set catalog_integration = adapter.get_catalog_integration(catalog_name) -%}
+    {%- endif -%}
     {%- set sql_header = config.get('sql_header', none) -%}
 
     {{ sql_header if sql_header is not none }}
 
         create or replace {{ materialization_prefix }} table {{ relation }}
-        {%- if relation.is_iceberg_format %}
+        {%- if catalog_integration is not none %}
           {#
             Valid DDL in CTAS statements. Plain create statements have a different order.
             https://docs.snowflake.com/en/sql-reference/sql/create-iceberg-table
           #}
-          {{ relation.get_iceberg_ddl_options(config.model.config) }}
-        {%- endif -%}
+          {{ catalog_integration.render_ddl_predicates(relation=relation, config=config.model.config) }}
+        {%- elif relation.is_iceberg_format %}
+          {%- set catalog_name = relation.add_managed_catalog_integration(config.model.config) -%}
+          {%- set catalog_integration = adapter.get_catalog_integration(catalog_name) -%}
+          {{ catalog_integration.render_ddl_predicates(relation, config.model.config) }}
+        {%- endif %}
 
         {%- set contract_config = config.get('contract') -%}
         {%- if contract_config.enforced -%}

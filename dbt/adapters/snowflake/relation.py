@@ -1,10 +1,9 @@
-import textwrap
-
 from dataclasses import dataclass, field
 from typing import FrozenSet, Optional, Type, Iterator, Tuple
 
-
+from dbt.adapters.clients import catalogs as catalogs_client
 from dbt.adapters.base.relation import BaseRelation
+from dbt.adapters.contracts.catalog import CatalogIntegrationConfig, CatalogIntegrationType
 from dbt.adapters.contracts.relation import ComponentName, RelationConfig
 from dbt.adapters.events.types import AdapterEventWarning, AdapterEventDebug
 from dbt.adapters.relation_configs import (
@@ -12,6 +11,7 @@ from dbt.adapters.relation_configs import (
     RelationConfigChangeAction,
     RelationResults,
 )
+from dbt.adapters.snowflake.catalog import SnowflakeManagedIcebergCatalogIntegration
 from dbt.adapters.utils import classproperty
 from dbt_common.exceptions import DbtRuntimeError
 from dbt_common.events.functions import fire_event, warn_or_error
@@ -64,6 +64,10 @@ class SnowflakeRelation(BaseRelation):
 
     @property
     def is_iceberg_format(self) -> bool:
+        if self.catalog_name:
+            return (
+                catalogs_client.get_catalog(self.catalog_name).table_format == TableFormat.ICEBERG
+            )
         return self.table_format == TableFormat.ICEBERG
 
     @classproperty
@@ -167,7 +171,11 @@ class SnowflakeRelation(BaseRelation):
         """
 
         transient_explicitly_set_true: bool = config.get("transient", False)
-
+        catalog_name = config.get("catalog_name", None)
+        if catalog_name:
+            catalog = catalogs_client.get_catalog(catalog_name)
+            if catalog.table_format == TableFormat.ICEBERG:
+                return "iceberg"
         # Temporary tables are a Snowflake feature that do not exist in the
         # Iceberg framework. We ignore the Iceberg status of the model.
         if temporary:
@@ -203,18 +211,21 @@ class SnowflakeRelation(BaseRelation):
         else:
             return ""
 
-    def get_iceberg_ddl_options(self, config: RelationConfig) -> str:
-        base_location: str = f"_dbt/{self.schema}/{self.name}"
-
-        if subpath := config.get("base_location_subpath"):
-            base_location += f"/{subpath}"
-
-        iceberg_ddl_predicates: str = f"""
-        external_volume = '{config.get('external_volume')}'
-        catalog = 'snowflake'
-        base_location = '{base_location}'
-        """
-        return textwrap.indent(textwrap.dedent(iceberg_ddl_predicates), " " * 10)
+    def add_managed_catalog_integration(self, config: RelationConfig) -> str:
+        catalog_name = "snowflake_managed"
+        external_volume = config.get("external_volume")
+        integration_config = CatalogIntegrationConfig(
+            catalog_name=catalog_name,
+            integration_name=catalog_name,
+            table_format=self.table_format,
+            catalog_type=CatalogIntegrationType.managed.value,
+            external_volume=external_volume,
+        )
+        catalogs_client.add_catalog(
+            SnowflakeManagedIcebergCatalogIntegration(integration_config),
+            catalog_name=catalog_name,
+        )
+        return catalog_name
 
     def __drop_conditions(self, old_relation: "SnowflakeRelation") -> Iterator[Tuple[bool, str]]:
         drop_view_message: str = (

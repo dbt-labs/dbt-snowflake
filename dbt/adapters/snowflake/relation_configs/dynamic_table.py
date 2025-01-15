@@ -40,10 +40,11 @@ class Initialize(StrEnum):
         return cls("ON_CREATE")
 
 
-def _setup_catalog_integration(catalog_info: Union[Dict, RelationConfig]) -> Optional[str]:
-    breakpoint()
+def _setup_catalog_integration(catalog_info: Union[Dict, RelationConfig]) -> str:
     if not catalog_info:
-        return None
+        return "SNOWFLAKE"
+    elif isinstance(catalog_info, str):
+        return catalog_info
     elif isinstance(catalog_info, dict):
         catalog_config = SnowflakeCatalogConfig.from_dict(catalog_info)
     else:
@@ -64,7 +65,7 @@ def _setup_catalog_integration(catalog_info: Union[Dict, RelationConfig]) -> Opt
         )
         return catalog_name
     else:
-        return None
+        return TableFormat.default().value
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
@@ -90,7 +91,7 @@ class SnowflakeDynamicTableConfig(SnowflakeRelationConfigBase):
     query: str
     target_lag: str
     snowflake_warehouse: str
-    catalog: Optional[str] = None
+    catalog: str = "SNOWFLAKE"
     refresh_mode: Optional[RefreshMode] = RefreshMode.default()
     initialize: Optional[Initialize] = Initialize.default()
 
