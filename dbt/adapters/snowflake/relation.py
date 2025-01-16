@@ -204,11 +204,8 @@ class SnowflakeRelation(BaseRelation):
             return ""
 
     def get_iceberg_ddl_options(self, config: RelationConfig) -> str:
-        base_location: str = f"_dbt/{self.schema}/{self.name}"
-
-        # If the base_location config is supplied, overwrite the default value
-        if base_path := config.get("base_location"):
-            base_location = f"{base_path}/{self.name}"
+        # If the base_location_root config is supplied, overwrite the default value ("_dbt/")
+        base_location: str = f"{config.get("base_location_root", "_dbt")}/{self.schema}/{self.name}"
 
         if subpath := config.get("base_location_subpath"):
             base_location += f"/{subpath}"
