@@ -31,7 +31,7 @@ _MODEL_BASIC_ICEBERG_MODEL_WITH_PATH = """
     cluster_by=['id'],
     table_format="iceberg",
     external_volume="s3_iceberg_snow",
-    base_location_root="base_path",
+    base_location_root="root_path",
   )
 }}
 
@@ -46,7 +46,7 @@ _MODEL_BASIC_ICEBERG_MODEL_WITH_PATH_SUBPATH = """
     cluster_by=['id'],
     table_format="iceberg",
     external_volume="s3_iceberg_snow",
-    base_location_root="base_path",
+    base_location_root="root_path",
     base_location_subpath="subpath",
   )
 }}
@@ -75,7 +75,7 @@ _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_PATH = """
     cluster_by=['id'],
     table_format="iceberg",
     external_volume="s3_iceberg_snow",
-    base_location_root="base_path",
+    base_location_root="root_path",
   )
 }}
 
@@ -90,7 +90,7 @@ _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_PATH_SUBPATH = """
     cluster_by=['id'],
     table_format="iceberg",
     external_volume="s3_iceberg_snow",
-    base_location_root="base_path",
+    base_location_root="root_path",
     base_location_subpath='subpath',
   )
 }}
