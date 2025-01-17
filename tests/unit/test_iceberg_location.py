@@ -73,9 +73,7 @@ def test_iceberg_no_path(iceberg_config: dict[str, str]):
     del iceberg_config["base_location_subpath"]
 
     expected_base_location = (
-        f"'_dbt/"
-        f"{iceberg_config['schema']}/"
-        f"{iceberg_config['identifier']}'"
+        f"'_dbt/" f"{iceberg_config['schema']}/" f"{iceberg_config['identifier']}'"
     ).strip()
 
     assert get_actual_base_location(iceberg_config) == expected_base_location
