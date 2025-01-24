@@ -1,0 +1,6 @@
+kind: Fixes
+body: correcly detect iceberg tables
+time: 2025-01-24T18:35:19.627555Z
+custom:
+    Author: ms32035
+    Issue: "1293"
