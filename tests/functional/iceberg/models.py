@@ -70,7 +70,7 @@ select * from {{ ref('first_table') }}
 _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_PATH = """
 {{
   config(
-    transient = "true",
+    transient = "dynamic_table",
     materialized = "table",
     cluster_by=['id'],
     table_format="iceberg",
@@ -86,7 +86,7 @@ _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_PATH_SUBPATH = """
 {{
   config(
     transient = "true",
-    materialized = "table",
+    materialized = "dynamic_table",
     cluster_by=['id'],
     table_format="iceberg",
     external_volume="s3_iceberg_snow",
