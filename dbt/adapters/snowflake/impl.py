@@ -113,19 +113,32 @@ class SnowflakeAdapter(SQLAdapter):
         return super()._catalog_filter_table(lowered, used_schemas)
 
     def _make_match_kwargs(self, database, schema, identifier):
+        # if any path part is already quoted then consider same casing but without quotes
         quoting = self.config.quoting
-        if identifier is not None and quoting["identifier"] is False:
+        if SnowflakeAdapter._is_quoted(identifier):
+            identifier = identifier.strip(SnowflakeRelation.quote_character)
+        elif identifier is not None and quoting["identifier"] is False:
             identifier = identifier.upper()
 
-        if schema is not None and quoting["schema"] is False:
+        if SnowflakeAdapter._is_quoted(schema):
+            schema = schema.strip(SnowflakeRelation.quote_character)
+        elif schema is not None and quoting["schema"] is False:
             schema = schema.upper()
 
-        if database is not None and quoting["database"] is False:
+        if SnowflakeAdapter._is_quoted(database):
+            database = database.strip(SnowflakeRelation.quote_character)
+        elif database is not None and quoting["database"] is False:
             database = database.upper()
 
         return filter_null_values(
             {"identifier": identifier, "schema": schema, "database": database}
         )
+
+    @classmethod
+    def _is_quoted(cls, identifier: str) -> bool:
+        return (identifier is not None
+                and identifier.startswith(SnowflakeRelation.quote_character)
+                and identifier.endswith(SnowflakeRelation.quote_character))
 
     def _get_warehouse(self) -> str:
         _, table = self.execute("select current_warehouse() as warehouse", fetch=True)
