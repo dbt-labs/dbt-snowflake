@@ -1,0 +1,59 @@
+{% materialization hybrid_table, adapter='snowflake' %}
+    {% set query_tag = set_query_tag() %}
+    {% set existing_relation = load_cached_relation(this) %}
+    {% set target_relation = this.incorporate(type='table') %}
+    
+    {{ run_hooks(pre_hooks) }}
+
+    {% set column_definitions = config.get('column_definitions', {}) %}
+    {% set primary_key = config.get('primary_key', []) %}
+    {% set indexes = config.get('indexes', []) %}
+    {% set force_ctas = config.get('force_ctas', false) %}
+
+    {% if existing_relation is none or force_ctas %}
+        {# Create new hybrid table #}
+        {% call statement('main') %}
+            CREATE OR REPLACE HYBRID TABLE {{ target_relation }} (
+                {% for column, definition in column_definitions.items() %}
+                    {{ column }} {{ definition }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+                {% if primary_key %}
+                    , PRIMARY KEY ({{ primary_key | join(', ') }})
+                {% endif %}
+                {% for index in indexes %}
+                    , INDEX {{ index.name }} ({{ index.columns | join(', ') }})
+                {% endfor %}
+            ) AS (
+                {{ sql }}
+            )
+        {% endcall %}
+    {% else %}
+        {# Merge into existing hybrid table #}
+        {% call statement('main') %}
+            MERGE INTO {{ target_relation }} t
+            USING ({{ sql }}) s
+            ON {% for pk in primary_key %}
+                t.{{ pk }} = s.{{ pk }}{% if not loop.last %} AND {% endif %}
+            {% endfor %}
+            WHEN MATCHED THEN
+                UPDATE SET
+                {% for column in column_definitions.keys() %}
+                    {% if column not in primary_key %}
+                        t.{{ column }} = s.{{ column }}{% if not loop.last %},{% endif %}
+                    {% endif %}
+                {% endfor %}
+            WHEN NOT MATCHED THEN
+                INSERT ({{ column_definitions.keys() | join(', ') }})
+                VALUES ({{ column_definitions.keys() | map('prefix', 's.') | join(', ') }})
+        {% endcall %}
+    {% endif %}
+
+    {{ run_hooks(post_hooks) }}
+    {% do unset_query_tag(query_tag) %}
+    
+    {% set grant_config = config.get('grants') %}
+    {% do apply_grants(target_relation, grant_config, should_revoke=should_revoke(existing_relation, full_refresh_mode=True)) %}
+    {% do persist_docs(target_relation, model) %}
+    
+    {{ return({'relations': [target_relation]}) }}
+{% endmaterialization %}
