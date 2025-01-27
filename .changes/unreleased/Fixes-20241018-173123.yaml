@@ -1,0 +1,6 @@
+kind: Fixes
+body: Fix parsing of the VECTOR type
+time: 2024-10-18T17:31:23.931299-04:00
+custom:
+    Author: achawkins
+    Issue: "1098"

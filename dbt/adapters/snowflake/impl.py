@@ -4,11 +4,13 @@ from typing import Mapping, Any, Optional, List, Union, Dict, FrozenSet, Tuple, 
 from dbt.adapters.base.impl import AdapterConfig, ConstraintSupport
 from dbt.adapters.base.meta import available
 from dbt.adapters.capability import CapabilityDict, CapabilitySupport, Support, Capability
+from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.sql.impl import (
     LIST_SCHEMAS_MACRO_NAME,
     LIST_RELATIONS_MACRO_NAME,
 )
+from dbt_common.behavior_flags import BehaviorFlag
 from dbt_common.contracts.constraints import ConstraintType
 from dbt_common.contracts.metadata import (
     TableMetadata,
@@ -20,7 +22,12 @@ from dbt_common.contracts.metadata import (
 from dbt_common.exceptions import CompilationError, DbtDatabaseError, DbtRuntimeError
 from dbt_common.utils import filter_null_values
 
-from dbt.adapters.snowflake.relation_configs import SnowflakeRelationType
+from dbt.adapters.snowflake import constants
+from dbt.adapters.snowflake.relation_configs import (
+    SnowflakeRelationType,
+    TableFormat,
+)
+
 from dbt.adapters.snowflake import SnowflakeColumn
 from dbt.adapters.snowflake import SnowflakeConnectionManager
 from dbt.adapters.snowflake import SnowflakeRelation
@@ -44,6 +51,12 @@ class SnowflakeConfig(AdapterConfig):
     merge_update_columns: Optional[str] = None
     target_lag: Optional[str] = None
 
+    # extended formats
+    table_format: Optional[str] = None
+    external_volume: Optional[str] = None
+    base_location_root: Optional[str] = None
+    base_location_subpath: Optional[str] = None
+
 
 class SnowflakeAdapter(SQLAdapter):
     Relation = SnowflakeRelation
@@ -66,8 +79,25 @@ class SnowflakeAdapter(SQLAdapter):
             Capability.TableLastModifiedMetadata: CapabilitySupport(support=Support.Full),
             Capability.TableLastModifiedMetadataBatch: CapabilitySupport(support=Support.Full),
             Capability.GetCatalogForSingleRelation: CapabilitySupport(support=Support.Full),
+            Capability.MicrobatchConcurrency: CapabilitySupport(support=Support.Full),
         }
     )
+
+    @property
+    def _behavior_flags(self) -> List[BehaviorFlag]:
+        return [
+            {
+                "name": "enable_iceberg_materializations",
+                "default": False,
+                "description": (
+                    "Enabling Iceberg materializations introduces latency to metadata queries, "
+                    "specifically within the list_relations_without_caching macro. Since Iceberg "
+                    "benefits only those actively using it, we've made this behavior opt-in to "
+                    "prevent unnecessary latency for other users."
+                ),
+                "docs_url": "https://docs.getdbt.com/reference/resource-configs/snowflake-configs#iceberg-table-format",
+            }
+        ]
 
     @classmethod
     def date_function(cls):
@@ -223,30 +253,38 @@ class SnowflakeAdapter(SQLAdapter):
         self, schema_relation: SnowflakeRelation
     ) -> List[SnowflakeRelation]:
         kwargs = {"schema_relation": schema_relation}
+
         try:
-            results = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
+            schema_objects = self.execute_macro(LIST_RELATIONS_MACRO_NAME, kwargs=kwargs)
         except DbtDatabaseError as exc:
             # if the schema doesn't exist, we just want to return.
             # Alternatively, we could query the list of schemas before we start
             # and skip listing the missing ones, which sounds expensive.
-            if "Object does not exist" in str(exc):
+            # "002043 (02000)" is error code for "object does not exist or is not found"
+            # The error message text may vary across languages, but the error code is expected to be more stable
+            if "002043 (02000)" in str(exc):
                 return []
             raise
 
-        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
-        columns = ["database_name", "schema_name", "name", "kind"]
-        if "is_dynamic" in results.column_names:
-            columns.append("is_dynamic")
+        # this can be collapsed once Snowflake adds is_iceberg to show objects
+        columns = ["database_name", "schema_name", "name", "kind", "is_dynamic"]
+        if self.behavior.enable_iceberg_materializations.no_warn:
+            # The QUOTED_IDENTIFIERS_IGNORE_CASE setting impacts column names like
+            # is_iceberg which is created by dbt, but it does not affect the case
+            # of column values in Snowflake's SHOW OBJECTS query! This
+            # normalization step ensures metadata queries are handled consistently.
+            schema_objects = schema_objects.rename(column_names={"IS_ICEBERG": "is_iceberg"})
+            columns.append("is_iceberg")
 
-        return [self._parse_list_relations_result(result) for result in results.select(columns)]
+        return [self._parse_list_relations_result(obj) for obj in schema_objects.select(columns)]
 
     def _parse_list_relations_result(self, result: "agate.Row") -> SnowflakeRelation:
-        # this can be reduced to always including `is_dynamic` once bundle `2024_03` is mandatory
-        try:
+        # this can be collapsed once Snowflake adds is_iceberg to show objects
+        if self.behavior.enable_iceberg_materializations.no_warn:
+            database, schema, identifier, relation_type, is_dynamic, is_iceberg = result
+        else:
             database, schema, identifier, relation_type, is_dynamic = result
-        except ValueError:
-            database, schema, identifier, relation_type = result
-            is_dynamic = "N"
+            is_iceberg = "N"
 
         try:
             relation_type = self.Relation.get_relation_type(relation_type.lower())
@@ -256,12 +294,16 @@ class SnowflakeAdapter(SQLAdapter):
         if relation_type == self.Relation.Table and is_dynamic == "Y":
             relation_type = self.Relation.DynamicTable
 
+        table_format = TableFormat.ICEBERG if is_iceberg in ("Y", "YES") else TableFormat.DEFAULT
+
         quote_policy = {"database": True, "schema": True, "identifier": True}
+
         return self.Relation.create(
             database=database,
             schema=schema,
             identifier=identifier,
             type=relation_type,
+            table_format=table_format,
             quote_policy=quote_policy,
         )
 
@@ -291,7 +333,7 @@ class SnowflakeAdapter(SQLAdapter):
             grantee = row["grantee_name"]
             granted_to = row["granted_to"]
             privilege = row["privilege"]
-            if privilege != "OWNERSHIP" and granted_to != "SHARE":
+            if privilege != "OWNERSHIP" and granted_to not in ["SHARE", "DATABASE_ROLE"]:
                 if privilege in grants_dict.keys():
                     grants_dict[privilege].append(grantee)
                 else:
@@ -305,7 +347,9 @@ class SnowflakeAdapter(SQLAdapter):
         schema = parsed_model["schema"]
         database = parsed_model["database"]
         identifier = parsed_model["alias"]
-        python_version = parsed_model["config"].get("python_version", "3.8")
+        python_version = parsed_model["config"].get(
+            "python_version", constants.DEFAULT_PYTHON_VERSION_FOR_PYTHON_MODELS
+        )
 
         packages = parsed_model["config"].get("packages", [])
         imports = parsed_model["config"].get("imports", [])
@@ -385,8 +429,23 @@ CALL {proc_name}();
         return response
 
     def valid_incremental_strategies(self):
-        return ["append", "merge", "delete+insert"]
+        return ["append", "merge", "delete+insert", "microbatch"]
 
     def debug_query(self):
         """Override for DebugTask method"""
         self.execute("select 1 as id")
+
+    @classmethod
+    def _get_adapter_specific_run_info(cls, config: RelationConfig) -> Dict[str, Any]:
+        table_format: Optional[str] = None
+        if (
+            config
+            and hasattr(config, "_extra")
+            and (relation_format := config._extra.get("table_format"))
+        ):
+            table_format = relation_format
+
+        return {
+            "adapter_type": "snowflake",
+            "table_format": table_format,
+        }

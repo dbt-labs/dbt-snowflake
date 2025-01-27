@@ -111,9 +111,10 @@
 
       {%- if loop.index == max_iter -%}
         {%- set msg -%}
-           dbt will list a maximum of {{ max_total_results }} objects in schema {{ schema_relation }}.
-           Your schema exceeds this limit. Please contact support@getdbt.com for troubleshooting tips,
-           or review and reduce the number of objects contained.
+            dbt is currently configured to list a maximum of {{ max_total_results }} objects per schema.
+            {{ schema_relation }} exceeds this limit. If this is expected, you may configure this limit
+            by setting list_relations_per_page and list_relations_page_limit in your project flags.
+            It is recommended to start by increasing list_relations_page_limit to something more than the default of 10.
         {%- endset -%}
 
         {% do exceptions.raise_compiler_error(msg) %}
@@ -136,16 +137,27 @@
 
 {% macro snowflake__list_relations_without_caching(schema_relation, max_iter=10, max_results_per_iter=10000) %}
 
+  {%- set max_results_per_iter = adapter.config.flags.get('list_relations_per_page', max_results_per_iter) -%}
+  {%- set max_iter = adapter.config.flags.get('list_relations_page_limit', max_iter) -%}
   {%- set max_total_results = max_results_per_iter * max_iter -%}
-  {% if schema_relation is string %}
-    {%- set sql -%}
-      show objects in {{ schema_relation }} limit {{ max_results_per_iter }}
-    {%- endset -%}
-  {% else %}
-    {%- set sql -%}
-      show objects in {{ schema_relation.include(identifier=False) }} limit {{ max_results_per_iter }}
-    {%- endset -%}
-  {% endif -%}
+  {%- set sql -%}
+    {% if schema_relation is string %}
+      show objects in {{ schema_relation }} limit {{ max_results_per_iter }};
+    {% else %}
+      show objects in {{ schema_relation.include(identifier=False) }} limit {{ max_results_per_iter }};
+    {% endif -%}
+
+    {# -- Gated for performance reason. If you don't want Iceberg, you shouldn't pay the
+       -- latency penalty. #}
+    {% if adapter.behavior.enable_iceberg_materializations.no_warn %}
+      select all_objects.*, is_iceberg
+      from table(result_scan(last_query_id(-1))) all_objects
+      left join INFORMATION_SCHEMA.tables as all_tables
+        on all_tables.table_name = all_objects."name"
+        and all_tables.table_schema = all_objects."schema_name"
+        and all_tables.table_catalog = all_objects."database_name"
+    {% endif -%}
+  {%- endset -%}
 
   {%- set result = run_query(sql) -%}
 
@@ -186,7 +198,7 @@
 
 {% macro snowflake__alter_column_type(relation, column_name, new_column_type) -%}
   {% call statement('alter_column_type') %}
-    alter table {{ relation.render() }} alter {{ adapter.quote(column_name) }} set data type {{ new_column_type }};
+    alter {{ relation.get_ddl_prefix_for_alter() }} table {{ relation.render() }} alter {{ adapter.quote(column_name) }} set data type {{ new_column_type }};
   {% endcall %}
 {% endmacro %}
 
@@ -207,7 +219,7 @@
     {% else -%}
         {% set relation_type = relation.type %}
     {% endif %}
-    alter {{ relation_type }} {{ relation.render() }} alter
+    alter {{ relation.get_ddl_prefix_for_alter() }} {{ relation_type }} {{ relation.render() }} alter
     {% for column_name in existing_columns if (column_name in existing_columns) or (column_name|lower in existing_columns) %}
         {{ get_column_comment_sql(column_name, column_dict) }} {{- ',' if not loop.last else ';' }}
     {% endfor %}
@@ -266,7 +278,7 @@
     {% if add_columns %}
 
     {% set sql -%}
-       alter {{ relation_type }} {{ relation.render() }} add column
+       alter {{ relation.get_ddl_prefix_for_alter() }} {{ relation_type }} {{ relation.render() }} add column
           {% for column in add_columns %}
             {{ column.name }} {{ column.data_type }}{{ ',' if not loop.last }}
           {% endfor %}
@@ -279,7 +291,7 @@
     {% if remove_columns %}
 
     {% set sql -%}
-        alter {{ relation_type }} {{ relation.render() }} drop column
+        alter {{ relation.get_ddl_prefix_for_alter() }} {{ relation_type }} {{ relation.render() }} drop column
             {% for column in remove_columns %}
                 {{ column.name }}{{ ',' if not loop.last }}
             {% endfor %}
