@@ -20,7 +20,7 @@
     {{ get_assert_columns_equivalent(sql) }}
   {%- endif %}
   {% if copy_grants -%} copy grants {%- endif %} as (
-    {{ sql }}
+    {{ sql|indent(4) }}
   );
 {% endmacro %}
 
