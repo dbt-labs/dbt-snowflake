@@ -96,6 +96,7 @@ class SnowflakeCredentials(Credentials):
     private_key_path: Optional[str] = None
     private_key_passphrase: Optional[str] = None
     token: Optional[str] = None
+    token_file_path: Optional[str] = None
     oauth_client_id: Optional[str] = None
     oauth_client_secret: Optional[str] = None
     query_tag: Optional[str] = None
@@ -114,7 +115,9 @@ class SnowflakeCredentials(Credentials):
     reuse_connections: Optional[bool] = None
 
     def __post_init__(self):
-        if self.authenticator != "oauth" and (self.oauth_client_secret or self.oauth_client_id):
+        if self.authenticator != "oauth" and (
+            self.oauth_client_secret or self.oauth_client_id or self.token_file_path
+        ):
             # the user probably forgot to set 'authenticator' like I keep doing
             warn_or_error(
                 AdapterEventWarning(
@@ -133,8 +136,9 @@ class SnowflakeCredentials(Credentials):
                     )
                 )
 
-            if not self.user:
+            if not (self.user or self.token_file_path):
                 # The user attribute is only optional if 'authenticator' is 'jwt' or 'oauth'
+                # It is also optional when using an OAuth token file in Snowpark Container Services
                 warn_or_error(
                     AdapterEventError(base_msg="Invalid profile: 'user' is a required property.")
                 )
@@ -179,6 +183,7 @@ class SnowflakeCredentials(Credentials):
             "retry_all",
             "insecure_mode",
             "reuse_connections",
+            "token_file_path",
         )
 
     def auth_args(self):
@@ -202,25 +207,33 @@ class SnowflakeCredentials(Credentials):
         if self.authenticator:
             result["authenticator"] = self.authenticator
             if self.authenticator == "oauth":
-                token = self.token
-                # if we have a client ID/client secret, the token is a refresh
-                # token, not an access token
-                if self.oauth_client_id and self.oauth_client_secret:
-                    token = self._get_access_token()
-                elif self.oauth_client_id:
-                    warn_or_error(
-                        AdapterEventWarning(
-                            base_msg="Invalid profile: got an oauth_client_id, but not an oauth_client_secret!"
+                # If the token_file_path is provided we ignore the token parameter
+                if self.token_file_path:
+                    if not os.path.isfile(self.token_file_path):
+                        raise DbtInternalError(
+                            f"The token_file_path file does not exist: {self.token_file_path}"
                         )
-                    )
-                elif self.oauth_client_secret:
-                    warn_or_error(
-                        AdapterEventWarning(
-                            base_msg="Invalid profile: got an oauth_client_secret, but not an oauth_client_id!"
+                    result["token_file_path"] = self.token_file_path
+                else:
+                    token = self.token
+                    # if we have a client ID/client secret, the token is a refresh
+                    # token, not an access token
+                    if self.oauth_client_id and self.oauth_client_secret:
+                        token = self._get_access_token()
+                    elif self.oauth_client_id:
+                        warn_or_error(
+                            AdapterEventWarning(
+                                base_msg="Invalid profile: got an oauth_client_id, but not an oauth_client_secret!"
+                            )
                         )
-                    )
+                    elif self.oauth_client_secret:
+                        warn_or_error(
+                            AdapterEventWarning(
+                                base_msg="Invalid profile: got an oauth_client_secret, but not an oauth_client_id!"
+                            )
+                        )
 
-                result["token"] = token
+                    result["token"] = token
 
             elif self.authenticator == "jwt":
                 # If authenticator is 'jwt', then the 'token' value should be used
