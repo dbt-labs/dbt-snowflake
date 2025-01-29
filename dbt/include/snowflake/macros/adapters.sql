@@ -210,7 +210,7 @@
     {%- else -%}
         {%- set relation_type = relation.type -%}
     {%- endif -%}
-    alter {{ relation_type }} {{ relation.render() }} SET comment = $${{ relation_comment | replace('$', '[$]') }}$$;
+    alter {{ relation_type }} {{ relation.render() }} set comment = $${{ relation_comment | replace('$', '[$]') }}$$;
 {% endmacro %}
 
 
