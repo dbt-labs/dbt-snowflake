@@ -66,6 +66,8 @@ class SnowflakeCatalogConfig(SnowflakeRelationConfigBase, RelationConfigValidati
         }
         if table_format := config_dict.get("table_format"):
             kwargs_dict["table_format"] = TableFormat(table_format)
+        if external_volume := config_dict.get("external_volume"):
+            kwargs_dict["external_volume"] = external_volume
         return super().from_dict(kwargs_dict)
 
     @classmethod
