@@ -104,6 +104,8 @@ class SnowflakeCredentials(Credentials):
     port: Optional[int] = None
     proxy_host: Optional[str] = None
     proxy_port: Optional[int] = None
+    proxy_user: Optional[str] = None
+    proxy_password: Optional[str] = None
     protocol: Optional[str] = None
     connect_retries: int = 1
     connect_timeout: Optional[int] = None
@@ -172,6 +174,8 @@ class SnowflakeCredentials(Credentials):
             "port",
             "proxy_host",
             "proxy_port",
+            "proxy_user",
+            "proxy_password",
             "protocol",
             "connect_retries",
             "connect_timeout",
@@ -197,6 +201,10 @@ class SnowflakeCredentials(Credentials):
             result["proxy_host"] = self.proxy_host
         if self.proxy_port:
             result["proxy_port"] = self.proxy_port
+        if self.proxy_user:
+            result["proxy_user"] = self.proxy_user
+        if self.proxy_password:
+            result["proxy_password"] = self.proxy_password
         if self.protocol:
             result["protocol"] = self.protocol
         if self.authenticator:
