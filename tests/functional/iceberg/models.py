@@ -70,8 +70,9 @@ select * from {{ ref('first_table') }}
 _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_PATH = """
 {{
   config(
-    transient = "transient",
     materialized = "dynamic_table",
+    snowflake_warehouse='DBT_TESTING',
+    target_lag='1 minute',
     cluster_by=['id'],
     table_format="iceberg",
     external_volume="s3_iceberg_snow",
@@ -85,8 +86,9 @@ select * from {{ ref('first_table') }}
 _MODEL_BASIC_DYNAMIC_TABLE_MODEL_WITH_PATH_SUBPATH = """
 {{
   config(
-    transient = "true",
     materialized = "dynamic_table",
+    snowflake_warehouse='DBT_TESTING',
+    target_lag='1 minute',
     cluster_by=['id'],
     table_format="iceberg",
     external_volume="s3_iceberg_snow",
