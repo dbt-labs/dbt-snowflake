@@ -1,0 +1,6 @@
+kind: Features
+body: Added support for custom iceberg base_location_root
+time: 2025-01-13T13:34:14.326047-08:00
+custom:
+    Author: LProcopi15
+    Issue: "1284"

@@ -119,86 +119,70 @@ defaults:
     shell: bash
 
 jobs:
-  log-inputs:
-    name: Log Inputs
-    runs-on: ubuntu-latest
-    steps:
-      - name: "[DEBUG] Print Variables"
-        run: |
-          echo The last commit sha in the release: ${{ inputs.sha }}
-          echo The branch to release from:         ${{ inputs.target_branch }}
-          echo The release version number:         ${{ inputs.version_number }}
-          echo Build script path:                  ${{ inputs.build_script_path }}
-          echo Environment setup script path:      ${{ inputs.env_setup_script_path }}
-          echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
-          echo Package test command:               ${{ inputs.package_test_command }}
-          echo Test run:                           ${{ inputs.test_run }}
-          echo Nightly release:                    ${{ inputs.nightly_release }}
-          echo Only Docker:                        ${{ inputs.only_docker }}
-
-  bump-version-generate-changelog:
-    name: Bump package version, Generate changelog
-    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@main
+  release-prep:
+    name: "Release prep: generate changelog, bump version"
+    uses: ./.github/workflows/release_prep_hatch.yml
     with:
-      sha: ${{ inputs.sha }}
-      version_number: ${{ inputs.version_number }}
-      target_branch: ${{ inputs.target_branch }}
-      env_setup_script_path: ${{ inputs.env_setup_script_path }}
-      test_run: ${{ inputs.test_run }}
-      nightly_release: ${{ inputs.nightly_release }}
+      branch: ${{ inputs.branch }}
+      version: ${{ inputs.version }}
+      deploy-to: ${{ inputs.deploy-to }}
     secrets: inherit
 
-  log-outputs-bump-version-generate-changelog:
-    name: "[Log output] Bump package version, Generate changelog"
-    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    needs: [bump-version-generate-changelog]
+  build-release:
+    name: "Build release"
+    needs: release-prep
     runs-on: ubuntu-latest
+    outputs:
+      archive-name: ${{ steps.archive.outputs.name }}
     steps:
-      - name: Print variables
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-prep.outputs.release-branch }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+      - uses: pypa/hatch@install
+      - id: archive
         run: |
-          echo Final SHA     : ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-          echo Changelog path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
-
-  build-test-package:
-    name: Build, Test, Package
-    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    needs: [bump-version-generate-changelog]
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
-    with:
-      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-      version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
-      build_script_path: ${{ inputs.build_script_path }}
-      s3_bucket_name: ${{ inputs.s3_bucket_name }}
-      package_test_command: ${{ inputs.package_test_command }}
-      test_run: ${{ inputs.test_run }}
-      nightly_release: ${{ inputs.nightly_release }}
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          archive_name=${{ github.event.repository.name }}-${{ inputs.version }}-${{ inputs.deploy-to }}
+          echo "name=$archive_name" >> $GITHUB_OUTPUT
+      - run: hatch build && hatch run build:check-all
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.archive.outputs.name }}
+          path: dist/
+          retention-days: 3
 
   github-release:
     name: GitHub Release
     if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    needs: [bump-version-generate-changelog, build-test-package]
-    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
+    needs: [build-release, release-prep]
+    uses: dbt-labs/dbt-adapters/.github/workflows/github-release.yml@main
     with:
       sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
       version_number: ${{ inputs.version_number }}
       changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
       test_run: ${{ inputs.test_run }}
+      archive_name: ${{ needs.build-release.outputs.archive-name }}
 
   pypi-release:
     name: PyPI Release
     if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    needs: [bump-version-generate-changelog, build-test-package]
-    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@main
-    with:
-      version_number: ${{ inputs.version_number }}
-      test_run: ${{ inputs.test_run }}
-    secrets:
-      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-      TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+    needs: build-release
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.deploy-to }}
+      url: ${{ vars.PYPI_PROJECT_URL }}
+    permissions:
+      # this permission is required for trusted publishing
+      # see https://github.com/marketplace/actions/pypi-publish
+      id-token: write
+    steps:
+      - uses: dbt-labs/dbt-adapters/.github/actions/publish-pypi@main
+        with:
+          repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
+          archive-name: ${{ needs.build-release.outputs.archive-name }}
 
   docker-release:
     name: "Docker Release"
@@ -206,7 +190,7 @@ jobs:
     # what we need to release but draft releases don't actually tag the commit so it
     # finds nothing to release
     if: ${{ !failure() && !cancelled() && (!inputs.test_run || inputs.only_docker) }}
-    needs: [bump-version-generate-changelog, build-test-package, github-release]
+    needs: github-release
     permissions:
       packages: write
     uses: dbt-labs/dbt-release/.github/workflows/release-docker.yml@main

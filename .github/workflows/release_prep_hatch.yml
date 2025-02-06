@@ -1,0 +1,440 @@
+# **what?**
+# Perform the version bump, generate the changelog and run tests.
+#
+# Inputs:
+#  branch:             The branch that we will release from
+#  version:            The release version number (i.e. 1.0.0b1, 1.2.3rc2, 1.0.0)
+#  deploy-to:          If we are deploying to prod or test, if test then release from branch
+#  is-nightly-release: Identifier that this is nightly release
+#
+# Outputs:
+#   release-sha:       The sha that will actually be released.  This can differ from the
+#                      input sha if adding a version bump and/or changelog
+#   changelog-path:    Path to the changelog file (ex .changes/1.2.3-rc1.md)
+#
+# Branching strategy:
+#  - During execution workflow execution the temp branch will be generated.
+#  - For normal runs the temp branch will be removed once changes were merged to target branch;
+#  - For test runs we will keep temp branch and will use it for release;
+#  Naming strategy:
+#  - For normal runs:      prep-release/${{ inputs.deploy-to}}/${{ inputs.version }}_$GITHUB_RUN_ID
+#  - For nightly releases: prep-release/nightly-release/${{ inputs.version }}_$GITHUB_RUN_ID
+#
+# **why?**
+# Reusable and consistent GitHub release process.
+#
+# **when?**
+# Call when ready to kick off a build and release
+#
+# Validation Checks
+#
+#  1. Bump the version if it has not been bumped
+#  2. Generate the changelog (via changie) if there is no markdown file for this version
+name: "Release prep"
+run-name: "Release prep: Generate changelog and bump to ${{ inputs.version }} for release to ${{ inputs.deploy-to }}"
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: "The branch to release from"
+        type: string
+        default: "main"
+      version:
+        description: "The version to release"
+        required: true
+        type: string
+      deploy-to:
+        description: "Deploy to test or prod"
+        type: string
+        default: "prod"
+      is-nightly-release:
+        description: "Identify if this is a nightly release"
+        type: boolean
+        default: false
+    outputs:
+      release-branch:
+        description: "The branch to be released from"
+        value: ${{ jobs.release.outputs.branch }}
+      release-sha:
+        description: "The SHA to be released"
+        value: ${{ jobs.release.outputs.sha }}
+      changelog-path:
+        description: "The path to the changelog from the repo root for this version, e.g. .changes/1.8.0-b1.md"
+        value: ${{ jobs.release-inputs.outputs.changelog-path }}
+    secrets:
+      FISHTOWN_BOT_PAT:
+        description: "Token to commit/merge changes into branches"
+        required: true
+      IT_TEAM_MEMBERSHIP:
+        description: "Token that can view org level teams"
+        required: true
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHON_TARGET_VERSION: 3.12
+  NOTIFICATION_PREFIX: "[Release Prep]"
+
+jobs:
+  release-inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      changelog-path: ${{ steps.changelog.outputs.path }}
+      changelog-exists: ${{ steps.changelog.outputs.exists }}
+      base-version: ${{ steps.semver.outputs.base-version }}
+      pre-release: ${{ steps.semver.outputs.pre-release }}
+      is-pre-release: ${{ steps.semver.outputs.is-pre-release }}
+      version-is-current: ${{ steps.version.outputs.is-current }}
+
+    steps:
+      - name: "[DEBUG] Log inputs"
+        run: |
+          # WORKFLOW INPUTS
+          echo Branch:               ${{ inputs.branch }}
+          echo Release version:      ${{ inputs.version }}
+          echo Deploy to:            ${{ inputs.deploy-to }}
+          echo Nightly release:      ${{ inputs.is-nightly-release }}
+          # ENVIRONMENT VARIABLES
+          echo Python version:       ${{ env.PYTHON_TARGET_VERSION }}
+          echo Notification prefix:  ${{ env.NOTIFICATION_PREFIX }}
+
+      - name: "Checkout ${{ github.event.repository.name }}@${{ inputs.branch }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: "Setup `hatch`"
+        uses: dbt-labs/dbt-adapters/.github/actions/setup-hatch@main
+
+      - name: "Parse input version"
+        id: semver
+        uses: dbt-labs/actions/parse-semver@v1.1.1
+        with:
+          version: ${{ inputs.version }}
+
+      - name: "Audit version"
+        id: version
+        run: |
+          is_current=false
+          current_version=$(hatch version)
+          if test "$current_version" = "${{ inputs.version }}"
+          then
+            is_current=true
+          fi
+          echo "is-current=$is_current" >> $GITHUB_OUTPUT
+
+      - name: "[INFO] Skip version bump"
+        if: steps.version.outputs.is-current == 'true'
+        run: |
+          title="Skip version bump"
+          message="The version matches the input version ${{ inputs.version }}, skipping version bump"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+
+      - name: "Audit changelog"
+        id: changelog
+        run: |
+          path=".changes/"
+          if [[ ${{ steps.semver.outputs.is-pre-release }} -eq 1 ]]
+          then
+            path+="${{ steps.semver.outputs.base-version }}-${{ steps.semver.outputs.pre-release }}.md"
+          else
+            path+="${{ steps.semver.outputs.base-version }}.md"
+          fi
+          echo "path=$path" >> $GITHUB_OUTPUT
+
+          does_exist=false
+          if test -f $path
+          then
+            does_exist=true
+          fi
+          echo "exists=$does_exist">> $GITHUB_OUTPUT
+
+      - name: "[INFO] Skip changelog generation"
+        if: steps.changelog.outputs.exists == 'true'
+        run: |
+          title="Skip changelog generation"
+          message="A changelog already exists at ${{ steps.changelog.outputs.path }}, skipping generating changelog"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+
+  release-branch:
+    runs-on: ubuntu-latest
+    needs: release-inputs
+    if: |
+        needs.release-inputs.outputs.changelog-exists == 'false' ||
+        needs.release-inputs.outputs.version-is-current == 'false'
+    outputs:
+      name: ${{ steps.release-branch.outputs.name }}
+
+    steps:
+      - name: "Checkout ${{ github.event.repository.name }}@${{ inputs.branch }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: "Set release branch"
+        id: release-branch
+        run: |
+          name="prep-release/"
+          if [[ ${{ inputs.is-nightly-release }} == true  ]]
+          then
+            name+="nightly-release/"
+          else
+            name+="${{ inputs.deploy-to }}/"
+          fi
+          name+="${{ inputs.version }}_$GITHUB_RUN_ID"
+          echo "name=$name" >> $GITHUB_OUTPUT
+
+      - name: "Create release branch ${{ steps.release-branch.outputs.name }}"
+        run: |
+          git checkout -b ${{ steps.release-branch.outputs.name }}
+          git push -u origin ${{ steps.release-branch.outputs.name }}
+
+      - name: "[INFO] Create release branch"
+        run: |
+          title="Create release branch"
+          message="Create release branch: ${{ steps.release-branch.outputs.name }}"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+
+  core-team:
+    if: needs.release-inputs.outputs.changelog-exists == 'false'
+    needs: release-inputs
+    uses: dbt-labs/actions/.github/workflows/determine-team-membership.yml@main
+    with:
+      github_team: "core-group"
+    secrets: inherit
+
+  generate-changelog:
+    runs-on: ubuntu-latest
+    if: needs.release-inputs.outputs.changelog-exists == 'false'
+    # only runs if we need to make changes, determined by not skipping release-branch
+    needs:
+      - release-inputs
+      - release-branch
+      - core-team
+
+    steps:
+      - name: "Checkout ${{ github.event.repository.name }}@${{ needs.release-branch.outputs.name }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-branch.outputs.name }}
+
+      - name: "Setup `hatch`"
+        uses: dbt-labs/dbt-adapters/.github/actions/setup-hatch@main
+
+      - name: "Install `changie`"
+        run: |
+          brew tap miniscruff/changie https://github.com/miniscruff/changie
+          brew install changie
+
+      - name: "Generate changelog at ${{ needs.release-inputs.outputs.changelog-path }}"
+        run: |
+          if [[ ${{ needs.release-inputs.outputs.is-pre-release }} -eq 1 ]]
+          then
+            changie batch ${{ needs.release-inputs.outputs.base-version }} \
+              --move-dir '${{ needs.release-inputs.outputs.base-version }}' \
+              --prerelease ${{ needs.release-inputs.outputs.pre-release }}
+          elif [[ -d ".changes/${{ needs.release-inputs.outputs.base-version }}" ]]
+          then
+            changie batch ${{ needs.release-inputs.outputs.base-version }} \
+              --include '${{ needs.release-inputs.outputs.base-version }}' \
+              --remove-prereleases
+          else # releasing a final patch with no pre-releases
+            changie batch ${{ needs.release-inputs.outputs.base-version }}
+          fi
+          changie merge
+        env:
+          CHANGIE_CORE_TEAM: ${{ needs.core-team.outputs.team_membership }}
+
+      - name: "Remove trailing whitespace and missing new lines"
+        # this step will fail on whitespace errors but also correct them
+        continue-on-error: true
+        run: hatch run code-quality
+
+      - name: "Commit & push changes"
+        run: |
+          git config user.name "$USER"
+          git config user.email "$EMAIL"
+          git pull
+          git add .
+          git commit -m "$COMMIT_MESSAGE"
+          git push
+        env:
+          USER: "GitHub Build Bot"
+          EMAIL: "buildbot@fishtownanalytics.com"
+          COMMIT_MESSAGE: "Generate changelog at ${{ needs.release-inputs.outputs.changelog-path }}"
+
+      - name: "[INFO] Generated changelog at ${{ needs.release-inputs.outputs.changelog-path }}"
+        run: |
+          title="Changelog generation"
+          if [[ -f ${{ needs.release-inputs.outputs.changelog-path }} ]]
+          then
+            message="Generated changelog file successfully"
+            echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+          else
+            message="Failed to generate changelog file"
+            echo "::error title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+            exit 1
+          fi
+
+  bump-version:
+    runs-on: ubuntu-latest
+    if: needs.release-inputs.outputs.version-is-current == 'false'
+    # only runs if we need to make changes, determined by not skipping release-branch
+    needs:
+      - release-inputs
+      - release-branch
+      - generate-changelog
+
+    steps:
+      - name: "Checkout ${{ github.event.repository.name }}@${{ needs.release-branch.outputs.name }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-branch.outputs.name }}
+
+      - name: "Setup `hatch`"
+        uses: dbt-labs/dbt-adapters/.github/actions/setup-hatch@main
+
+      - name: "Bump version to ${{ inputs.version }}"
+        run: hatch version ${{ inputs.version }}
+
+      - name: "Commit & push changes"
+        run: |
+          git config user.name "$USER"
+          git config user.email "$EMAIL"
+          git pull
+          git add .
+          git commit -m "$COMMIT_MESSAGE"
+          git push
+        env:
+          USER: "GitHub Build Bot"
+          EMAIL: "buildbot@fishtownanalytics.com"
+          COMMIT_MESSAGE: "Bump version to ${{ inputs.version }}"
+
+      - name: "[INFO] Bumped version to ${{ inputs.version }}"
+        run: |
+          title="Version bump"
+          message="Bumped version to ${{ inputs.version }}"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    # only run unit tests if we created a release branch and already bumped the version and generated the changelog
+    if: |
+      !failure() && !cancelled() &&
+      needs.release-branch.outputs.name != ''
+    needs:
+      - release-branch
+      - generate-changelog
+      - bump-version
+
+    steps:
+      - name: "Checkout ${{ github.event.repository.name }}@${{ needs.release-branch.outputs.name }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-branch.outputs.name }}
+
+      - name: "Setup `hatch`"
+        uses: dbt-labs/dbt-adapters/.github/actions/setup-hatch@main
+
+      - name: "Run unit tests"
+        run: hatch run unit-tests
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    # only run integration tests if we created a release branch and already bumped the version and generated the changelog
+    if: |
+      !failure() && !cancelled() &&
+      needs.release-branch.outputs.name != ''
+    needs:
+      - release-branch
+      - generate-changelog
+      - bump-version
+
+    steps:
+      - name: "Checkout ${{ github.event.repository.name }}@${{ needs.release-branch.outputs.name }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-branch.outputs.name }}\
+
+      - name: "Set up `hatch`"
+        uses: dbt-labs/dbt-adapters/.github/actions/setup-hatch@main
+
+      - name: "Run integration tests"
+        run: hatch run integration-tests
+
+  merge-release-branch:
+    runs-on: ubuntu-latest
+    needs:
+      - unit-tests
+      - integration-tests
+      - release-branch
+      - release-inputs
+    if: |
+        !failure() && !cancelled() &&
+        needs.release-branch.result == 'success' &&
+        inputs.deploy-to == 'prod'
+
+    steps:
+      - name: "Checkout ${{ github.event.repository.name }}"
+        uses: actions/checkout@v4
+
+      - name: "Merge changes into ${{ inputs.branch }}"
+        uses: everlytic/branch-merge@1.1.5
+        with:
+          source_ref: ${{ needs.release-branch.outputs.name }}
+          target_branch: ${{ inputs.branch }}
+          github_token: ${{ secrets.FISHTOWN_BOT_PAT }}
+          commit_message_template: "[Automated] Merged {source_ref} into target {target_branch} during release process"
+
+      - name: "[INFO] Merge changes into ${{ inputs.branch }}"
+        run: |
+          title="Merge changes"
+          message="Merge ${{ needs.release-branch.outputs.name }} into ${{ inputs.branch }}"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - release-branch
+      - merge-release-branch
+    if: ${{ !failure() && !cancelled() }}
+
+    # Get the SHA that will be released.
+    # If the changelog already exists and the version was already current on the input branch, then release from there.
+    # Otherwise, we generated a changelog and/or did the version bump in this workflow and there is a
+    # new sha to use from the merge we just did. Grab that here instead.
+    outputs:
+      branch: ${{ steps.branch.outputs.name }}
+      sha: ${{ steps.sha.outputs.sha }}
+
+    steps:
+      - name: "Set release branch"
+        id: branch
+        # If a release branch was created and not merged, use the release branch
+        # Otherwise, use the input branch because either nothing was done, or the changes were merged back in
+        run: |
+          if [[ ${{ needs.release-branch.result == 'success' }} && ${{ needs.merge-release-branch.result == 'skipped' }} ]]; then
+            branch="${{ needs.release-branch.outputs.name }}"
+          else
+            branch="${{ inputs.branch }}"
+          fi
+          echo "name=$branch" >> $GITHUB_OUTPUT
+
+      - name: "Checkout ${{ github.event.repository.name }}@${{ steps.branch.outputs.name }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch.outputs.name }}
+
+      - name: "Set release SHA"
+        id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      # if this is a real release and a release branch was created, delete it
+      - name: "Delete release branch: ${{ needs.release-branch.outputs.name }}"
+        if: ${{ inputs.deploy-to == 'prod' && inputs.is-nightly-release == 'false' && needs.release-branch.outputs.name != '' }}
+        run: git push origin -d ${{ needs.release-branch.outputs.name }}
