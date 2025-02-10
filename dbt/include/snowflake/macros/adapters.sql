@@ -152,7 +152,7 @@
     {% if adapter.behavior.enable_iceberg_materializations.no_warn %}
       select all_objects.*, is_iceberg
       from table(result_scan(last_query_id(-1))) all_objects
-      left join INFORMATION_SCHEMA.tables as all_tables
+      left join {{ schema_relation.database }}.INFORMATION_SCHEMA.tables as all_tables
         on all_tables.table_name = all_objects."name"
         and all_tables.table_schema = all_objects."schema_name"
         and all_tables.table_catalog = all_objects."database_name"
