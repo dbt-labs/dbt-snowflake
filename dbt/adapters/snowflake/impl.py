@@ -42,6 +42,7 @@ SHOW_OBJECT_METADATA_MACRO_NAME = "snowflake__show_object_metadata"
 class SnowflakeConfig(AdapterConfig):
     transient: Optional[bool] = None
     cluster_by: Optional[Union[str, List[str]]] = None
+    order_by_cluster_key: Optional[bool] = None
     automatic_clustering: Optional[bool] = None
     secure: Optional[bool] = None
     copy_grants: Optional[bool] = None

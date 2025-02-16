@@ -1,0 +1,6 @@
+kind: Features
+body: Add new order_by_cluster_key config option for table creation
+time: 2024-02-27T15:19:15.75488-08:00
+custom:
+  Author: Slanman3755
+  Issue: "606"
