@@ -138,7 +138,7 @@ jobs:
 
   bump-version-generate-changelog:
     name: Bump package version, Generate changelog
-    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@er/ubuntu-deprecation
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
@@ -148,83 +148,83 @@ jobs:
       nightly_release: ${{ inputs.nightly_release }}
     secrets: inherit
 
-  log-outputs-bump-version-generate-changelog:
-    name: "[Log output] Bump package version, Generate changelog"
-    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    needs: [bump-version-generate-changelog]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Print variables
-        run: |
-          echo Final SHA     : ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-          echo Changelog path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
+  # log-outputs-bump-version-generate-changelog:
+  #   name: "[Log output] Bump package version, Generate changelog"
+  #   if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
+  #   needs: [bump-version-generate-changelog]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Print variables
+  #       run: |
+  #         echo Final SHA     : ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
+  #         echo Changelog path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
 
-  build-test-package:
-    name: Build, Test, Package
-    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    needs: [bump-version-generate-changelog]
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
-    with:
-      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-      version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
-      build_script_path: ${{ inputs.build_script_path }}
-      s3_bucket_name: ${{ inputs.s3_bucket_name }}
-      package_test_command: ${{ inputs.package_test_command }}
-      test_run: ${{ inputs.test_run }}
-      nightly_release: ${{ inputs.nightly_release }}
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  # build-test-package:
+  #   name: Build, Test, Package
+  #   if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
+  #   needs: [bump-version-generate-changelog]
+  #   uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
+  #   with:
+  #     sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
+  #     version_number: ${{ inputs.version_number }}
+  #     changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
+  #     build_script_path: ${{ inputs.build_script_path }}
+  #     s3_bucket_name: ${{ inputs.s3_bucket_name }}
+  #     package_test_command: ${{ inputs.package_test_command }}
+  #     test_run: ${{ inputs.test_run }}
+  #     nightly_release: ${{ inputs.nightly_release }}
+  #   secrets:
+  #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  github-release:
-    name: GitHub Release
-    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    needs: [bump-version-generate-changelog, build-test-package]
-    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
-    with:
-      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-      version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
-      test_run: ${{ inputs.test_run }}
+  # github-release:
+  #   name: GitHub Release
+  #   if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
+  #   needs: [bump-version-generate-changelog, build-test-package]
+  #   uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
+  #   with:
+  #     sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
+  #     version_number: ${{ inputs.version_number }}
+  #     changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
+  #     test_run: ${{ inputs.test_run }}
 
-  pypi-release:
-    name: PyPI Release
-    if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
-    needs: [bump-version-generate-changelog, build-test-package]
-    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@main
-    with:
-      version_number: ${{ inputs.version_number }}
-      test_run: ${{ inputs.test_run }}
-    secrets:
-      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-      TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+  # pypi-release:
+  #   name: PyPI Release
+  #   if: ${{ !failure() && !cancelled() && !inputs.only_docker }}
+  #   needs: [bump-version-generate-changelog, build-test-package]
+  #   uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@main
+  #   with:
+  #     version_number: ${{ inputs.version_number }}
+  #     test_run: ${{ inputs.test_run }}
+  #   secrets:
+  #     PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+  #     TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
 
-  docker-release:
-    name: "Docker Release"
-    # We cannot release to docker on a test run because it uses the tag in GitHub as
-    # what we need to release but draft releases don't actually tag the commit so it
-    # finds nothing to release
-    if: ${{ !failure() && !cancelled() && (!inputs.test_run || inputs.only_docker) }}
-    needs: [bump-version-generate-changelog, build-test-package, github-release]
-    permissions:
-      packages: write
-    uses: dbt-labs/dbt-release/.github/workflows/release-docker.yml@main
-    with:
-      version_number: ${{ inputs.version_number }}
-      test_run: ${{ inputs.test_run }}
+  # docker-release:
+  #   name: "Docker Release"
+  #   # We cannot release to docker on a test run because it uses the tag in GitHub as
+  #   # what we need to release but draft releases don't actually tag the commit so it
+  #   # finds nothing to release
+  #   if: ${{ !failure() && !cancelled() && (!inputs.test_run || inputs.only_docker) }}
+  #   needs: [bump-version-generate-changelog, build-test-package, github-release]
+  #   permissions:
+  #     packages: write
+  #   uses: dbt-labs/dbt-release/.github/workflows/release-docker.yml@main
+  #   with:
+  #     version_number: ${{ inputs.version_number }}
+  #     test_run: ${{ inputs.test_run }}
 
-  slack-notification:
-    name: Slack Notification
-    if: ${{ failure() && (!inputs.test_run || inputs.nightly_release) }}
-    needs:
-      [
-        github-release,
-        pypi-release,
-        docker-release,
-      ]
-    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@main
-    with:
-      status: "failure"
-    secrets:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_ADAPTER_ALERTS }}
+  # slack-notification:
+  #   name: Slack Notification
+  #   if: ${{ failure() && (!inputs.test_run || inputs.nightly_release) }}
+  #   needs:
+  #     [
+  #       github-release,
+  #       pypi-release,
+  #       docker-release,
+  #     ]
+  #   uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@main
+  #   with:
+  #     status: "failure"
+  #   secrets:
+  #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEV_ADAPTER_ALERTS }}
