@@ -27,4 +27,5 @@ jobs:
     uses: dbt-labs/actions/.github/workflows/release-branch-tests.yml@main
     with:
       workflows_to_run: '["main.yml", "integration.yml"]'
+      include_main: false
     secrets: inherit
