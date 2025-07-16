@@ -54,6 +54,7 @@ class SnowflakeConfig(AdapterConfig):
     # extended formats
     table_format: Optional[str] = None
     external_volume: Optional[str] = None
+    base_location_root: Optional[str] = None
     base_location_subpath: Optional[str] = None
 
 
