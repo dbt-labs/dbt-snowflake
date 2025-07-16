@@ -1,0 +1,6 @@
+kind: Fixes
+body: Fix adapter.get_relation to find quoted case-sensitive relations
+time: 2024-12-18T23:18:34.836877+05:30
+custom:
+    Author: prashantpiyush
+    Issue: "1252"
